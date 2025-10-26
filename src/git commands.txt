@@ -1,0 +1,25 @@
+git status
+
+git add . 
+
+git commit -m "SS"
+
+git push origin main   (git push)
+
+
+
+--------------------
+CREATE REPO  (cd to folder)
+
+git init
+
+git remote add origin https://github.com/yourusername/your-repo-name.git
+
+git add .
+
+git commit -m "first commit"
+
+git branch -M main
+git push -u origin main  ([error type before] git pull origin main --allow-unrelated-histories)
+
+
