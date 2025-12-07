@@ -2,13 +2,10 @@ from PySide6.QtWidgets import QApplication, QWidget, QMainWindow, QLabel,QVBoxLa
 from PySide6.QtCore import Qt
 
 
-class MainWindow(QMainWindow):
+class LoginPage():
 
     def __init__(self):    #Basic Consructor
         super().__init__()
-
-        self.setWindowTitle('Password Manager')
-        #set size
 
         container = QWidget()
         self.setCentralWidget(container)
@@ -26,20 +23,12 @@ class MainWindow(QMainWindow):
 
         button = QPushButton('Login')
         inner_layout.addWidget(button)
-        button.clicked.connect(login_funct()) #lambda: print...
+        button.clicked.connect(self.login_funct) #lambda: print...login_funct()
 
         layout.addWidget(inner_container)
 
     def login_funct():
         print(f"Button Clicked" )
-
-
-# You need one (and only one) QApplication instance per application.
-app = QApplication()
-window = MainWindow() 
-window.show()
-
-app.exec()
 
 
 
