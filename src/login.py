@@ -29,6 +29,7 @@ class LoginPage():
 
     def login_funct():
         print(f"Button Clicked" )
+        window = MainInterface()
 
 
 

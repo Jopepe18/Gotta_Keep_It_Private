@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QApplication, QWidget, QMainWindow
 
-#from src import LoginPage
+from src import class LoginPage 
 
 
 class MainWindow(QMainWindow):
@@ -11,7 +11,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle('Password Manager')
         #set size
 
-        #loginpage = LoginPage()
+        loginPage = LoginPage()
 
         #MENU
         menubar = self.menuBar()
