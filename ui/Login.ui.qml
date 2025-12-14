@@ -10,15 +10,30 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-Item {
+Window {
     id: root
     width: 1500
     height: 1080
+    visible: true
     property alias buttonIconcolor: login_button.icon.color
     property alias rectangle_subMain_color: rectangle_sub.main_color
     property alias rectangle_subBlue: rectangle_sub.blue
     property alias rectangle_subBackround_color: rectangle_sub.backround_color
     property alias rectangle_subColor: rectangle_sub.color
+    Connections {
+        target: backend //αυτό το ονομα δώσαμε στο main.py
+    function onLogin_status(success, message) {
+            if (success) {
+                message_text.color = "green"
+                message_text.text = message
+                //  on success θα αλλάζει η σελίδα
+            } else {
+                message_text.color = "#c50000" // Κόκκινο
+                message_text.text = message
+
+    }
+    }
+    }
 
     Rectangle {
         id: rectangle
@@ -115,6 +130,15 @@ Item {
                         Layout.leftMargin: 50
                         placeholderText: qsTr("")
                     }
+                    Text {
+                        id: message_text
+                        text: ""  //  κενό
+                        color: "red"
+                        font.pixelSize: 16
+                        Layout.alignment: Qt.AlignHCenter  
+                        Layout.topMargin: 10
+                        Layout.bottomMargin: 10
+                    }
 
                     Button {
                         id: login_button
@@ -135,6 +159,9 @@ Item {
                         icon.width: 30
                         Layout.rightMargin: 50
                         Layout.fillWidth: true
+                        onClicked: {
+        backend.attempt_login(textfield_username.text, textfield_password.text)
+    }
                     }
                 }
             }
@@ -158,7 +185,7 @@ Item {
                     id: img_user
                     width: 200
                     height: 200
-                    source: "../../imgs/user_icon.png"
+                    source: "../imgs/user_icon.png"
                     Layout.topMargin: 30
                     Layout.fillHeight: true
                     Layout.fillWidth: true

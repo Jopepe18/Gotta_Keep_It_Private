@@ -1,44 +1,19 @@
-from PySide6.QtWidgets import QApplication, QWidget, QMainWindow, QLabel,QVBoxLayout, QPushButton, QHBoxLayout, QLineEdit
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QObject, Slot, Signal
 
+class LoginBackend(QObject):
+    login_status = Signal(bool, str)
 
-class LoginPage():
-
-    def __init__(self):    #Basic Consructor
+    def __init__(self):
         super().__init__()
 
-        container = QWidget()
-        self.setCentralWidget(container)
+    
+    @Slot(str, str) # χάρη σε αυτό εδώ το βλέπει η QML
+    def attempt_login(self, username, password):
+        print(f"Python: Username={username}, Password={password}")
 
-        layout = QVBoxLayout(container)
-
-        label1= QLabel('One') 
-        layout.addWidget(label1)
-
-        inner_container = QWidget()
-        inner_layout = QHBoxLayout(inner_container)
-
-        line_edit= QLineEdit()
-        inner_layout.addWidget(line_edit)  
-
-        button = QPushButton('Login')
-        inner_layout.addWidget(button)
-        button.clicked.connect(self.login_funct) #lambda: print...login_funct()
-
-        layout.addWidget(inner_container)
-
-    def login_funct():
-        print(f"Button Clicked" )
-        window = MainInterface()
-
-
-
-
-
-
-
-
-
-
-
-
+        if username == "admin" and password == "1234":
+            print("Python: Επιτυχία")
+            self.login_status.emit(True, "Επιτυχής σύνδεση!")
+        else:
+            print("Python: Αποτυχία")
+            self.login_status.emit(False, "Λάθος στοιχεία.")

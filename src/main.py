@@ -1,39 +1,27 @@
-from PySide6.QtWidgets import QApplication, QWidget, QMainWindow
+import sys # not to be confuzed with syssy
+import os
+from PySide6.QtGui import QGuiApplication
+from PySide6.QtQml import QQmlApplicationEngine
 
-from src import class LoginPage 
+#  import συνάρτησης από το άλλο
+from login import LoginBackend 
 
+if __name__ == "__main__":
+    app = QGuiApplication(sys.argv)
+    engine = QQmlApplicationEngine()
 
-class MainWindow(QMainWindow):
+    backend = LoginBackend()
 
-    def __init__(self):    #Basic Consructor
-        super().__init__()
+    # σύνδεση με QML
+    engine.rootContext().setContextProperty("backend", backend)
 
-        self.setWindowTitle('Password Manager')
-        #set size
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    qml_file_path = os.path.join(current_dir, "../ui/Login.ui.qml")
 
-        loginPage = LoginPage()
+    engine.load(qml_file_path)
 
-        #MENU
-        menubar = self.menuBar()
+    # Έλεγχος αν φόρτωσε σωστά
+    if not engine.rootObjects():
+        sys.exit(-1)
 
-        passMenu = menubar.addMenu("Passwords")
-        ccMenu = menubar.addMenu("CreditCards")
-        wtMenu = menubar.addMenu("WatchTower")
-        gMenu = menubar.addMenu("Generator")
-        sMenu = menubar.addMenu("Settings")
-
-    
-       passMenu.triggered.connect(lambda: print(f"Open PasswordScreen"))
-
-        
-        
-
-
-
-
-
-app = QApplication()
-window = MainWindow() 
-window.show()
-
-app.exec()
+    sys.exit(app.exec())
