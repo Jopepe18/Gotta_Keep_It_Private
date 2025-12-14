@@ -1,5 +1,3 @@
-
-
 /*
 This is a UI file (.ui.qml) that is intended to be edited in Qt Design Studio only.
 It is supposed to be strictly declarative and only uses a subset of QML. If you edit
@@ -10,43 +8,45 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-Window {
+Item {
     id: root
     width: 1500
     height: 1080
-    visible: true
     property alias buttonIconcolor: login_button.icon.color
-    property alias rectangle_subMain_color: rectangle_sub.main_color
-    property alias rectangle_subBlue: rectangle_sub.blue
-    property alias rectangle_subBackround_color: rectangle_sub.backround_color
-    property alias rectangle_subColor: rectangle_sub.color
+    property alias rectangle_subMain_color: rectangle_login_sub.main_color
+    property alias rectangle_subBlue: rectangle_login_sub.blue
+    property alias rectangle_subBackround_color: rectangle_login_sub.backround_color
+    property alias rectangle_subColor: rectangle_login_sub.color
+
+    signal registerRequested()
+
     Connections {
-        target: backend //αυτό το ονομα δώσαμε στο main.py
-    function onLogin_status(success, message) {
+        target: backend
+        function onLogin_status(success, message) {
             if (success) {
+                console.log("Login success: " + message)
                 message_text.color = "green"
                 message_text.text = message
-                //  on success θα αλλάζει η σελίδα
             } else {
-                message_text.color = "#c50000" // Κόκκινο
+                console.log("Login failed: " + message)
+                message_text.color = "#c50000"
                 message_text.text = message
-
-    }
-    }
+            }
+        }
     }
 
     Rectangle {
-        id: rectangle
+        id: rectangle_login
         x: 0
         y: 0
         width: 1500
         height: 1080
-        color: rectangle_sub.backround_color
+        color: rectangle_login_sub.backround_color
         radius: 0
 
         Rectangle {
-            id: rectangle_main
-            color: rectangle_sub.main_color
+            id: rectangle_login_main
+            color: rectangle_login_sub.main_color
             radius: 15
             anchors.left: parent.left
             anchors.right: parent.right
@@ -59,7 +59,7 @@ Window {
             property int text_size: 25
 
             Rectangle {
-                id: rectangle_sub
+                id: rectangle_login_sub
                 color: sub_color
                 radius: 25
                 anchors.left: parent.left
@@ -95,7 +95,7 @@ Window {
                         height: 40
                         color: "#eaeaea"
                         text: qsTr("Username")
-                        font.pixelSize: rectangle_main.text_size
+                        font.pixelSize: rectangle_login_main.text_size
                         Layout.fillWidth: false
                         Layout.topMargin: 10
                         Layout.leftMargin: 60
@@ -115,7 +115,7 @@ Window {
                         id: label_password
                         color: "#eaeaea"
                         text: qsTr("Password")
-                        font.pixelSize: rectangle_main.text_size
+                        font.pixelSize: rectangle_login_main.text_size
                         Layout.topMargin: 20
                         Layout.leftMargin: 60
                     }
@@ -130,38 +130,56 @@ Window {
                         Layout.leftMargin: 50
                         placeholderText: qsTr("")
                     }
+
                     Text {
                         id: message_text
-                        text: ""  //  κενό
+                        text: ""
                         color: "red"
                         font.pixelSize: 16
-                        Layout.alignment: Qt.AlignHCenter  
+                        Layout.alignment: Qt.AlignHCenter
                         Layout.topMargin: 10
                         Layout.bottomMargin: 10
                     }
 
-                    Button {
-                        id: login_button
-                        width: 200
-                        height: 70
-                        text: qsTr("Login")
-                        focusPolicy: Qt.ClickFocus
-                        Layout.leftMargin: 330
-                        Layout.alignment: Qt.AlignRight | Qt.AlignBaseline
-                        highlighted: true
-                        flat: false
-                        checkable: false
-                        display: AbstractButton.TextOnly
-                        rightInset: 10
-                        leftInset: 10
-                        font.pointSize: 18
-                        Layout.fillHeight: false
-                        icon.width: 30
-                        Layout.rightMargin: 50
+                    RowLayout {
                         Layout.fillWidth: true
-                        onClicked: {
-        backend.attempt_login(textfield_username.text, textfield_password.text)
-    }
+                        Layout.alignment: Qt.AlignRight
+                        Layout.rightMargin: 50
+                        spacing: 20
+
+                        Label {
+                            text: qsTr("Not user?")
+                            color: "#eaeaea"
+                            font.pointSize: 14
+                        }
+
+                        Button {
+                            text: qsTr("Sign Up")
+                            display: AbstractButton.TextOnly
+                            flat: true
+                            font.pointSize: 14
+                            font.underline: true
+                            onClicked: root.registerRequested()
+                        }
+
+                        Button {
+                            id: login_button
+                            width: 200
+                            height: 70
+                            text: qsTr("Login")
+                            focusPolicy: Qt.ClickFocus
+                            highlighted: true
+                            flat: false
+                            checkable: false
+                            display: AbstractButton.TextOnly
+                            rightInset: 10
+                            leftInset: 10
+                            font.pointSize: 18
+                            icon.width: 30
+                            onClicked: {
+                                backend.attempt_login(textfield_username.text, textfield_password.text)
+                            }
+                        }
                     }
                 }
             }
@@ -171,7 +189,7 @@ Window {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: parent.top
-                anchors.bottom: rectangle_sub.top
+                anchors.bottom: rectangle_login_sub.top
                 anchors.leftMargin: 150
                 anchors.rightMargin: 178
                 anchors.topMargin: 0
@@ -203,35 +221,7 @@ Window {
                 }
             }
 
-            RowLayout {
-                id: register_column
-                x: 318
-                y: 892
-                width: 237
-                height: 79
-                spacing: 0
 
-                Label {
-                    id: register_label
-                    color: "#eaeaea"
-                    text: qsTr("New to GKIP?")
-                    font.pointSize: 16
-                }
-
-                Button {
-                    id: register_button
-                    text: qsTr("Sign Up")
-                    focusPolicy: Qt.ClickFocus
-                    display: AbstractButton.TextOnly
-                    highlighted: true
-                    font.hintingPreference: Font.PreferDefaultHinting
-                    flat: true
-                    font.pointSize: 16
-                    font.underline: true
-                    font.bold: false
-                    font.italic: false
-                }
-            }
         }
     }
 }

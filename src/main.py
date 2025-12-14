@@ -5,18 +5,25 @@ from PySide6.QtQml import QQmlApplicationEngine
 
 #  import συνάρτησης από το άλλο
 from login import LoginBackend 
+from register import RegisterBackend
+
 
 if __name__ == "__main__":
     app = QGuiApplication(sys.argv)
     engine = QQmlApplicationEngine()
 
     backend = LoginBackend()
+    register_backend = RegisterBackend()
+
 
     # σύνδεση με QML
     engine.rootContext().setContextProperty("backend", backend)
+    engine.rootContext().setContextProperty("registerBackend", register_backend)
+
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    qml_file_path = os.path.join(current_dir, "../ui/Login.ui.qml")
+    qml_file_path = os.path.join(current_dir, "../ui/Main.qml")
+
 
     engine.load(qml_file_path)
 

@@ -1,5 +1,4 @@
 
-
 /*
 This is a UI file (.ui.qml) that is intended to be edited in Qt Design Studio only.
 It is supposed to be strictly declarative and only uses a subset of QML. If you edit
@@ -14,11 +13,24 @@ Item {
     id: root
     width: 1500
     height: 1080
-    property alias buttonIconcolor: login_button.icon.color
     property alias rectangle_subMain_color: rectangle_register_sub.main_color
     property alias rectangle_subBlue: rectangle_register_sub.blue
     property alias rectangle_subBackround_color: rectangle_register_sub.backround_color
     property alias rectangle_subColor: rectangle_register_sub.color
+
+    signal loginRequested()
+
+    Connections {
+        target: registerBackend
+        function onRegister_status(success, message) {
+            if (success) {
+                console.log("Registration successful: " + message)
+                // Optionally navigate back or show success message
+            } else {
+                console.log("Registration failed: " + message)
+            }
+        }
+    }
 
     Rectangle {
         id: rectangle_register_window
@@ -133,25 +145,46 @@ Item {
                         placeholderText: qsTr("")
                     }
 
-                    Button {
-                        id: login_button
-                        width: 200
-                        height: 70
-                        text: qsTr("Register")
-                        focusPolicy: Qt.ClickFocus
-                        Layout.leftMargin: 330
-                        Layout.alignment: Qt.AlignRight | Qt.AlignBaseline
-                        highlighted: true
-                        flat: false
-                        checkable: false
-                        display: AbstractButton.TextOnly
-                        rightInset: 10
-                        leftInset: 10
-                        font.pointSize: 18
-                        Layout.fillHeight: false
-                        icon.width: 30
-                        Layout.rightMargin: 50
+                    RowLayout {
                         Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignRight
+                        Layout.rightMargin: 50
+                        spacing: 20
+                        Layout.topMargin: 20
+
+                        Label {
+                            text: qsTr("Already user?")
+                            color: "#eaeaea"
+                            font.pointSize: 14
+                        }
+
+                        Button {
+                            text: qsTr("Login")
+                            display: AbstractButton.TextOnly
+                            flat: true
+                            font.pointSize: 14
+                            font.underline: true
+                            onClicked: root.loginRequested()
+                        }
+
+                        Button {
+                            id: register_action_button
+                            width: 200
+                            height: 70
+                            text: qsTr("Register")
+                            focusPolicy: Qt.ClickFocus
+                            highlighted: true
+                            flat: false
+                            checkable: false
+                            display: AbstractButton.TextOnly
+                            rightInset: 10
+                            leftInset: 10
+                            font.pointSize: 18
+                            icon.width: 30
+                            onClicked: {
+                                registerBackend.attempt_register(textfield_username.text, textfield_password.text, textfield_confirmpass.text)
+                            }
+                        }
                     }
                 }
             }
@@ -175,7 +208,7 @@ Item {
                     id: img_user
                     width: 200
                     height: 200
-                    source: "../../imgs/user_icon.png"
+                    source: "../imgs/user_icon.png"
                     Layout.topMargin: 30
                     Layout.fillHeight: true
                     Layout.fillWidth: true
@@ -193,35 +226,7 @@ Item {
                 }
             }
 
-            RowLayout {
-                id: signin_column
-                x: 272
-                y: 891
-                width: 348
-                height: 79
-                spacing: 0
 
-                Label {
-                    id: signin_label
-                    color: "#eaeaea"
-                    text: qsTr("Already have an account?")
-                    font.pointSize: 16
-                }
-
-                Button {
-                    id: signin_button
-                    text: qsTr("Sign In")
-                    focusPolicy: Qt.ClickFocus
-                    display: AbstractButton.TextOnly
-                    highlighted: true
-                    font.hintingPreference: Font.PreferDefaultHinting
-                    flat: true
-                    font.pointSize: 16
-                    font.underline: true
-                    font.bold: false
-                    font.italic: false
-                }
-            }
         }
     }
 }
