@@ -19,15 +19,20 @@ Item {
     property alias rectangle_subColor: rectangle_register_sub.color
 
     signal loginRequested()
+    signal registerSuccess(string key)
 
     Connections {
         target: registerBackend
-        function onRegister_status(success, message) {
+        function onRegister_status(success, message, secret_key) {
             if (success) {
                 console.log("Registration successful: " + message)
-                // Optionally navigate back or show success message
+                message_text.color = "green"
+                message_text.text = "Success"
+                root.registerSuccess(secret_key)
             } else {
                 console.log("Registration failed: " + message)
+                message_text.color = "#c50000"
+                message_text.text = message
             }
         }
     }
@@ -101,7 +106,7 @@ Item {
                     TextField {
                         id: textfield_username
                         font.pointSize: 18
-                        Layout.topMargin: -20
+                        Layout.topMargin: 5
                         Layout.fillWidth: true
                         Layout.rightMargin: 50
                         Layout.leftMargin: 50
@@ -121,12 +126,32 @@ Item {
                         id: textfield_password
                         z: 0
                         font.pointSize: 18
-                        Layout.topMargin: -20
+                        Layout.topMargin: 5
                         Layout.rightMargin: 50
                         Layout.fillWidth: true
                         Layout.leftMargin: 50
                         placeholderText: qsTr("")
                     }
+
+                    Text {
+                        id: label_email
+                        color: "#eaeaea"
+                        text: qsTr("Email")
+                        font.pixelSize: rectangle_register_main.text_size
+                        Layout.topMargin: 0
+                        Layout.leftMargin: 60
+                    }
+
+                    TextField {
+                        id: textfield_email
+                        font.pointSize: 18
+                        Layout.topMargin: 5
+                        Layout.rightMargin: 50
+                        Layout.fillWidth: true
+                        Layout.leftMargin: 50
+                        placeholderText: qsTr("")
+                    }
+
 
                     Text {
                         id: text_confirmpass
@@ -138,11 +163,21 @@ Item {
 
                     TextField {
                         id: textfield_confirmpass
-                        Layout.topMargin: -20
+                        Layout.topMargin: 5
                         Layout.rightMargin: 50
                         Layout.leftMargin: 50
                         Layout.fillWidth: true
                         placeholderText: qsTr("")
+                    }
+
+                    Text {
+                        id: message_text
+                        text: ""
+                        color: "red"
+                        font.pixelSize: 16
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.topMargin: 10
+                        Layout.bottomMargin: 10
                     }
 
                     RowLayout {
@@ -182,7 +217,7 @@ Item {
                             font.pointSize: 18
                             icon.width: 30
                             onClicked: {
-                                registerBackend.attempt_register(textfield_username.text, textfield_password.text, textfield_confirmpass.text)
+                                registerBackend.attempt_register(textfield_username.text, textfield_email.text, textfield_password.text, textfield_confirmpass.text)
                             }
                         }
                     }
@@ -221,6 +256,7 @@ Item {
                     width: img_column.width
                     height: 30
                     text: qsTr("Create Account")
+                    color: "#eaeaea"
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                     font.pointSize: 25
                 }

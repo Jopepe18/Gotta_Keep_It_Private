@@ -1,24 +1,31 @@
-import sys # not to be confuzed with syssy
+import sys 
 import os
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
+from PySide6.QtQuickControls2 import QQuickStyle
 
-#  import συνάρτησης από το άλλο
 from login import LoginBackend 
 from register import RegisterBackend
-
+from forgot_password import ForgotPasswordBackend
+from auth_manager import AuthenticationManager
 
 if __name__ == "__main__":
     app = QGuiApplication(sys.argv)
+    QQuickStyle.setStyle("Basic")
     engine = QQmlApplicationEngine()
 
-    backend = LoginBackend()
-    register_backend = RegisterBackend()
+    # 1. Initialize Authentication Manager
+    auth_manager = AuthenticationManager()
+    
+    # 2. Create Backends, injecting the manager
+    login_backend = LoginBackend(auth_manager)
+    register_backend = RegisterBackend(auth_manager)
+    forgot_password_backend = ForgotPasswordBackend(auth_manager)
 
-
-    # σύνδεση με QML
-    engine.rootContext().setContextProperty("backend", backend)
+    # 3. Expose to QML
+    engine.rootContext().setContextProperty("loginBackend", login_backend)
     engine.rootContext().setContextProperty("registerBackend", register_backend)
+    engine.rootContext().setContextProperty("forgotPasswordBackend", forgot_password_backend)
 
 
     current_dir = os.path.dirname(os.path.abspath(__file__))

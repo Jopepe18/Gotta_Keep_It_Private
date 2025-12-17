@@ -19,14 +19,21 @@ Item {
     property alias rectangle_subColor: rectangle_login_sub.color
 
     signal registerRequested()
+    signal loginSuccess(string secretKey)
+    signal forgotPasswordRequested()
+
+    property bool is_login_success: false
+    property string login_message: ""
+    property string secret_key_val: ""
 
     Connections {
-        target: backend
-        function onLogin_status(success, message) {
+        target: loginBackend
+        function onLogin_status(success, message, secret_key) {
             if (success) {
                 console.log("Login success: " + message)
                 message_text.color = "green"
                 message_text.text = message
+                root.loginSuccess(secret_key)
             } else {
                 console.log("Login failed: " + message)
                 message_text.color = "#c50000"
@@ -104,7 +111,7 @@ Item {
                     TextField {
                         id: textfield_username
                         font.pointSize: 18
-                        Layout.topMargin: -40
+                        Layout.topMargin: 5
                         Layout.fillWidth: true
                         Layout.rightMargin: 50
                         Layout.leftMargin: 50
@@ -124,7 +131,7 @@ Item {
                         id: textfield_password
                         z: 0
                         font.pointSize: 18
-                        Layout.topMargin: -45
+                        Layout.topMargin: 5
                         Layout.rightMargin: 50
                         Layout.fillWidth: true
                         Layout.leftMargin: 50
@@ -139,6 +146,22 @@ Item {
                         Layout.alignment: Qt.AlignHCenter
                         Layout.topMargin: 10
                         Layout.bottomMargin: 10
+                    }
+
+                    // Forgot Password Link
+                    Button {
+                        text: qsTr("Forgot Password?")
+                        Layout.alignment: Qt.AlignRight
+                        Layout.rightMargin: 50
+                        
+                        background: Rectangle { color: "transparent" }
+                        contentItem: Text {
+                            text: parent.text
+                            color: "#eaeaea"
+                            font.underline: true
+                            font.pixelSize: 14
+                        }
+                        onClicked: root.forgotPasswordRequested()
                     }
 
                     RowLayout {
@@ -177,7 +200,7 @@ Item {
                             font.pointSize: 18
                             icon.width: 30
                             onClicked: {
-                                backend.attempt_login(textfield_username.text, textfield_password.text)
+                                loginBackend.attempt_login(textfield_username.text, textfield_password.text)
                             }
                         }
                     }
@@ -216,6 +239,7 @@ Item {
                     width: img_column.width
                     height: 30
                     text: qsTr("Log in to Gotta Keep It Private")
+                    color: "#eaeaea"
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                     font.pointSize: 25
                 }

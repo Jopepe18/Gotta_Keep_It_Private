@@ -11,14 +11,65 @@ Window {
     StackView {
         id: stackView
         anchors.fill: parent
+        Component {
+            id: changeForgotPasswordComponent
+            ChangeForgotPassword {
+                onChangePasswordSuccess: {
+                    stackView.push(vaultRouterComponent)
+                }
+                onBackRequested: {
+                    stackView.pop()
+                }
+            }
+        }
+
+        Component {
+            id: forgotPasswordComponent
+            ForgotPassword {
+                onLoginRequested: {
+                    stackView.pop()
+                }
+                onRecoveryVerified: function(username, key) {
+                    // Instantiate component programmatically to pass properties or use push with properties if supported
+                    // For simplicity in StackView push:
+                    stackView.push(changeForgotPasswordComponent, {"username": username, "secretKey": key})
+                }
+            }
+        }
+
         initialItem: Login {
-            onRegisterRequested: stackView.push(registerComponent)
+            onRegisterRequested: {
+                stackView.push(registerComponent)
+            }
+            onLoginSuccess: {
+                stackView.push(vaultRouterComponent)
+            }
+            onForgotPasswordRequested: {
+                stackView.push(forgotPasswordComponent)
+            }
         }
 
         Component {
             id: registerComponent
             Register {
                 onLoginRequested: stackView.pop()
+                onRegisterSuccess: {
+                    stackView.push(secretKeyComponent, {secretKey: key})
+                }
+            }
+        }
+
+        Component {
+            id: secretKeyComponent
+            SecretKeyScreen {
+                onContinueClicked: stackView.push(vaultRouterComponent)
+            }
+        }
+
+        Component {
+            id: vaultRouterComponent
+            VaultRouterScreen {
+                onLogoutClicked: stackView.pop(null) // Pop to root (Login)
             }
         }
     }
