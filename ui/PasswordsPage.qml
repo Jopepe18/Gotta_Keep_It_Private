@@ -308,7 +308,7 @@ Item{
                                         spacing: 170
 
                                         Label{
-                                            text: "Username"
+                                            text: "Password"
                                             color: "white"
                                             font.pixelSize: 18
                                         }
@@ -325,7 +325,7 @@ Item{
                                             contentItem: Image{
                                             height: 30
                                             width: 30 
-                                            src: visibilityOn ? "../imgs/visibility_on.png" : "../imgs/visibility_off.png"
+                                            source: visibilityOn ? "../imgs/visibility_on.png" : "../imgs/visibility_off.png"
                                         }
                                         onClicked:{
                                             visibilityOn = !visibilityOn
