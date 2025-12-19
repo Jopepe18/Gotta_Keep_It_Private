@@ -21,6 +21,7 @@ Item {
     signal registerRequested()
     signal loginSuccess(string secretKey)
     signal forgotPasswordRequested()
+    signal loadMain()
 
     property bool is_login_success: false
     property string login_message: ""

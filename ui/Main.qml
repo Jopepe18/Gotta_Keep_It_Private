@@ -37,7 +37,17 @@ Window {
             }
         }
 
-        initialItem: Login {
+        initialItem: 
+
+        
+        loadMainScreenComponent
+            SideMenu {
+                onLogoutClicked: stackView.pop(null) //Pop to root (Login)
+            }
+
+
+      /*
+        Login {
             onRegisterRequested: {
                 stackView.push(registerComponent)
             }
@@ -47,7 +57,7 @@ Window {
             onForgotPasswordRequested: {
                 stackView.push(forgotPasswordComponent)
             }
-        }
+        }*/
 
         Component {
             id: registerComponent
@@ -70,7 +80,16 @@ Window {
             id: vaultRouterComponent
             VaultRouterScreen {
                 onLogoutClicked: stackView.pop(null) // Pop to root (Login)
+                onLoadMain: stackView.push(loadMainScreenComponent)
             }
         }
+
+        Component{
+            id: loadMainScreenComponent
+            SideMenu {
+                onLogoutClicked: stackView.pop(null) //Pop to root (Login)
+            }
+        }
+
     }
 }

@@ -3,6 +3,7 @@ from dtos import LoginRequest
 
 class LoginBackend(QObject):
     login_status = Signal(bool, str, str)  # success, message, secret_key
+    login_successful = Signal(str)
 
     def __init__(self, auth_manager):
         super().__init__()
@@ -19,6 +20,7 @@ class LoginBackend(QObject):
             print("Python: Επιτυχία")
             # We could store result.token here if needed
             self.login_status.emit(True, result.message, result.secret_key)
+            self.login_successful.emit(username)
         else:
             print("Python: Αποτυχία")
             self.login_status.emit(False, result.message, "")
