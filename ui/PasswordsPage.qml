@@ -8,6 +8,7 @@ Item{
     height: 1080
 
     property bool showFavorites: false
+    property bool visibilityOn: false
 
     RowLayout{
         anchors.fill: parent
@@ -233,25 +234,115 @@ Item{
                             ColumnLayout{
                                 anchors.margins: 20
 
+                                /*------------Image Title and Last Modification Labels*/
                                 RowLayout{
                                     spacing: 20
                                     Layout.margins:20
 
-                                    Rectangle{
-                                        radius: 20
-                                        width: 60
-                                        height: 60
-                                        clip: true
-
                                         Image{
                                         id: detailImage
-                                        anchors.fill: parent
+                                        Layout.preferredHeight: 60
+                                        Layout.preferredWidth: 60
                                         source: "../imgs/placeholders/google.png"
                                         fillMode: Image.PreserveAspectCrop
                                         smooth: true
                                         }
+
+                                        ColumnLayout{
+
+                                            Label{
+                                                id: detailPassNameLabel
+                                                text: "Gmail"
+                                                font.pixelSize: 20
+                                            }
+
+                                            Label{
+                                                id: detailPassLastModLabel
+                                                text: "Last modified: 12/7/2025"
+                                                color: "#B5B5B5"
+                                                font.pixelSize: 16
+                                            }
+                                        }
                                     }
+                                
+                                /*----------Username Row---------------*/
+                                ColumnLayout{
+                                    Layout.margins: 20
+                                    spacing: 10
+                                    Layout.fillHeight: true
+
+                                    RowLayout{
+                                        spacing: 170
+
+                                        Label{
+                                            text: "Username"
+                                            color: "white"
+                                            font.pixelSize: 18
+                                        }
+
+                                        Label{
+                                            id: passDetailsUsernameLabel
+                                            text: "User"
+                                            color: "#B5B5B5"
+                                            font.pixelSize: 18
+                                        }
+                                    }
+
+                                    Rectangle{
+                                        color: "#7B7B7B"
+                                        Layout.fillWidth: true
+                                        Layout.preferredHeight: 2
+                                        opacity: 0.3
+                                    }
+                                
                                 }
+
+
+                                /*----------Password Row---------------*/
+                                ColumnLayout{
+                                    Layout.margins: 20
+                                    spacing: 10
+                                    Layout.fillHeight: true
+
+                                    RowLayout{
+                                        spacing: 170
+
+                                        Label{
+                                            text: "Username"
+                                            color: "white"
+                                            font.pixelSize: 18
+                                        }
+
+                                        Label{
+                                            id: passDetailsPasswordLabel
+                                            text: "User"
+                                            color: "#B5B5B5"
+                                            font.pixelSize: 18
+                                        }
+
+                                        Button{
+                                            id: changePasswordVisibilityButton
+                                            contentItem: Image{
+                                            height: 30
+                                            width: 30 
+                                            src: visibilityOn ? "../imgs/visibility_on.png" : "../imgs/visibility_off.png"
+                                        }
+                                        onClicked:{
+                                            visibilityOn = !visibilityOn
+                                        }
+                                        }
+                                    }
+
+                                    Rectangle{
+                                        color: "#7B7B7B"
+                                        Layout.fillWidth: true
+                                        Layout.preferredHeight: 2
+                                        opacity: 0.3
+                                    }
+                                
+                                }
+                                }
+                                
                             }
                         }
                        }
@@ -262,6 +353,5 @@ Item{
         }
 
         
-    }
-
+    
 }
