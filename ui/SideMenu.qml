@@ -305,7 +305,7 @@ Item{
                 }
 
                 Item{
-                    Layout.fillHeight: true
+                    Layout.preferredHeight: 170
                 }
 
                 /*--------White Line---------*/
@@ -360,7 +360,7 @@ Item{
                 }
 
                 Item{
-                    Layout.preferredHeight: 10
+                    Layout.fillHeight: true
                 }
             }
         }
