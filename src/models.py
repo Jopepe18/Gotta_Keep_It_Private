@@ -8,7 +8,7 @@ import uuid
 Base = declarative_base()
 
 class UserModel(Base):
-    __tablename__ = 'users'
+    __tablename__ = 'users' # used for authentication
 
     user_id = Column(String, primary_key=True)
     username = Column(String, unique=True, nullable=False)
@@ -28,7 +28,7 @@ def generate_uuid():
 # TABLE: USERS 
 # ========================================================== 
 class UserModel(Base):
-	__tablename__ = 'users' 
+	__tablename__ = 'users_2' #not curently used, previous name "users"
 
 user_id = Column(String(36), primary_key=True, default=generate_uuid) 
 username = Column(String(50), unique=True, nullable=False) 
