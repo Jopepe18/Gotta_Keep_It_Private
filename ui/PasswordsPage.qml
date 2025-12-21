@@ -59,7 +59,6 @@ Item{
 
 
                                 Image{
-                                    id: searchIcon
                                     Layout.preferredWidth: 20 
                                     Layout.preferredHeight: 20
                                     source: "../imgs/search.png"
@@ -69,9 +68,10 @@ Item{
                                 TextField{
                                     Layout.fillWidth: true
                                     Layout.fillHeight: true
-                                    placeholderText: "Search"
+                                    placeholderText: "Search..."
                                     color: "white"
                                     font.pixelSize: 16
+                                    id: passwordsSearchTextField
 
                                     background: Rectangle{
                                         color: "transparent"
@@ -82,7 +82,7 @@ Item{
 
                         /*------------Show Favorites Button-----------*/
                         Button{
-                            id: showFavoritesButton
+                            id: showFavoritePasswordsButton
                             Layout.preferredWidth:170
                             Layout.preferredHeight:45
                             padding:0
@@ -112,7 +112,7 @@ Item{
 
                             background: Rectangle{
                                 radius:20
-                                color: showFavoritesButton.pressed ? "#20B990" : (showFavoritesButton.hovered? "#109C77" : "#09946D" )
+                                color: showFavoritePasswordsButton.pressed ? "#20B990" : (showFavoritePasswordsButton.hovered? "#109C77" : "#09946D" )
 
                                 Behavior on color{
                                     ColorAnimation { duration: 150}
@@ -152,6 +152,8 @@ Item{
                                         font.pixelSize:20
                                     }
                                 }
+
+                                
                             }
 
                             background: Rectangle{
@@ -213,11 +215,11 @@ Item{
                     radius: 20
 
                     ColumnLayout{
-                        Layout.fillWidth:true
                         Layout.fillHeight:true
 
                        ColumnLayout{
                         Layout.margins: 20
+                        Layout.fillWidth: true
 
                         Label{
                         text:"Details"
@@ -227,17 +229,22 @@ Item{
 
                         Rectangle{
                             color: "#303946"
-                            Layout.preferredWidth:360
-                            Layout.preferredHeight:400
+                            Layout.preferredWidth: 360
+                            Layout.preferredHeight:370
                             radius: 20
 
                             ColumnLayout{
                                 anchors.margins: 20
+                                anchors.fill:parent
 
                                 /*------------Image Title and Last Modification Labels*/
                                 RowLayout{
                                     spacing: 20
-                                    Layout.margins:20
+                                    Layout.topMargin: 10
+                                    Layout.leftMargin: 20
+                                    Layout.rightMargin: 20
+                                    Layout.bottomMargin: 20
+                                    Layout.fillWidth: true
 
                                         Image{
                                         id: detailImage
@@ -265,26 +272,32 @@ Item{
                                         }
                                     }
                                 
-                                /*----------Username Row---------------*/
+                                /*-------Details of Object*/
+                               ColumnLayout{
+                                spacing: 10
+
+                                 /*----------Username Row---------------*/
                                 ColumnLayout{
-                                    Layout.margins: 20
                                     spacing: 10
-                                    Layout.fillHeight: true
 
                                     RowLayout{
-                                        spacing: 170
+                                        spacing: 5
 
                                         Label{
                                             text: "Username"
                                             color: "white"
-                                            font.pixelSize: 18
+                                            font.pixelSize: 15
+                                        }
+
+                                        Item{
+                                            Layout.fillWidth: true
                                         }
 
                                         Label{
                                             id: passDetailsUsernameLabel
                                             text: "User"
                                             color: "#B5B5B5"
-                                            font.pixelSize: 18
+                                            font.pixelSize: 15
                                         }
                                     }
 
@@ -300,28 +313,35 @@ Item{
 
                                 /*----------Password Row---------------*/
                                 ColumnLayout{
-                                    Layout.margins: 20
-                                    spacing: 10
-                                    Layout.fillHeight: true
+                                    spacing: 5
 
                                     RowLayout{
-                                        spacing: 170
+                                        spacing: 0
+                                        Layout.fillWidth:true
 
                                         Label{
                                             text: "Password"
                                             color: "white"
-                                            font.pixelSize: 18
+                                            font.pixelSize: 15
+                                        }
+
+                                        Item{
+                                            Layout.fillWidth:true
                                         }
 
                                         Label{
                                             id: passDetailsPasswordLabel
-                                            text: "User"
+                                            text: visibilityOn? "1234567890" : "**********"
                                             color: "#B5B5B5"
-                                            font.pixelSize: 18
+                                            font.pixelSize: 15
                                         }
 
                                         Button{
                                             id: changePasswordVisibilityButton
+                                            background: Rectangle{
+                                                color: "transparent"
+                                            }
+
                                             contentItem: Image{
                                             height: 30
                                             width: 30 
@@ -341,9 +361,239 @@ Item{
                                     }
                                 
                                 }
+                                
+                                /*----------Website Row---------------*/
+                                ColumnLayout{
+                                    spacing: 10
+
+                                    RowLayout{
+                                        spacing: 5
+
+                                        Label{
+                                            text: "Website"
+                                            color: "white"
+                                            font.pixelSize: 15
+                                        }
+
+                                        Item{
+                                            Layout.fillWidth:true
+                                        }
+
+                                        Label{
+                                            id: passDetailsWebsiteLabel
+                                            text: "www.google.com"
+                                            color: "#B5B5B5"
+                                            font.pixelSize: 15
+                                        }
+                                    }
+
+                                    Rectangle{
+                                        color: "#7B7B7B"
+                                        Layout.fillWidth: true
+                                        Layout.preferredHeight: 2
+                                        opacity: 0.3
+                                    }
+                                
+                                }
+
+
+                                /*----------Safety Row---------------*/
+                                ColumnLayout{
+                                    spacing: 10
+
+                                    RowLayout{
+                                        spacing: 5
+
+                                        Label{
+                                            text: "Safety"
+                                            color: "white"
+                                            font.pixelSize: 15
+                                        }
+
+                                        Item{
+                                            Layout.fillWidth:true
+                                        }
+
+                                        Image{
+                                            id: passSafetyImage
+                                            Layout.preferredHeight: 30
+                                            Layout.preferredWidth: 30
+                                            source: "../imgs/safe.png"
+                                        }
+                                    }
+
+                                    Rectangle{
+                                        color: "#7B7B7B"
+                                        Layout.fillWidth: true
+                                        Layout.preferredHeight: 2
+                                        opacity: 0.3
+                                    }
+                                
+                                }
+
+                                /*----------------Add a Note Text Field---------------*/
+                                TextField{
+                                    id: passAddANote
+                                    placeholderText: "Add a Note..."
+                                    color: "white"
+
+                                    background: Rectangle{
+                                        color: "#303946"
+                                    }
+                                }
+
+                                Item{
+                                    Layout.fillHeight: true
+                                }
+
                                 }
                                 
                             }
+                        }
+
+                        Item{
+                            Layout.preferredHeight: 10
+                        }
+
+                        Label{
+                            text: "Item history"
+                            color: "white"
+                            font.pointSize:18
+                        }
+                        /*Item History Details*/
+                        Rectangle{
+                            color: "#303946"
+                            Layout.preferredWidth: 360
+                            Layout.preferredHeight: 150
+                            radius: 20
+
+                            ColumnLayout{
+                                anchors.topMargin: 10
+                                anchors.bottomMargin: 10
+                                anchors.rightMargin: 20 
+                                anchors.leftMargin: 20
+                                anchors.fill:parent
+                                spacing: 20
+
+
+                                /*--------------Last Edited Row------------*/
+                                RowLayout{
+                                        spacing: 5
+
+                                        Label{
+                                            text: "Last edited:"
+                                            color: "white"
+                                            font.pixelSize: 15
+                                        }
+
+                                        Item{
+                                            Layout.fillWidth: true
+                                        }
+
+                                        Label{
+                                            id: passDetailsLastEditedLabel
+                                            text: "12/20/2025"
+                                            color: "#B5B5B5"
+                                            font.pixelSize: 15
+                                        }
+                                    }
+                                /*--------------Created Row------------*/
+                                RowLayout{
+                                        spacing: 5
+
+                                        Label{
+                                            text: "Created:"
+                                            color: "white"
+                                            font.pixelSize: 15
+                                        }
+
+                                        Item{
+                                            Layout.fillWidth: true
+                                        }
+
+                                        Label{
+                                            id: passDetailsCreatedLabel
+                                            text: "12/20/2025"
+                                            color: "#B5B5B5"
+                                            font.pixelSize: 15
+                                        }
+                                    }
+
+                                /*--------------Password Updated------------*/
+                                RowLayout{
+                                        spacing: 10
+
+                                        Label{
+                                            text: "Password Updated:"
+                                            color: "white"
+                                            font.pixelSize: 15
+                                        }
+
+                                        Item{
+                                            Layout.fillWidth: true
+                                        }
+
+                                        Label{
+                                            id: passDetailsUpdatedPasswordLabel
+                                            text: "12/20/2025"
+                                            color: "#B5B5B5"
+                                            font.pixelSize: 15
+                                        }
+
+                                    }
+
+                              
+        
+                            }
+                        }
+
+                        Item{
+                            Layout.fillHeight:true
+                        }
+
+                        RowLayout{
+                            Layout.margins:20
+
+                            Button{
+                                id: passEditButton
+                                text: "Edit"
+                                font.pixelSize: 17
+                                Layout.preferredHeight: 45
+                                Layout.preferredWidth: 85
+
+                             background: Rectangle{
+                                radius:20
+                                color: passEditButton.pressed ? "#313A4B" : (passEditButton.hovered? "#222B3A" : "#161C26" )
+                                border.color: "white"
+
+                                Behavior on color{
+                                    ColorAnimation { duration: 150}
+                                }
+                            }
+                            }
+
+                            Item{
+                                Layout.fillWidth: true
+                            }
+
+                            Button{
+                                id: passDeleteButton
+                                text: "Delete"
+                                font.pixelSize: 17
+                                Layout.preferredHeight: 45
+                                Layout.preferredWidth:85
+
+                             background: Rectangle{
+                                radius:20
+                                color: passDeleteButton.pressed ? "#F76262" : (passDeleteButton.hovered? "#F54040" : "#E22323" )
+
+                                Behavior on color{
+                                    ColorAnimation { duration: 150}
+                                }
+                            }
+                            }
+                        }
+
                         }
                        }
                     }
