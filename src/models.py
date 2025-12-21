@@ -19,7 +19,7 @@ class UserModel(Base):
     
     password_reset_token = Column(String, nullable=True)
     reset_token_expiry = Column(DateTime, nullable=True)
-
+    vaults = relationship("VaultModel", back_populates="user", cascade="all, delete-orphan") 
 
 def generate_uuid(): 
  return str(uuid.uuid4()) 
@@ -27,17 +27,17 @@ def generate_uuid():
 # ==========================================================
 # TABLE: USERS 
 # ========================================================== 
-class UserModel(Base):
-	__tablename__ = 'users' 
+#    class UserModel(Base):
+#	__tablename__ = 'users' 
 
-user_id = Column(String(36), primary_key=True, default=generate_uuid) 
-username = Column(String(50), unique=True, nullable=False) 
-email = Column(String(100), unique=True, nullable=False)
-password_hash = Column(String(255), nullable=False)
-secret_key = Column(String(255), nullable=False)
-is_verified = Column(Boolean, default=False)
-created_at = Column(DateTime(timezone=True), server_default=func.now())
-vaults = relationship("VaultModel", back_populates="user", cascade="all, delete-orphan") 
+#    user_id = Column(String(36), primary_key=True, default=generate_uuid) 
+#    username = Column(String(50), unique=True, nullable=False) 
+#    email = Column(String(100), unique=True, nullable=False)
+#    password_hash = Column(String(255), nullable=False)
+#    secret_key = Column(String(255), nullable=False)
+#    is_verified = Column(Boolean, default=False)
+#    created_at = Column(DateTime(timezone=True), server_default=func.now())
+#    vaults = relationship("VaultModel", back_populates="user", cascade="all, delete-orphan") 
 
 # ========================================================== # TABLE: VAULTS 
 # # ========================================================== 

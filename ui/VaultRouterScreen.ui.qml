@@ -12,7 +12,7 @@ import QtQuick.Layouts
 
 Item {
     id: root
-    anchors.fill:parent
+    // anchors.fill:parent removed to avoid StackView conflict
     property alias rectangle_subMain_color: rectangle_login_sub.main_color
     property alias rectangle_subBlue: rectangle_login_sub.blue
     property alias rectangle_subBackround_color: rectangle_login_sub.backround_color
@@ -76,6 +76,7 @@ Item {
                         Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                         Layout.leftMargin: 50
                         Layout.rightMargin: 50
+                        onClicked: root.loadMain()
                     }
 
                     Button {

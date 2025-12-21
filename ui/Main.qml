@@ -37,34 +37,25 @@ Window {
             }
         }
 
-        initialItem: 
-
-        
-        loadMainScreenComponent
-            SideMenu {
-                onLogoutClicked: stackView.pop(null) //Pop to root (Login)
-            }
-
-
-      /*
-        Login {
+        initialItem: Login {
             onRegisterRequested: {
                 stackView.push(registerComponent)
             }
             onLoginSuccess: {
+                // Pass secret key if needed, or just navigate
                 stackView.push(vaultRouterComponent)
             }
             onForgotPasswordRequested: {
                 stackView.push(forgotPasswordComponent)
             }
-        }*/
+        }
 
         Component {
             id: registerComponent
             Register {
                 onLoginRequested: stackView.pop()
                 onRegisterSuccess: {
-                    stackView.push(secretKeyComponent, {secretKey: key})
+                     stackView.push(secretKeyComponent, {secretKey: key})
                 }
             }
         }
