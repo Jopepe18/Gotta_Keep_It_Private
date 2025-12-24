@@ -9,17 +9,22 @@ Item{
 
     signal logoutClicked()
     property string currentPage: "passwords"
+    property string userIdString: ""
 
     function updatePage() {
         var page;
+        var props = {};
         switch(currentPage){
-            case "passwords": page = "PasswordsPage.qml"; break;
+            case "passwords": 
+                page = "PasswordsPage.qml"; 
+                props = {"userId": root.userIdString};
+                break;
             case "cards": page = "CardsPage.qml"; break;
             case "watchTower": page = "WatchTowerPage.qml"; break;
             case "generator": page = "GeneratorPage.qml"; break;
             case "settings": page = "SettingsPage.qml"; break;
         }
-        if(page) stack.replace(page);
+        if(page) stack.replace(page, props);
     }
 
    Rectangle{
@@ -366,11 +371,18 @@ Item{
         }
     
         /* ----------Show Pages ----------*/
+        Component {
+            id: firstPasswordPage
+            PasswordsPage {
+                userId: root.userIdString
+            }
+        }
+
         StackView{
             id: stack
             Layout.fillWidth: true
             Layout.fillHeight: true
-            initialItem: "PasswordsPage.qml"
+            initialItem: firstPasswordPage
 
             // Using Fade for the transition instead of slide
             replaceEnter: Transition {

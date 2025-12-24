@@ -18,8 +18,25 @@ Item {
     property alias rectangle_subBackround_color: rectangle_login_sub.backround_color
     property alias rectangle_subColor: rectangle_login_sub.color
 
+    property string userIdString: ""
+    property bool hasExistingVault: false
+
     signal logoutClicked()
     signal loadMain()
+
+    Connections {
+        target: vaultBackend
+        function onVault_created(success, message) {
+            if(success) {
+                console.log("Vault Created: " + message)
+                // Update local state to disable New Vault and enable Main
+                root.hasExistingVault = true
+                root.loadMain() // Navigate to Main
+            } else {
+                console.log("Vault Creation Failed: " + message)
+            }
+        }
+    }
 
     Rectangle {
         id: rectangle_login
@@ -76,7 +93,12 @@ Item {
                         Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                         Layout.leftMargin: 50
                         Layout.rightMargin: 50
-                        onClicked: root.loadMain()
+                        enabled: !root.hasExistingVault
+                        opacity: enabled ? 1.0 : 0.5
+                        onClicked: {
+                            console.log("Creating vault for user: " + root.userIdString)
+                            vaultBackend.create_vault(root.userIdString, "My New Vault", "", "")
+                        }
                     }
 
                     Button {
@@ -89,6 +111,8 @@ Item {
                         Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                         Layout.leftMargin: 50
                         Layout.rightMargin: 50
+                        enabled: !root.hasExistingVault
+                        opacity: enabled ? 1.0 : 0.5
                     }
 
                     Button {
@@ -112,6 +136,8 @@ Item {
                         Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                         Layout.leftMargin: 50
                         Layout.rightMargin: 50
+                        enabled: root.hasExistingVault
+                        opacity: enabled ? 1.0 : 0.5
                         onClicked: root.loadMain()
                     }
                     

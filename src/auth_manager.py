@@ -55,7 +55,7 @@ class AuthenticationManager:
             secret_key = self.encrypt_service.generate_secret_key()
 
             # 5. Create new User
-            new_user_id = str(uuid.uuid4())
+            new_user_id = str(uuid.uuid4())#random user id generated
             new_user = UserModel(
                 user_id=new_user_id, 
                 username=request.username, 
@@ -86,7 +86,9 @@ class AuthenticationManager:
             if self.encrypt_service.verify_password(request.password, found_user.password_hash):
                 # 3. Success -> Generate Token
                 token = self.encrypt_service.generate_token()
-                return AuthenticationResult(success=True, message="Login Successful", token=token, secret_key=found_user.secret_key)
+                # Check if user has vaults
+                has_vault = len(found_user.vaults) > 0
+                return AuthenticationResult(success=True, message="Login Successful", token=token, secret_key=found_user.secret_key, user_id=found_user.user_id, has_vault=has_vault)
             else:
                 return AuthenticationResult(success=False, message="Invalid credentials")
         finally:

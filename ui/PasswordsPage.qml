@@ -9,6 +9,31 @@ Item{
 
     property bool showFavorites: false
     property bool visibilityOn: false
+    property string userId: ""
+
+    property var passwordsList: []
+    
+    Connections {
+        target: vaultBackend
+        function onPasswords_updated(updatedList) {
+            console.log("Passwords Page: List updated with " + updatedList.length + " items")
+            passwordsPage.passwordsList = updatedList
+        }
+    }
+
+    onUserIdChanged: {
+        if(passwordsPage.userId !== "") {
+            console.log("PasswordsPage: userId changed to " + passwordsPage.userId + ". Fetching passwords.")
+            vaultBackend.getPasswords(passwordsPage.userId)
+        }
+    }
+
+    Component.onCompleted: {
+        if(passwordsPage.userId !== "") {
+            console.log("PasswordsPage Loaded (onCompleted). Fetching passwords for: " + passwordsPage.userId)
+            vaultBackend.getPasswords(passwordsPage.userId)
+        }
+    }
 
     RowLayout{
         anchors.fill: parent
@@ -166,6 +191,32 @@ Item{
                             }
                         }
 
+                        /*------------DEBUG Button-----------*/
+                        Button{
+                            id: addPasswordDebug
+                            Layout.preferredWidth:150
+                            Layout.preferredHeight:45
+                            padding:0
+                            text: "Debug Add"
+                            
+                            contentItem: Text {
+                                text: addPasswordDebug.text
+                                color: "white"
+                                font.pixelSize: 18
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+
+                            background: Rectangle{
+                                radius:20
+                                color: "#FF5500" // Orange for debug
+                            }
+                             onClicked: {
+                                    console.log("Debug Add Clicked for User: " + passwordsPage.userId)
+                                    vaultBackend.addDebugPassword(passwordsPage.userId)
+                             }
+                        }
+
 
                     }
 
@@ -200,8 +251,50 @@ Item{
                     ScrollView{
                         id: passwordItemsScrollView
                         Layout.fillHeight:true
-                        Column{
-
+                        Layout.fillWidth: true
+                        clip: true // Ensure content doesn't overflow
+                        
+                        ColumnLayout {
+                            width: passwordItemsScrollView.width
+                            spacing: 10
+                            
+                            Repeater {
+                                model: passwordsPage.passwordsList
+                                delegate: Rectangle {
+                                    height: 50
+                                    width: parent.width
+                                    color: "#303946"
+                                    radius: 10
+                                    
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.margins: 10
+                                        spacing: 20
+                                        
+                                        // Favorite Icon (Dummy for now)
+                                        Image {
+                                            source: modelData.is_favorite ? "../imgs/favorite.png" : "../imgs/not_favoriteStar.png"
+                                            Layout.preferredWidth: 20
+                                            Layout.preferredHeight: 20
+                                        }
+                                        
+                                        // Title
+                                        Text {
+                                            text: modelData.title
+                                            color: "white"
+                                            font.pixelSize: 18
+                                            Layout.fillWidth: true
+                                        }
+                                        
+                                        // Updates
+                                        Text {
+                                            text: modelData.username
+                                            color: "#B5B5B5"
+                                            font.pixelSize: 14
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
 

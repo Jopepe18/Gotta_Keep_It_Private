@@ -20,6 +20,7 @@ class UserModel(Base):
     password_reset_token = Column(String, nullable=True)
     reset_token_expiry = Column(DateTime, nullable=True)
     vaults = relationship("VaultModel", back_populates="user", cascade="all, delete-orphan") 
+    #αν διαγραφεί ο χρήστης, σβήνεται και το vault του
 
 def generate_uuid(): 
  return str(uuid.uuid4()) 
@@ -43,8 +44,9 @@ def generate_uuid():
 # # ========================================================== 
 class VaultModel(Base): 
   __tablename__ = 'vaults'  
-  vault_id = Column(Integer, primary_key=True, autoincrement=True)
+  vault_id = Column(Integer, primary_key=True, autoincrement=True)#δημιουργία τυχαίου id για κάθε vault, με αύξων αριθμο
   user_id = Column(String(36), ForeignKey('users.user_id', ondelete='CASCADE'), nullable=False)
+  #!!!εδώ γινεται η διασύνδεση vault με user id
   name = Column(String(100), default="Main Vault")
   created_at = Column(DateTime(timezone=True), server_default=func.now())
   user = relationship("UserModel", back_populates="vaults")
@@ -67,20 +69,20 @@ class PasswordEntry(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now()) 
     last_modified = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now()) 
     vault = relationship("VaultModel", back_populates="passwords") 
-    # ========================================================== # TABLE: CREDIT CARDS 
-    # # ========================================================== 
-    class CreditCardEntry(Base): 
-        __tablename__ = 'credit_cards' 
-        id = Column(Integer, primary_key=True, autoincrement=True) 
-        vault_id = Column(Integer, ForeignKey('vaults.vault_id', ondelete='CASCADE'), nullable=False) 
-        title = Column(String(100), nullable=False) 
-        cardholder_name = Column(String(100)) 
-        card_type = Column(String(50)) 
-        expiration_date = Column(String(10)) 
-        note = Column(Text, nullable=True) 
-        encrypted_number = Column(Text, nullable=False) 
-        encrypted_cvv = Column(Text, nullable=False) 
-        encrypted_pin = Column(Text, nullable=True) 
-        is_favorite = Column(Boolean, default=False) 
-        last_modified = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now()) 
-        vault = relationship("VaultModel", back_populates="cards")
+# ========================================================== # TABLE: CREDIT CARDS 
+# # ========================================================== 
+class CreditCardEntry(Base): 
+    __tablename__ = 'credit_cards' 
+    id = Column(Integer, primary_key=True, autoincrement=True) 
+    vault_id = Column(Integer, ForeignKey('vaults.vault_id', ondelete='CASCADE'), nullable=False) 
+    title = Column(String(100), nullable=False) 
+    cardholder_name = Column(String(100)) 
+    card_type = Column(String(50)) 
+    expiration_date = Column(String(10)) 
+    note = Column(Text, nullable=True) 
+    encrypted_number = Column(Text, nullable=False) 
+    encrypted_cvv = Column(Text, nullable=False) 
+    encrypted_pin = Column(Text, nullable=True) 
+    is_favorite = Column(Boolean, default=False) 
+    last_modified = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now()) 
+    vault = relationship("VaultModel", back_populates="cards")

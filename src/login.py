@@ -2,7 +2,7 @@ from PySide6.QtCore import QObject, Slot, Signal
 from dtos import LoginRequest
 
 class LoginBackend(QObject):
-    login_status = Signal(bool, str, str)  # success, message, secret_key
+    login_status = Signal(bool, str, str, str, bool)  # success, message, secret_key, user_id, has_vault
     login_successful = Signal(str)
 
     def __init__(self, auth_manager):
@@ -17,10 +17,10 @@ class LoginBackend(QObject):
         result = self.auth_manager.login(req)
 
         if result.success:
-            print("Python: Επιτυχία")
+            print(f"Python: Επιτυχία. UserID={result.user_id}, HasVault={result.has_vault}")
             # We could store result.token here if needed
-            self.login_status.emit(True, result.message, result.secret_key)
+            self.login_status.emit(True, result.message, result.secret_key, result.user_id, result.has_vault)
             self.login_successful.emit(username)
         else:
             print("Python: Αποτυχία")
-            self.login_status.emit(False, result.message, "")
+            self.login_status.emit(False, result.message, "", "", False)

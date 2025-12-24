@@ -2,7 +2,7 @@ from PySide6.QtCore import QObject, Slot, Signal
 from dtos import RegistrationRequest
 
 class RegisterBackend(QObject):
-    register_status = Signal(bool, str, str)  # success, message, secret_key
+    register_status = Signal(bool, str, str, str)  # success, message, secret_key, user_id
 
     def __init__(self, auth_manager):
         super().__init__()
@@ -17,7 +17,7 @@ class RegisterBackend(QObject):
         
         if result.success:
             print("Python: Registration Success")
-            self.register_status.emit(True, result.msg, result.secret_key)
+            self.register_status.emit(True, result.msg, result.secret_key, result.user_id)
         else:
             print(f"Python: Registration Failed - {result.msg}")
-            self.register_status.emit(False, result.msg, "")
+            self.register_status.emit(False, result.msg, "", "")

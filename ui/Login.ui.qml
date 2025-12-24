@@ -19,7 +19,7 @@ Item {
     property alias rectangle_subColor: rectangle_login_sub.color
 
     signal registerRequested()
-    signal loginSuccess(string secretKey)
+    signal loginSuccess(string secretKey, string userId, bool hasVault)
     signal forgotPasswordRequested()
     signal loadMain()
 
@@ -29,12 +29,12 @@ Item {
 
     Connections {
         target: loginBackend
-        function onLogin_status(success, message, secret_key) {
+        function onLogin_status(success, message, secret_key, user_id, has_vault) {
             if (success) {
                 console.log("Login success: " + message)
                 message_text.color = "green"
                 message_text.text = message
-                root.loginSuccess(secret_key)
+                root.loginSuccess(secret_key, user_id, has_vault)
             } else {
                 console.log("Login failed: " + message)
                 message_text.color = "#c50000"

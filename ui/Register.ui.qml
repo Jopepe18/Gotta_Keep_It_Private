@@ -19,16 +19,16 @@ Item {
     property alias rectangle_subColor: rectangle_register_sub.color
 
     signal loginRequested()
-    signal registerSuccess(string key)
+    signal registerSuccess(string key, string userId)
 
     Connections {
         target: registerBackend
-        function onRegister_status(success, message, secret_key) {
+        function onRegister_status(success, message, secret_key, user_id) {
             if (success) {
                 console.log("Registration successful: " + message)
                 message_text.color = "green"
                 message_text.text = "Success"
-                root.registerSuccess(secret_key)
+                root.registerSuccess(secret_key, user_id)
             } else {
                 console.log("Registration failed: " + message)
                 message_text.color = "#c50000"

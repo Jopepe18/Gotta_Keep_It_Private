@@ -9,6 +9,8 @@ from register import RegisterBackend
 from forgot_password import ForgotPasswordBackend
 from auth_manager import AuthenticationManager
 from menu import MenuBackend
+from vault_backend import VaultBackend
+from vault_manager import VaultManager
 
 if __name__ == "__main__":
     app = QGuiApplication(sys.argv)
@@ -23,12 +25,15 @@ if __name__ == "__main__":
     register_backend = RegisterBackend(auth_manager)
     forgot_password_backend = ForgotPasswordBackend(auth_manager)
     menu_backend = MenuBackend(auth_manager)
+    vault_manager = VaultManager()
+    vault_backend = VaultBackend(vault_manager)
 
     # 3. Expose to QML
     engine.rootContext().setContextProperty("loginBackend", login_backend)
     engine.rootContext().setContextProperty("registerBackend", register_backend)
     engine.rootContext().setContextProperty("forgotPasswordBackend", forgot_password_backend)
     engine.rootContext().setContextProperty("menuBackend", menu_backend)
+    engine.rootContext().setContextProperty("vaultBackend", vault_backend)
 
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
