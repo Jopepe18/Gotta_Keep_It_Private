@@ -39,7 +39,8 @@ Window {
             }
         }
 
-        initialItem: Login {
+        initialItem: 
+        Login {
             onRegisterRequested: {
                 stackView.push(registerComponent)
             }
@@ -56,6 +57,13 @@ Window {
                 stackView.push(forgotPasswordComponent)
             }
         }
+        
+        /*
+        loadMainScreenComponent
+            SideMenu{
+                onLogoutClicked: stackView.pop(null)
+            }
+        */
 
         Component {
             id: registerComponent

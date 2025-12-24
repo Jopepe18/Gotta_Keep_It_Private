@@ -553,6 +553,7 @@ Item{
                             color: "white"
                             font.pointSize:18
                         }
+
                         /*Item History Details*/
                         Rectangle{
                             color: "#303946"
@@ -643,6 +644,7 @@ Item{
                         Item{
                             Layout.fillHeight:true
                         }
+                        
 
                         RowLayout{
                             Layout.margins:20
