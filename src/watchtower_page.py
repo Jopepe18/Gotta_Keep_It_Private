@@ -1,0 +1,1 @@
+print("kill me pls . i crave the sweet release of death !!!!!!")
