@@ -1,9 +1,3 @@
-/*
-This is a UI file (.ui.qml) that is intended to be edited in Qt Design Studio only.
-It is supposed to be strictly declarative and only uses a subset of QML. If you edit
-this file manually, you might introduce QML code that is not supported by Qt Design Studio.
-Check out https://doc.qt.io/qtcreator/creator-quick-ui-forms.html for details on .ui.qml files.
-*/
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -12,11 +6,6 @@ Item {
     id: root
     width: 1500
     height: 1080
-    property alias buttonIconcolor: login_button.icon.color
-    property alias rectangle_subMain_color: rectangle_login_sub.main_color
-    property alias rectangle_subBlue: rectangle_login_sub.blue
-    property alias rectangle_subBackround_color: rectangle_login_sub.backround_color
-    property alias rectangle_subColor: rectangle_login_sub.color
 
     signal registerRequested()
     signal loginSuccess(string secretKey, string userId, bool hasVault)
@@ -26,6 +15,7 @@ Item {
     property bool is_login_success: false
     property string login_message: ""
     property string secret_key_val: ""
+    property bool visiblePassword: false
 
     Connections {
         target: loginBackend
@@ -43,87 +33,91 @@ Item {
         }
     }
 
-    Rectangle {
+    Rectangle{
         id: rectangle_login
-        x: 0
-        y: 0
         width: 1500
         height: 1080
-        color: rectangle_login_sub.backround_color
-        radius: 0
+        color: "#1E1E1E"
 
-        Rectangle {
-            id: rectangle_login_main
-            color: rectangle_login_sub.main_color
-            radius: 15
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            anchors.leftMargin: 300
-            anchors.rightMargin: 300
-            anchors.topMargin: 40
-            anchors.bottomMargin: 40
-            property int text_size: 25
+        Rectangle{
+        id: rectangle_login_main
+        width: 600
+        height: 1080
+        anchors.centerIn: parent
+        color: "#1E2634"
+        radius: 20
 
-            Rectangle {
+        ColumnLayout{
+            id: img_column
+            anchors.fill: parent
+            
+             Image {
+                    Layout.preferredWidth: 200
+                    Layout.preferredHeight: 200
+                    source: "../imgs/user_icon.png"
+                    Layout.topMargin: 30
+                    Layout.alignment: Qt.AlignHCenter
+                    fillMode: Image.PreserveAspectFit
+                    Layout.bottomMargin: 10
+                }
+
+            Label {
+                    width: img_column.width
+                    height: 30
+                    text: qsTr("Log in to Gotta Keep It Private")
+                    color: "#eaeaea"
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    font.pointSize: 25
+                    Layout.bottomMargin: 20
+            }
+
+            Rectangle{
                 id: rectangle_login_sub
-                color: sub_color
-                radius: 25
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                anchors.leftMargin: 142
-                anchors.rightMargin: 158
-                anchors.topMargin: 357
-                anchors.bottomMargin: 143
-                property color blue: "#3d7fd6"
-                property color backround_color: "#1e1e1e"
-                property color sub_color: "#303a46"
-                property color main_color: "#1d2532"
+                Layout.preferredHeight: 350
+                Layout.fillWidth: parent
+                Layout.leftMargin: 50
+                Layout.bottomMargin: 30
+                Layout.rightMargin: 50
 
-                ColumnLayout {
-                    id: credentials_column
-                    visible: true
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    anchors.bottom: parent.bottom
-                    anchors.leftMargin: 0
-                    anchors.rightMargin: 0
-                    anchors.topMargin: 8
-                    anchors.bottomMargin: 0
-                    spacing: 0
-                    clip: false
+                color: "#303946"
+                radius: 20
 
-                    Text {
-                        id: label_username
-                        width: 100
-                        height: 40
-                        color: "#eaeaea"
-                        text: qsTr("Username")
-                        font.pixelSize: rectangle_login_main.text_size
-                        Layout.fillWidth: false
-                        Layout.topMargin: 10
-                        Layout.leftMargin: 60
-                    }
+                ColumnLayout{
+                anchors.fill:parent
 
+                Text {
+                id: label_username
+                width: 100
+                height: 40
+                color: "#eaeaea"
+                text: qsTr("Username")
+                font.pixelSize: 20
+                Layout.fillWidth: false
+                Layout.topMargin: 20
+                Layout.leftMargin: 60
+                }
+
+            
                     TextField {
                         id: textfield_username
-                        font.pointSize: 18
-                        Layout.topMargin: 5
+                        font.pointSize: 17
                         Layout.fillWidth: true
+                        Layout.leftMargin:50
                         Layout.rightMargin: 50
-                        Layout.leftMargin: 50
                         placeholderText: qsTr("")
+
+                        background: Rectangle{
+                            color: "transparent"
+                            border.color: "white"
+                            radius: 20
+                        }
                     }
 
                     Text {
                         id: label_password
                         color: "#eaeaea"
                         text: qsTr("Password")
-                        font.pixelSize: rectangle_login_main.text_size
+                        font.pixelSize: 20
                         Layout.topMargin: 20
                         Layout.leftMargin: 60
                     }
@@ -131,12 +125,19 @@ Item {
                     TextField {
                         id: textfield_password
                         z: 0
-                        font.pointSize: 18
+                        font.pointSize: 17
                         Layout.topMargin: 5
                         Layout.rightMargin: 50
                         Layout.fillWidth: true
                         Layout.leftMargin: 50
                         placeholderText: qsTr("")
+
+                        background: Rectangle{
+                            color: "transparent"
+                            border.color: "white"
+                            radius: 20
+                            border.width: 1
+                        }
                     }
 
                     Text {
@@ -149,104 +150,85 @@ Item {
                         Layout.bottomMargin: 10
                     }
 
-                    // Forgot Password Link
-                    Button {
+                    RowLayout{
+                        Layout.fillWidth: true
+                        Layout.rightMargin: 50
+                        Layout.leftMargin: 50
+                        Layout.bottomMargin: 30
+
+                        Button {
                         text: qsTr("Forgot Password?")
                         Layout.alignment: Qt.AlignRight
                         Layout.rightMargin: 50
+                        
                         
                         background: Rectangle { color: "transparent" }
                         contentItem: Text {
                             text: parent.text
                             color: "#eaeaea"
                             font.underline: true
-                            font.pixelSize: 14
+                            font.pixelSize: 16
                         }
                         onClicked: root.forgotPasswordRequested()
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Layout.alignment: Qt.AlignRight
-                        Layout.rightMargin: 50
-                        spacing: 20
-
-                        Label {
-                            text: qsTr("Not user?")
-                            color: "#eaeaea"
-                            font.pointSize: 14
                         }
 
-                        Button {
-                            text: qsTr("Sign Up")
-                            display: AbstractButton.TextOnly
-                            flat: true
-                            font.pointSize: 14
-                            font.underline: true
-                            onClicked: root.registerRequested()
+                        Item{
+                            Layout.fillWidth: true
                         }
+
 
                         Button {
                             id: login_button
-                            width: 200
-                            height: 70
+                            Layout.preferredWidth: 140
+                            Layout.preferredHeight: 55
                             text: qsTr("Login")
-                            focusPolicy: Qt.ClickFocus
-                            highlighted: true
-                            flat: false
-                            checkable: false
-                            display: AbstractButton.TextOnly
-                            rightInset: 10
-                            leftInset: 10
                             font.pointSize: 18
-                            icon.width: 30
+
+                            background: Rectangle{
+                                color: login_button.pressed ? "#619DEC" : (login_button.hovered ? "#4F91E8" : "#4080D4")
+                                radius: 30
+                            }
+
                             onClicked: {
                                 loginBackend.attempt_login(textfield_username.text, textfield_password.text)
                             }
                         }
                     }
+
                 }
             }
 
-            ColumnLayout {
-                id: img_column
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.bottom: rectangle_login_sub.top
-                anchors.leftMargin: 150
-                anchors.rightMargin: 178
-                anchors.topMargin: 0
-                anchors.bottomMargin: 35
-                uniformCellSizes: false
-                layoutDirection: Qt.LeftToRight
-                transformOrigin: Item.Center
-                spacing: 30
-
-                Image {
-                    id: img_user
-                    width: 200
-                    height: 200
-                    source: "../imgs/user_icon.png"
-                    Layout.topMargin: 30
-                    Layout.fillHeight: true
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                    fillMode: Image.PreserveAspectFit
-                }
+            RowLayout{
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignHCenter
+                Layout.bottomMargin: 100
 
                 Label {
-                    id: img_label
-                    width: img_column.width
-                    height: 30
-                    text: qsTr("Log in to Gotta Keep It Private")
-                    color: "#eaeaea"
-                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                    font.pointSize: 25
-                }
+                            text: qsTr("New to GKIP?")
+                            color: "#eaeaea"
+                            font.pointSize: 17
+                        }
+
+                        Button {
+                            display: AbstractButton.TextOnly
+                            flat: true
+                            onClicked: root.registerRequested()
+
+                            contentItem: Text{
+                                text: "Sign Up"
+                                color: "#73AAF3"
+                                font.pointSize: 17
+                                font.underline: true
+                            }
+                        }
             }
+                
 
-
+            Item{
+                Layout.preferredHeight: 600
+            }
         }
+        }
+
     }
 }

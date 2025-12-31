@@ -40,6 +40,7 @@ Window {
         }
 
         initialItem: 
+        
         Login {
             onRegisterRequested: {
                 stackView.push(registerComponent)
@@ -58,12 +59,15 @@ Window {
             }
         }
         
+        
         /*
         loadMainScreenComponent
             SideMenu{
                 onLogoutClicked: stackView.pop(null)
             }
         */
+
+
 
         Component {
             id: registerComponent
