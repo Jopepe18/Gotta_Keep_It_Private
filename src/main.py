@@ -11,6 +11,7 @@ from auth_manager import AuthenticationManager
 from menu import MenuBackend
 from vault_backend import VaultBackend
 from vault_manager import VaultManager
+from watchtower_backend import WatchTowerBackend
 
 if __name__ == "__main__":
     app = QGuiApplication(sys.argv)
@@ -28,6 +29,8 @@ if __name__ == "__main__":
     vault_manager = VaultManager()
     vault_backend = VaultBackend(vault_manager)
 
+    watchtower_backend = WatchTowerBackend() 
+    
     # 3. Expose to QML
     engine.rootContext().setContextProperty("loginBackend", login_backend)
     engine.rootContext().setContextProperty("registerBackend", register_backend)
@@ -35,7 +38,8 @@ if __name__ == "__main__":
     engine.rootContext().setContextProperty("menuBackend", menu_backend)
     engine.rootContext().setContextProperty("vaultBackend", vault_backend)
 
-
+    root_context.setContextProperty("watchTowerBackend", watchtower_backend)
+    
     current_dir = os.path.dirname(os.path.abspath(__file__))
     qml_file_path = os.path.join(current_dir, "../ui/Main.qml")
 
