@@ -20,9 +20,9 @@ Item{
                 props = {"userId": root.userIdString};
                 break;
             case "cards": page = "CardsPage.qml"; break;
-            case "watchTower": 
+            case "watchTower": // ΝΕΟ
                 page = "WatchTowerPage.qml"; 
-                props = {"userId": root.userIdString}; // <--- ΑΥΤΟ ΕΙΝΑΙ ΑΠΑΡΑΙΤΗΤΟ
+                props = {"userId": root.userIdString}; // ΑΠΑΡΑΙΤΗΤΟ
                 break;
             case "generator": page = "GeneratorPage.qml"; break;
             case "settings": page = "SettingsPage.qml"; break;
