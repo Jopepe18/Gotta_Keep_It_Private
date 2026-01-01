@@ -201,7 +201,6 @@ Item {
             RowLayout{
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignHCenter
-                Layout.bottomMargin: 100
 
                 Label {
                             text: qsTr("New to GKIP?")

@@ -13,10 +13,6 @@ Item {
     id: root
     width: 1500
     height: 1080
-    property alias rectangle_subMain_color: rectangle_register_sub.main_color
-    property alias rectangle_subBlue: rectangle_register_sub.blue
-    property alias rectangle_subBackround_color: rectangle_register_sub.backround_color
-    property alias rectangle_subColor: rectangle_register_sub.color
 
     signal loginRequested()
     signal registerSuccess(string key, string userId)
@@ -37,137 +33,144 @@ Item {
         }
     }
 
-    Rectangle {
+    Rectangle{
         id: rectangle_register_window
-        x: 0
-        y: 0
         width: 1500
-        height: 1080
-        color: rectangle_register_sub.backround_color
-        radius: 0
+        height: 1000
+        color: "#1E1E1E"
 
-        Rectangle {
+        Rectangle{
             id: rectangle_register_main
-            color: rectangle_register_sub.main_color
-            radius: 15
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            anchors.leftMargin: 300
-            anchors.rightMargin: 300
-            anchors.topMargin: 40
-            anchors.bottomMargin: 40
-            property int text_size: 25
+            color: "#1E2634"
+            radius: 20
+            width: 600
+            height: 1080
+            anchors.centerIn: parent
 
-            Rectangle {
-                id: rectangle_register_sub
-                color: sub_color
-                radius: 25
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                anchors.leftMargin: 142
-                anchors.rightMargin: 158
-                anchors.topMargin: 357
-                anchors.bottomMargin: 143
-                property color blue: "#3d7fd6"
-                property color backround_color: "#1e1e1e"
-                property color sub_color: "#303a46"
-                property color main_color: "#1d2532"
+            ColumnLayout{
+                id: img_column
+                anchors.fill: parent
+                anchors.margins: 30
 
-                ColumnLayout {
-                    id: credentials_column
-                    visible: true
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    anchors.bottom: parent.bottom
-                    anchors.leftMargin: 0
-                    anchors.rightMargin: 0
-                    anchors.topMargin: 8
-                    anchors.bottomMargin: 0
-                    spacing: 0
-                    clip: false
+                 Image {
+                    Layout.preferredWidth: 150
+                    Layout.preferredHeight: 150
+                    source: "../imgs/user.png"
+                    Layout.topMargin: 30
+                    Layout.alignment: Qt.AlignHCenter
+                    fillMode: Image.PreserveAspectFit
+                    Layout.bottomMargin: 10
+                }
 
-                    Text {
+                Label{
+                    width: img_column.width
+                    height: 30
+                    text: qsTr("Create account")
+                    color: "#eaeaea"
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    font.pointSize: 25
+                    Layout.bottomMargin: 10
+                } 
+
+                Rectangle{
+                    id: rectangle_register_sub
+                    Layout.preferredHeight: 470
+                    Layout.fillWidth: true
+                    color: "#303946"
+                    Layout.rightMargin: 50
+                    Layout.leftMargin: 50
+                    radius: 20
+
+                    ColumnLayout{
+                        id: credentials_column
+                        anchors.fill: parent
+                        anchors.topMargin: 10
+                        anchors.rightMargin: 50
+                        anchors.leftMargin: 50
+                        spacing: 8
+                        clip: false
+
+                        Text {
                         id: label_username
                         width: 100
                         height: 40
                         color: "#eaeaea"
                         text: qsTr("Username")
-                        font.pixelSize: rectangle_register_main.text_size
+                        font.pixelSize: 20
                         Layout.fillWidth: false
-                        Layout.topMargin: 5
-                        Layout.leftMargin: 60
-                    }
+                        }
 
-                    TextField {
-                        id: textfield_username
-                        font.pointSize: 18
-                        Layout.topMargin: 5
-                        Layout.fillWidth: true
-                        Layout.rightMargin: 50
-                        Layout.leftMargin: 50
-                        placeholderText: qsTr("")
-                    }
+                        TextField {
+                            id: textfield_username
+                            font.pointSize: 17
+                            Layout.fillWidth: true
+                            placeholderText: qsTr("")
 
-                    Text {
-                        id: label_password
-                        color: "#eaeaea"
-                        text: qsTr("Password")
-                        font.pixelSize: rectangle_register_main.text_size
-                        Layout.topMargin: 0
-                        Layout.leftMargin: 60
-                    }
+                            background: Rectangle{
+                                color: "transparent"
+                                border.color: "white"
+                                radius: 20
+                            }
+                        }
 
-                    TextField {
-                        id: textfield_password
-                        z: 0
-                        font.pointSize: 18
-                        Layout.topMargin: 5
-                        Layout.rightMargin: 50
-                        Layout.fillWidth: true
-                        Layout.leftMargin: 50
-                        placeholderText: qsTr("")
-                    }
+                        Text {
+                            id: label_email
+                            color: "#eaeaea"
+                            text: qsTr("Email")
+                            font.pixelSize: 20
+                        }
 
-                    Text {
-                        id: label_email
-                        color: "#eaeaea"
-                        text: qsTr("Email")
-                        font.pixelSize: rectangle_register_main.text_size
-                        Layout.topMargin: 0
-                        Layout.leftMargin: 60
-                    }
+                        TextField {
+                            id: textfield_email
+                            font.pointSize: 17
+                            Layout.fillWidth: true
+                            placeholderText: qsTr("")
 
-                    TextField {
-                        id: textfield_email
-                        font.pointSize: 18
-                        Layout.topMargin: 5
-                        Layout.rightMargin: 50
-                        Layout.fillWidth: true
-                        Layout.leftMargin: 50
-                        placeholderText: qsTr("")
-                    }
+                            background: Rectangle{
+                                color: "transparent"
+                                border.color: "white"
+                                radius: 20
+                            }
+                        }
 
+                        Text {
+                            id: label_password
+                            color: "#eaeaea"
+                            text: qsTr("Password")
+                            font.pixelSize: 20
+                        }
 
-                    Text {
-                        id: text_confirmpass
-                        color: "#eaeaea"
-                        text: qsTr("Confirm Password")
-                        font.pixelSize: rectangle_register_main.text_size
-                        Layout.leftMargin: 60
-                    }
+                        TextField {
+                            id: textfield_password
+                            font.pointSize: 17
+                            Layout.fillWidth: true
+                            placeholderText: qsTr("")
+
+                            background: Rectangle{
+                                color: "transparent"
+                                border.color: "white"
+                                radius: 20
+                            }
+                        }
+
+                        Text {
+                            id: text_confirmpass
+                            color: "#eaeaea"
+                            text: qsTr("Confirm Password")
+                            font.pixelSize: 20
+                        }
 
                     TextField {
                         id: textfield_confirmpass
-                        Layout.topMargin: 5
-                        Layout.rightMargin: 50
-                        Layout.leftMargin: 50
+                        font.pointSize: 17
                         Layout.fillWidth: true
                         placeholderText: qsTr("")
+
+                        background: Rectangle{
+                                color: "transparent"
+                                border.color: "white"
+                                radius: 20
+                        }
                     }
 
                     Text {
@@ -176,92 +179,67 @@ Item {
                         color: "red"
                         font.pixelSize: 16
                         Layout.alignment: Qt.AlignHCenter
-                        Layout.topMargin: 10
-                        Layout.bottomMargin: 10
                     }
 
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Layout.alignment: Qt.AlignRight
-                        Layout.rightMargin: 50
-                        spacing: 20
-                        Layout.topMargin: 20
-
-                        Label {
-                            text: qsTr("Already user?")
-                            color: "#eaeaea"
-                            font.pointSize: 14
-                        }
-
-                        Button {
-                            text: qsTr("Login")
-                            display: AbstractButton.TextOnly
-                            flat: true
-                            font.pointSize: 14
-                            font.underline: true
-                            onClicked: root.loginRequested()
-                        }
+                    
 
                         Button {
                             id: register_action_button
-                            width: 200
-                            height: 70
+                            Layout.preferredWidth: 180
+                            Layout.preferredHeight: 50
+                            Layout.topMargin: 10
                             text: qsTr("Register")
-                            focusPolicy: Qt.ClickFocus
-                            highlighted: true
-                            flat: false
-                            checkable: false
-                            display: AbstractButton.TextOnly
-                            rightInset: 10
-                            leftInset: 10
                             font.pointSize: 18
-                            icon.width: 30
+                            
+                            Layout.alignment: Qt.AlignRight
+
+                            background: Rectangle{
+                                color: register_action_button.pressed ? "#619DEC" : (register_action_button.hovered ? "#4F91E8" : "#4080D4")
+                                radius: 30
+                            }
+
                             onClicked: {
                                 registerBackend.attempt_register(textfield_username.text, textfield_email.text, textfield_password.text, textfield_confirmpass.text)
                             }
                         }
+                    
+
+                        Item{
+                            Layout.fillHeight: true
+                        }
                     }
+
                 }
-            }
 
-            ColumnLayout {
-                id: img_column
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.bottom: rectangle_register_sub.top
-                anchors.leftMargin: 150
-                anchors.rightMargin: 178
-                anchors.topMargin: 0
-                anchors.bottomMargin: 35
-                uniformCellSizes: false
-                layoutDirection: Qt.LeftToRight
-                transformOrigin: Item.Center
-                spacing: 30
-
-                Image {
-                    id: img_user
-                    width: 200
-                    height: 200
-                    source: "../imgs/user_icon.png"
-                    Layout.topMargin: 30
-                    Layout.fillHeight: true
+                RowLayout{
                     Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                    fillMode: Image.PreserveAspectFit
+                    Layout.alignment: Qt.AlignHCenter
+                     Label {
+                            text: qsTr("Already have an account?")
+                            color: "#eaeaea"
+                            font.pointSize: 17
+                        }
+
+                        Button {
+                            display: AbstractButton.TextOnly
+                            flat: true
+                            onClicked: root.loginRequested()
+
+                            contentItem: Text{
+                                text: "Sign In"
+                                color: "#73AAF3"
+                                font.pointSize: 17
+                                font.underline: true
+                            }
+                        }
+
+
                 }
 
-                Label {
-                    id: img_label
-                    width: img_column.width
-                    height: 30
-                    text: qsTr("Create Account")
-                    color: "#eaeaea"
-                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                    font.pointSize: 25
-                }
+                Item{
+                    Layout.fillHeight: true
+                } 
             }
-
 
         }
     }
