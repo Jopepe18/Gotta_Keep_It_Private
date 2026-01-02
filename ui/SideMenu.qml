@@ -25,7 +25,10 @@ Item{
                 props = {"userId": root.userIdString}; 
                 break;
             case "generator": page = "GeneratorPage.qml"; break;
-            case "settings": page = "SettingsPage.qml"; break;
+            case "settings": 
+                page = "SettingsPage.qml"; 
+                props = {"userId": root.userIdString};
+                break;
         }
         if(page) stack.replace(page, props);
     }

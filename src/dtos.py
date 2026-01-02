@@ -94,3 +94,15 @@ class SecurityReport:
     weak_credentials: List[Any] = field(default_factory=list)
     reused_credentials: List[Any] = field(default_factory=list)
     breached_credentials: List[Any] = field(default_factory=list)
+
+@dataclass
+class ChangeEmailRequest:
+    user_id: str
+    new_email: str
+    current_password: str
+
+@dataclass
+class ChangeMasterPasswordRequest:
+    user_id: str
+    current_password: str
+    new_password: str

@@ -7,6 +7,68 @@ Item{
     width: 1500
     height: 1080
 
+    property string userId: ""
+    property string pendingAction: "" // "email" or "password"
+    property string currentUsername: "Loading..."
+    property string currentEmail: "Loading..."
+
+    Component.onCompleted: {
+        if(userId !== "") {
+            vaultBackend.getUserInfo(userId)
+        }
+    }
+    
+    onUserIdChanged: {
+         if(userId !== "") {
+            vaultBackend.getUserInfo(userId)
+        }
+    }
+
+    Connections {
+        target: vaultBackend
+        function onUserInfoReceived(username, email) {
+            settingsPage.currentUsername = username
+            settingsPage.currentEmail = email
+        }
+
+        function onOperation_finished(success, message) {
+            console.log("Operation finished: " + success + " - " + message)
+            
+            resultPopup.titleText = success ? "Success" : "Error"
+            resultPopup.messageText = message
+            resultPopup.isSuccess = success
+            resultPopup.open()
+            
+            // Refund fields or update UI if success
+            if (success) {
+                 if (settingsPage.pendingAction === "email") {
+                     settingsPage.currentEmail = newEmailTextField.text // Optimistic update or refetch
+                     newEmailTextField.text = ""
+                     newEmailPasswordVerifTextField.text = ""
+                 } else if (settingsPage.pendingAction === "password") {
+                     currentPasswordTextField.text = ""
+                     newPasswordfTextField.text = ""
+                     confirmNewPasswordfTextField.text = ""
+                 }
+            }
+        }
+    }
+
+    ResultPopup {
+        id: resultPopup
+    }
+
+    ConfirmationPopup {
+        id: confirmationPopup
+        onConfirmed: {
+            if (settingsPage.pendingAction === "email") {
+                vaultBackend.changeEmail(settingsPage.userId, newEmailTextField.text, newEmailPasswordVerifTextField.text)
+            } else if (settingsPage.pendingAction === "password") {
+                vaultBackend.changeMasterPassword(settingsPage.userId, currentPasswordTextField.text, newPasswordfTextField.text)
+            }
+        }
+    }
+
    Rectangle{
     color: "#1E2634"
     anchors.fill: parent
@@ -59,9 +121,11 @@ Item{
                                     TextField{
                                         Layout.fillWidth: true
                                         Layout.fillHeight: true
-                                        text: "User"
+                                        text: settingsPage.currentUsername
                                         font.pixelSize: 16
                                         id: userNameTextField
+                                        color: "#eaeaea"
+                                        readOnly: true
 
                                         background: Rectangle{
                                             color: "transparent"
@@ -81,7 +145,7 @@ Item{
                             }
 
                             Label{
-                                text: "useremail@gmail.com"
+                                text: settingsPage.currentEmail
                                 color: "white"
                                 font.pixelSize: 18
                             }
@@ -208,6 +272,8 @@ Item{
                                         text: ""
                                         font.pixelSize: 16
                                         id: newEmailTextField
+                                        color: "#eaeaea"
+                                        placeholderText: "Enter new email"
 
                                         background: Rectangle{
                                             color: "transparent"
@@ -221,7 +287,7 @@ Item{
                             }
 
                             Label{
-                                text:"Pasword (required)"
+                                text:"Password (required)"
                                 color: "white"
                                 font.pixelSize: 20
                             }
@@ -247,6 +313,9 @@ Item{
                                         text: ""
                                         font.pixelSize: 16
                                         id: newEmailPasswordVerifTextField
+                                        color: "#eaeaea"
+                                        echoMode: TextInput.Password
+                                        placeholderText: "Confirm password"
 
                                         background: Rectangle{
                                             color: "transparent"
@@ -280,6 +349,14 @@ Item{
                                     Behavior on color{
                                         ColorAnimation { duration: 150}
                                     }
+                                }
+                                onClicked: {
+                                    if(newEmailTextField.text === "" || newEmailPasswordVerifTextField.text === "") return;
+                                    settingsPage.pendingAction = "email"
+                                    confirmationPopup.titleText = "Change Email"
+                                    confirmationPopup.messageText = "Are you sure you want to change your email to " + newEmailTextField.text + "?"
+                                    confirmationPopup.confirmButtonText = "Confirm"
+                                    confirmationPopup.open()
                                 }
                             }
                             }
@@ -363,7 +440,7 @@ Item{
                     spacing: 10
 
                     Label{
-                        text: "Change Passord"
+                        text: "Change Password"
                         color: "white"
                         font.pixelSize: 20
                     }
@@ -407,6 +484,8 @@ Item{
                                         text: ""
                                         font.pixelSize: 16
                                         id: currentPasswordTextField
+                                        color: "#eaeaea"
+                                        echoMode: TextInput.Password
 
                                         background: Rectangle{
                                             color: "transparent"
@@ -446,6 +525,8 @@ Item{
                                         text: ""
                                         font.pixelSize: 16
                                         id: newPasswordfTextField
+                                        color: "#eaeaea"
+                                        echoMode: TextInput.Password
 
                                         background: Rectangle{
                                             color: "transparent"
@@ -485,6 +566,8 @@ Item{
                                         text: ""
                                         font.pixelSize: 16
                                         id: confirmNewPasswordfTextField
+                                        color: "#eaeaea"
+                                        echoMode: TextInput.Password
 
                                         background: Rectangle{
                                             color: "transparent"
@@ -518,6 +601,22 @@ Item{
                                         Behavior on color{
                                             ColorAnimation { duration: 150}
                                         }
+                                    }
+                                    onClicked: {
+                                        if(currentPasswordTextField.text === "" || newPasswordfTextField.text === "" || confirmNewPasswordfTextField.text === "") return;
+                                        if (newPasswordfTextField.text !== confirmNewPasswordfTextField.text) {
+                                            confirmationPopup.titleText = "Error"
+                                            confirmationPopup.messageText = "Passwords do not match."
+                                            confirmationPopup.confirmButtonText = "OK"
+                                            confirmationPopup.open()
+                                            return;
+                                        }
+
+                                        settingsPage.pendingAction = "password"
+                                        confirmationPopup.titleText = "Change Password"
+                                        confirmationPopup.messageText = "Are you sure you want to change your master password?"
+                                        confirmationPopup.confirmButtonText = "Confirm"
+                                        confirmationPopup.open()
                                     }
                                 }
                             }

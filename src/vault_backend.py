@@ -3,12 +3,38 @@ from dtos import VaultCreationRequest
 from vault_manager import VaultManager
 
 class VaultBackend(QObject):
-    vault_created = Signal(bool, str) # success, message
+    vault_created = Signal(bool, str)
     passwords_updated = Signal(list) 
+    operation_finished = Signal(bool, str) # Generic signal for updates
+    userInfoReceived = Signal(str, str) # username, email
 
     def __init__(self, manager):
         super().__init__()
         self.manager = manager
+    
+    @Slot(str)
+    def getUserInfo(self, user_id):
+        result = self.manager.get_user_info(user_id)
+        if result["success"]:
+            self.userInfoReceived.emit(result["username"], result["email"])
+        else:
+            print(f"Error fetching user info: {result.get('message')}")
+    
+    @Slot(str, str, str)
+    def changeEmail(self, user_id, new_email, current_password):
+        print("VaultBackend: Change Email Request")
+        from dtos import ChangeEmailRequest
+        req = ChangeEmailRequest(user_id, new_email, current_password)
+        result = self.manager.change_email(req)
+        self.operation_finished.emit(result["success"], result["message"])
+
+    @Slot(str, str, str)
+    def changeMasterPassword(self, user_id, current_password, new_password):
+        print("VaultBackend: Change Password Request")
+        from dtos import ChangeMasterPasswordRequest
+        req = ChangeMasterPasswordRequest(user_id, current_password, new_password)
+        result = self.manager.change_master_password(req)
+        self.operation_finished.emit(result["success"], result["message"])
 
     @Slot(str, str, str, str)
     def create_vault(self, user_id, vault_name, password, confirm_password):
