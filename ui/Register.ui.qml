@@ -175,6 +175,7 @@ Item {
                                     Layout.preferredHeight: 35
                                     Layout.preferredWidth: 35
                                     Layout.rightMargin: 10
+                                    Layout.topMargin: 5
 
                                     background: Rectangle{
                                         color: eyeButton.pressed? "#3A4354" : (eyeButton.hovered? "#2D3749": "transparent")
