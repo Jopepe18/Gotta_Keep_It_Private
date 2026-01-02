@@ -33,6 +33,12 @@ Item {
         }
     }
 
+    function emptyFields(){
+        textfield_username.text = ""
+        textfield_password.text = ""
+        message_text.text = ""
+    }
+
     Rectangle{
         id: rectangle_login
         width: 1500
@@ -123,24 +129,70 @@ Item {
                         Layout.leftMargin: 60
                     }
 
-                    TextField {
-                        id: textfield_password
-                        z: 0
-                        font.pointSize: 17
-                        Layout.topMargin: 5
-                        Layout.rightMargin: 50
-                        Layout.fillWidth: true
-                        Layout.leftMargin: 50
-                        placeholderText: qsTr("")
-                        color: "#eaeaea"
-
-                        background: Rectangle{
+                    Rectangle{
+                            Layout.preferredHeight: 45
+                            Layout.fillWidth: true
+                            Layout.leftMargin:50
+                            Layout.rightMargin: 50
                             color: "transparent"
                             border.color: "white"
                             radius: 20
                             border.width: 1
+                            Layout.alignment: Qt.AlignVCenter
+
+                            RowLayout{
+                                anchors.fill: parent
+                                anchors.margins: 5
+                                spacing: 10
+
+                                TextField {
+                                    id: textfield_password
+                                    font.pointSize: 17
+                                    Layout.fillWidth: true
+                                    color: "#eaeaea"
+
+                                    background: Rectangle{
+                                        color: "transparent"
+                                    }
+
+                                    echoMode: visiblePassword ? TextInput.Normal : TextInput.Password
+                                }
+
+                                Button{
+                                    id: eyeButton
+                                    Layout.preferredHeight: 35
+                                    Layout.preferredWidth: 35
+                                    Layout.rightMargin: 10
+                                    Layout.bottomMargin: 5
+
+                                    background: Rectangle{
+                                        color: eyeButton.pressed? "#3A4354" : (eyeButton.hovered? "#2D3749": "transparent")
+                                        radius: 20
+                                    }
+
+                                    contentItem: Rectangle{
+                                        anchors.fill: parent
+                                        color: "transparent"
+
+                                        Image{
+                                            height: 30
+                                            width: 30
+                                            source: visiblePassword ? "../imgs/visibility_on.png" : "../imgs/visibility_off.png"
+                                            fillMode: Image.PreserveAspectFit
+                                        }
+                                    }
+
+                                    onClicked:{
+                                        visiblePassword = !visiblePassword;
+                                    }
+                                }
+                            }
+
+
+
                         }
-                    }
+
+                    
 
                     Text {
                         id: message_text

@@ -36,7 +36,7 @@ Item {
     Rectangle{
         id: rectangle_register_window
         width: 1500
-        height: 1000
+        height: 1080
         color: "#1E1E1E"
 
         Rectangle{

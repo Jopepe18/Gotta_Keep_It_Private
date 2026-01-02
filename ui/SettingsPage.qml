@@ -344,7 +344,7 @@ Item{
 
                                 background: Rectangle{
                                     radius:20
-                                    color: changeEmailButton.pressed ? "#F76262" : (changeEmailButton.hovered? "#F54040" : "#E22323" )
+                                    color: changeEmailButton.pressed ? "#619DEC" : (changeEmailButton.hovered ? "#4F91E8" : "#4080D4")
 
                                     Behavior on color{
                                         ColorAnimation { duration: 150}
@@ -596,7 +596,7 @@ Item{
 
                                     background: Rectangle{
                                         radius:20
-                                        color: changePasswordButton.pressed ? "#F76262" : (changePasswordButton.hovered? "#F54040" : "#E22323" )
+                                        color:  changePasswordButton.pressed ? "#619DEC" : (changePasswordButton.hovered ? "#4F91E8" : "#4080D4")
 
                                         Behavior on color{
                                             ColorAnimation { duration: 150}
