@@ -105,6 +105,7 @@ Item {
                             font.pointSize: 17
                             Layout.fillWidth: true
                             placeholderText: qsTr("")
+                            color: "#eaeaea"
 
                             background: Rectangle{
                                 color: "transparent"
@@ -125,6 +126,7 @@ Item {
                             font.pointSize: 17
                             Layout.fillWidth: true
                             placeholderText: qsTr("")
+                            color: "#eaeaea"
 
                             background: Rectangle{
                                 color: "transparent"
@@ -145,6 +147,7 @@ Item {
                             font.pointSize: 17
                             Layout.fillWidth: true
                             placeholderText: qsTr("")
+                            color: "#eaeaea"
 
                             background: Rectangle{
                                 color: "transparent"
@@ -165,6 +168,7 @@ Item {
                         font.pointSize: 17
                         Layout.fillWidth: true
                         placeholderText: qsTr("")
+                        color: "#eaeaea"
 
                         background: Rectangle{
                                 color: "transparent"

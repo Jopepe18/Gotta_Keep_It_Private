@@ -105,6 +105,7 @@ Item {
                         Layout.leftMargin:50
                         Layout.rightMargin: 50
                         placeholderText: qsTr("")
+                        color: "#eaeaea"
 
                         background: Rectangle{
                             color: "transparent"
@@ -131,6 +132,7 @@ Item {
                         Layout.fillWidth: true
                         Layout.leftMargin: 50
                         placeholderText: qsTr("")
+                        color: "#eaeaea"
 
                         background: Rectangle{
                             color: "transparent"
