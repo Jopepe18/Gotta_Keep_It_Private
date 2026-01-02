@@ -17,6 +17,8 @@ Item {
     signal loginRequested()
     signal registerSuccess(string key, string userId)
 
+    property bool visiblePassword: false
+
     Connections {
         target: registerBackend
         function onRegister_status(success, message, secret_key, user_id) {
@@ -142,18 +144,63 @@ Item {
                             font.pixelSize: 20
                         }
 
-                        TextField {
-                            id: textfield_password
-                            font.pointSize: 17
+                        Rectangle{
+                            Layout.preferredHeight: 45
                             Layout.fillWidth: true
-                            placeholderText: qsTr("")
-                            color: "#eaeaea"
+                            color: "transparent"
+                            border.color: "white"
+                            radius: 20
+                            border.width: 1
+                            Layout.alignment: Qt.AlignVCenter
 
-                            background: Rectangle{
-                                color: "transparent"
-                                border.color: "white"
-                                radius: 20
+                            RowLayout{
+                                anchors.fill: parent
+                                spacing: 10
+
+                                TextField {
+                                    id: textfield_password
+                                    font.pointSize: 17
+                                    Layout.fillWidth: true
+                                    color: "#eaeaea"
+
+                                    background: Rectangle{
+                                        color: "transparent"
+                                    }
+
+                                    echoMode: visiblePassword ? TextInput.Normal : TextInput.Password
+                                }
+
+                                Button{
+                                    id: eyeButton
+                                    Layout.preferredHeight: 35
+                                    Layout.preferredWidth: 35
+                                    Layout.rightMargin: 10
+
+                                    background: Rectangle{
+                                        color: eyeButton.pressed? "#3A4354" : (eyeButton.hovered? "#2D3749": "transparent")
+                                        radius: 20
+                                    }
+
+                                    contentItem: Rectangle{
+                                        anchors.fill: parent
+                                        color: "transparent"
+
+                                        Image{
+                                            height: 30
+                                            width: 30
+                                            source: visiblePassword ? "../imgs/visibility_on.png" : "../imgs/visibility_off.png"
+                                            fillMode: Image.PreserveAspectFit
+                                        }
+                                    }
+
+                                    onClicked:{
+                                        visiblePassword = !visiblePassword;
+                                    }
+                                }
                             }
+
+
+
                         }
 
                         Text {
@@ -168,6 +215,7 @@ Item {
                         font.pointSize: 17
                         Layout.fillWidth: true
                         placeholderText: qsTr("")
+                        echoMode: TextInput.Password
                         color: "#eaeaea"
 
                         background: Rectangle{
