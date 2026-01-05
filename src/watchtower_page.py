@@ -1,13 +1,15 @@
 import math
+import os
 from typing import List, Set, Any
 from Gotta_Keep_It_Private.src.dtos import SecurityReport
-
+from Gotta_Keep_It_Private.src import BreachAPIService
 class Watchtower:
     def __init__(self):
         self.weak_count = 0
         self.reused_count = 0
         self.weak_passList = []    
         self.reused_passList = []  
+        self.breach_checker = BreachAPIService()
 
     def _calculate_entropy(self, password):
         pool_size = 0
@@ -27,6 +29,8 @@ class Watchtower:
         
         self.dictionary: Set[str] = set()
         self.dictionary_loaded: bool = False
+        currentDir = os.path.dirname(os.path.abspath(__file__))
+        filepath = os.path.join(currentDir, '100k-most-used-passwords-NCSC.txt')    
         
 
     def load_dictionary(self, filepath: str) -> None: # 
@@ -47,61 +51,59 @@ class Watchtower:
     
 
     def evaluate_strength(self, password: str) -> str: 
+        if len(password)<8:
+            return "weak"
         entropy = self.calculate_entropy(password)
         if entropy < 40:
-            return "Weak"
+             return "Weak"
         elif entropy < 60:
-            return "Medium"
+             return "Medium"
         else:
-            return "Strong"
-
-    def check_breach(self, password: str) -> bool: # 
-        
-        # pending , false for now so it doesnt need debugging 
-        return False
+             return "Strong"
 
     def analyze_vault(self, decrypted_credentials: List[Any]) -> SecurityReport:
 
         report = SecurityReport()
         password_temp = {} 
         total_entropy = 0.0
-
         
-
         for item in decrypted_credentials:
-            pwd = item.password
-            
-            
+            pwd = item.password            
             entropy = self.calculate_entropy(pwd)
             total_entropy += entropy
-
-            
-            is_weak = False
-            if entropy < 40:
-                is_weak = True
-            if self.check_in_dictionary(pwd):
-                is_weak = True 
+            if self.breach_checker.check_pwned(pwd):
+              item.security_status = "COMPROMISED"
+            else:
+              is_weak = False
+            is_weak= (entropy < 40) or self.check_in_dictionary(pwd)
             
             if is_weak:
-                report.weak_count += 1
-                report.weak_credentials.append(item)
+              item.security_status = "WEAK"
+            else:
+              item.security_status = "SAFE" 
 
-            
-            if pwd not in password_temp:
-                password_temp[pwd] = []
-            password_temp[pwd].append(item)
+        if pwd not in password_temp:
+            password_temp[pwd] = []
 
-            
-            if self.check_breach(pwd):
-                report.breached_count += 1
-                report.breached_credentials.append(item)
+        password_temp[pwd].append(item)
 
+   
         for pwd, items_list in password_temp.items():
             if len(items_list) > 1:
-                report.reused_count += len(items_list)
-    
-                report.reused_credentials.extend(items_list)
+              for entry in items_list:
+                if entry.security_status != "COMPROMISED":
+                     entry.security_status = "REUSED"
 
+        for item in decrypted_credentials:
+            if item.security_status == "WEAK":
+               report.weak_count += 1
+               report.weak_credentials.append(item)
+            elif item.security_status == "REUSED":
+               report.reused_count += 1
+               report.reused_credentials.append(item)
+            elif item.security_status == "COMPROMISED":
+               report.breached_count += 1
+               report.breached_credentials.append(item)
         
         if len(decrypted_credentials) > 0:
             report.average_entropy = total_entropy / len(decrypted_credentials)
