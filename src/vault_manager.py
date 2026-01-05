@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import VaultModel, PasswordEntry
 from dtos import VaultCreationRequest, VaultCreationResult, PasswordDTO, ChangeEmailRequest, ChangeMasterPasswordRequest
-
+#σαν να είναι το Handle Credential μας, to be changed 
 class VaultManager:
     """
     Manages logic for Vault creation and management.
