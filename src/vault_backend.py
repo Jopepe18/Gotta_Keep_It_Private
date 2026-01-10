@@ -88,3 +88,15 @@ class VaultBackend(QObject):
         ]
         print(f"VaultBackend: Emitting {len(passwords_list)} passwords")
         self.passwords_updated.emit(passwords_list)
+
+   # @Slot
+    #def toggleFavorite(self, user_id, password_id):
+     #   print(f"Vault Backend: Toggle favoirte for password {password_id}")
+      #  result = self.manager.toggle_favorite(password_id)
+
+       # if result["success"]:
+        #    self.getPasswords(user_id)
+        #else: 
+         #   print(f"VaultBackend: Failed to toggle favoirte - {result.get('message')}")
+
+        

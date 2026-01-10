@@ -10,6 +10,7 @@ Item{
     property bool showFavorites: false
     property bool visibilityOn: false
     property string userId: ""
+    property var selectedPassword: null
 
     property var passwordsList: []
     
@@ -198,6 +199,7 @@ Item{
                             Layout.preferredHeight:45
                             padding:0
                             text: "Debug Add"
+                            visible: false
                             
                             contentItem: Text {
                                 text: addPasswordDebug.text
@@ -225,6 +227,7 @@ Item{
                         spacing: 10
 
                         RowLayout{
+                        Layout.leftMargin: 25
                         spacing:100
 
                         Label{
@@ -260,25 +263,74 @@ Item{
                             
                             Repeater {
                                 model: passwordsPage.passwordsList
+
                                 delegate: Rectangle {
-                                    height: 50
+                                    id: delegateRect
+                                    height: 70
                                     width: parent.width
-                                    color: "#303946"
                                     radius: 10
+
+                                    property bool selected: false
+                                    property bool hovered: false
+
+
+                                    color: (selectedPassword && selectedPassword.id === modelData.id) ? "#111B2C" : 
+                                    (selected ? "#424D61" : 
+                                     hovered ? "#2A3444" : "#1E2634")
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        onEntered: delegateRect.hovered = true
+                                        onExited: delegateRect.hovered = false
+                                        onPressed: delegateRect.selected = true
+                                        onReleased: delegateRect.selected = false
+                                        onClicked:{
+                                            passwordsPage.selectedPassword = modelData
+                                            console.log("Selected password: ", modelData.title)
+                                        }
+                                    }
                                     
                                     RowLayout {
                                         anchors.fill: parent
-                                        anchors.margins: 10
-                                        spacing: 20
+                                        anchors.leftMargin: 30
+                                        anchors.topMargin: 10
+                                        anchors.bottomMargin: 10
+                                        spacing: 45
                                         
-                                        // Favorite Icon (Dummy for now)
-                                        Image {
-                                            source: modelData.is_favorite ? "../imgs/favorite.png" : "../imgs/not_favoriteStar.png"
-                                            Layout.preferredWidth: 20
-                                            Layout.preferredHeight: 20
+                                        Button{
+                                            Layout.preferredHeight: 40
+                                            Layout.preferredWidth: 40
+                                            background: Rectangle{
+                                                color: "transparent"
+                                            }
+
+                                            contentItem: Image {
+                                                source: modelData.is_favorite ? "../imgs/favorite.png" : "../imgs/not_favoriteStar.png"
+                                                width: 20
+                                                height: 20
+                                            }
+                                            onClicked:{
+                                                modelData.is_favorite = !modelData.is_favorite
+                                            }    
+                                        }
+
+                                        Image{
+                                            source: "https://www.google.com/s2/favicons?domain="+ modelData.Website + "&sz=40"
+                                            Layout.preferredWidth: 45
+                                            Layout.preferredHeight: 45
+
+                                            onStatusChanged: {
+                                                if(status === Image.Error){
+                                                    source = "../imgs/placeholders/google.png"
+                                                }
+                                            }
                                         }
                                         
-                                        // Title
+                                        ColumnLayout{
+                                            Layout.fillHeight: true
+                                            Layout.fillWidth: true
+
+                                            // Title
                                         Text {
                                             text: modelData.title
                                             color: "white"
@@ -291,6 +343,7 @@ Item{
                                             text: modelData.username
                                             color: "#B5B5B5"
                                             font.pixelSize: 14
+                                        }
                                         }
                                     }
                                 }
@@ -343,27 +396,34 @@ Item{
                                         id: detailImage
                                         Layout.preferredHeight: 60
                                         Layout.preferredWidth: 60
-                                        source: "../imgs/placeholders/google.png"
+                                        source:  selectedPassword? "https://www.google.com/s2/favicons?domain="+ selectedPassword.Website + "&sz=60" : "../imgs/placeholders/google.png"
                                         fillMode: Image.PreserveAspectCrop
                                         smooth: true
+
+                                         onStatusChanged: {
+                                                if(status === Image.Error){
+                                                    source = "../imgs/placeholders/google.png"
+                                                }
+                                            }
+                                            
                                         }
 
                                         ColumnLayout{
 
                                             Label{
                                                 id: detailPassNameLabel
-                                                text: "Gmail"
+                                                text: selectedPassword ? selectedPassword.title : "Title"
                                                 font.pixelSize: 20
                                             }
 
                                             Label{
                                                 id: detailPassLastModLabel
-                                                text: "Last modified: 12/7/2025"
+                                                text: selectedPassword ? selectedPassword.last_modified : "12.12.12"
                                                 color: "#B5B5B5"
                                                 font.pixelSize: 16
                                             }
                                         }
-                                    }
+                                }
                                 
                                 /*-------Details of Object*/
                                ColumnLayout{
@@ -388,7 +448,7 @@ Item{
 
                                         Label{
                                             id: passDetailsUsernameLabel
-                                            text: "User"
+                                            text: selectedPassword ? selectedPassword.username : "User"
                                             color: "#B5B5B5"
                                             font.pixelSize: 15
                                         }
@@ -424,7 +484,7 @@ Item{
 
                                         Label{
                                             id: passDetailsPasswordLabel
-                                            text: visibilityOn? "1234567890" : "**********"
+                                            text: selectedPassword ? (visibilityOn? selectedPassword.password : "**********") : (visibilityOn? "1234567890" : "**********")
                                             color: "#B5B5B5"
                                             font.pixelSize: 15
                                         }
@@ -439,10 +499,11 @@ Item{
                                             height: 30
                                             width: 30 
                                             source: visibilityOn ? "../imgs/visibility_on.png" : "../imgs/visibility_off.png"
-                                        }
-                                        onClicked:{
-                                            visibilityOn = !visibilityOn
-                                        }
+                                            }
+
+                                            onClicked:{
+                                                visibilityOn = !visibilityOn
+                                            }
                                         }
                                     }
 
@@ -474,7 +535,7 @@ Item{
 
                                         Label{
                                             id: passDetailsWebsiteLabel
-                                            text: "www.google.com"
+                                            text: selectedPassword ? selectedPassword.website : "www.website.com"
                                             color: "#B5B5B5"
                                             font.pixelSize: 15
                                         }
