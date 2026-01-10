@@ -1,8 +1,9 @@
 import math
 import os
 from typing import List, Set, Any
-from Gotta_Keep_It_Private.src.dtos import SecurityReport
-from Gotta_Keep_It_Private.src import BreachAPIService
+from dtos import SecurityReport
+from BreachAPI import BreachAPIService
+
 class Watchtower:
     def __init__(self):
         self.weak_count = 0
