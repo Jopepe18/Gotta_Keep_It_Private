@@ -52,10 +52,26 @@ Item{
                  }
             }
         }
+
+        function onVaultDeleted(success, message) {
+            if (!success) {
+                resultPopup.titleText = "Error"
+                resultPopup.messageText = message
+                resultPopup.isSuccess = false
+                resultPopup.open()
+            }
+        }
     }
 
     ResultPopup {
         id: resultPopup
+    }
+
+    DeleteVaultPopup {
+        id: deleteVaultPopup
+        onConfirmed: function(password) {
+            vaultBackend.deleteVault(settingsPage.userId, password)
+        }
     }
 
     ConfirmationPopup {
@@ -209,7 +225,7 @@ Item{
                                     ColorAnimation { duration: 150}
                                     }
                                 }
-
+                                onClicked: deleteVaultPopup.open()
                             }
                         }
                     }

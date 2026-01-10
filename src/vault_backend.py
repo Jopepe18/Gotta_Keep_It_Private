@@ -7,11 +7,18 @@ class VaultBackend(QObject):
     passwords_updated = Signal(list) 
     operation_finished = Signal(bool, str) # Generic signal for updates
     userInfoReceived = Signal(str, str) # username, email
+    vaultDeleted = Signal(bool, str) # success, message
 
     def __init__(self, manager):
         super().__init__()
         self.manager = manager
     
+    @Slot(str, str)
+    def deleteVault(self, user_id, password):
+        print(f"VaultBackend: Delete Vault Request for {user_id}")
+        result = self.manager.delete_vault(user_id, password)
+        self.vaultDeleted.emit(result["success"], result["message"])
+
     @Slot(str)
     def getUserInfo(self, user_id):
         result = self.manager.get_user_info(user_id)

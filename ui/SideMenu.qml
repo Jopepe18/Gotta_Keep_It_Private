@@ -11,6 +11,16 @@ Item{
     property string currentPage: "passwords"
     property string userIdString: ""
 
+    Connections {
+        target: vaultBackend
+        function onVaultDeleted(success, message){
+            if(success){
+                console.log("SideMenu: Vault deleted. Logging out.")
+                root.logoutClicked()
+            }
+        }
+    }
+
     function updatePage() {
         var page;
         var props = {};

@@ -185,3 +185,33 @@ class VaultManager:
             return {"success": False, "message": str(e)}
         finally:
             db.close()
+
+    def delete_vault(self, user_id: str, password: str) -> dict:
+        """
+        Deletes the user account, vault, and all data.
+        Verifies password first.
+        """
+        from encryption_service import EncryptionService
+        encrypt_service = EncryptionService()
+        
+        db: Session = self.get_db()
+        try:
+            from models import UserModel
+            user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
+            if not user:
+                return {"success": False, "message": "User not found"}
+            
+            # Verify password
+            if not encrypt_service.verify_password(password, user.password_hash):
+                return {"success": False, "message": "Invalid password"}
+            
+            # Delete User (Cascade should handle the rest)
+            print(f"VaultManager: Deleting user {user_id} and all associated data.")
+            db.delete(user)
+            db.commit()
+            return {"success": True, "message": "Vault deleted successfully"}
+        except Exception as e:
+            print(f"VaultManager: Error deleting account: {e}")
+            return {"success": False, "message": str(e)}
+        finally:
+            db.close()
