@@ -104,19 +104,32 @@ Item {
                 }
 
             
-                    TextField {
-                        id: textfield_username
-                        font.pointSize: 17
+                    Rectangle{
+                        Layout.preferredHeight: 45
                         Layout.fillWidth: true
-                        Layout.leftMargin:50
+                        Layout.leftMargin: 50
                         Layout.rightMargin: 50
-                        placeholderText: qsTr("")
-                        color: "#eaeaea"
+                        color: "transparent"
+                        border.color: "white"
+                        radius: 20
+                        border.width: 1
+                        Layout.alignment: Qt.AlignVCenter
 
-                        background: Rectangle{
-                            color: "transparent"
-                            border.color: "white"
-                            radius: 20
+                        RowLayout{
+                            anchors.fill: parent
+                            anchors.margins: 5
+
+                            TextField {
+                                id: textfield_username
+                                font.pointSize: 17
+                                Layout.fillWidth: true
+                                placeholderText: qsTr("")
+                                color: "#eaeaea"
+
+                                background: Rectangle{
+                                    color: "transparent"
+                                }
+                            }
                         }
                     }
 

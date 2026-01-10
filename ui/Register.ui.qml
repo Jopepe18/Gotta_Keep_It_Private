@@ -102,17 +102,27 @@ Item {
                         Layout.fillWidth: false
                         }
 
-                        TextField {
-                            id: textfield_username
-                            font.pointSize: 17
+                        Rectangle {
+                            Layout.preferredHeight: 45
                             Layout.fillWidth: true
-                            placeholderText: qsTr("")
-                            color: "#eaeaea"
+                            color: "transparent"
+                            border.color: "white"
+                            radius: 20
+                            border.width: 1
+                            Layout.alignment: Qt.AlignVCenter
 
-                            background: Rectangle{
-                                color: "transparent"
-                                border.color: "white"
-                                radius: 20
+                            RowLayout {
+                                 anchors.fill: parent
+                                 anchors.margins: 5 
+                                 
+                                 TextField {
+                                     id: textfield_username
+                                     font.pointSize: 17
+                                     Layout.fillWidth: true
+                                     placeholderText: qsTr("")
+                                     color: "#eaeaea"
+                                     background: Rectangle { color: "transparent" }
+                                 }
                             }
                         }
 
@@ -123,17 +133,27 @@ Item {
                             font.pixelSize: 20
                         }
 
-                        TextField {
-                            id: textfield_email
-                            font.pointSize: 17
+                        Rectangle {
+                            Layout.preferredHeight: 45
                             Layout.fillWidth: true
-                            placeholderText: qsTr("")
-                            color: "#eaeaea"
+                            color: "transparent"
+                            border.color: "white"
+                            radius: 20
+                            border.width: 1
+                            Layout.alignment: Qt.AlignVCenter
 
-                            background: Rectangle{
-                                color: "transparent"
-                                border.color: "white"
-                                radius: 20
+                            RowLayout {
+                                 anchors.fill: parent
+                                 anchors.margins: 5 
+                                 
+                                 TextField {
+                                     id: textfield_email
+                                     font.pointSize: 17
+                                     Layout.fillWidth: true
+                                     placeholderText: qsTr("")
+                                     color: "#eaeaea"
+                                     background: Rectangle { color: "transparent" }
+                                 }
                             }
                         }
 
@@ -211,20 +231,30 @@ Item {
                             font.pixelSize: 20
                         }
 
-                    TextField {
-                        id: textfield_confirmpass
-                        font.pointSize: 17
-                        Layout.fillWidth: true
-                        placeholderText: qsTr("")
-                        echoMode: TextInput.Password
-                        color: "#eaeaea"
+                        Rectangle {
+                            Layout.preferredHeight: 45
+                            Layout.fillWidth: true
+                            color: "transparent"
+                            border.color: "white"
+                            radius: 20
+                            border.width: 1
+                            Layout.alignment: Qt.AlignVCenter
 
-                        background: Rectangle{
-                                color: "transparent"
-                                border.color: "white"
-                                radius: 20
+                            RowLayout {
+                                 anchors.fill: parent
+                                 anchors.margins: 5 
+                                 
+                                 TextField {
+                                     id: textfield_confirmpass
+                                     font.pointSize: 17
+                                     Layout.fillWidth: true
+                                     placeholderText: qsTr("")
+                                     echoMode: TextInput.Password
+                                     color: "#eaeaea"
+                                     background: Rectangle { color: "transparent" }
+                                 }
+                            }
                         }
-                    }
 
                     Text {
                         id: message_text

@@ -123,29 +123,23 @@ Item{
                                 Layout.preferredHeight: 50
                                 Layout.preferredWidth: 300
                                 radius: 20
-                                color: "#1E2634"
-                                border.color: "white"
+                                color: "#252D36"
+                                border.color: "#555"
+                                border.width: 1
 
                                 RowLayout{
                                     anchors.fill: parent
-                                    anchors.topMargin:5
-                                    anchors.bottomMargin: 5
-                                    anchors.leftMargin: 15
-                                    anchors.rightMargin: 15
+                                    anchors.margins: 15
                                     spacing: 10
 
-                                    TextField{
+                                    Text{
                                         Layout.fillWidth: true
-                                        Layout.fillHeight: true
+                                        Layout.alignment: Qt.AlignVCenter
                                         text: settingsPage.currentUsername
                                         font.pixelSize: 16
-                                        id: userNameTextField
-                                        color: "#eaeaea"
-                                        readOnly: true
-
-                                        background: Rectangle{
-                                            color: "transparent"
-                                        }
+                                        color: "#ACACAC"
+                                        font.bold: true
+                                        elide: Text.ElideRight
                                     }
                                 }
                             }  
@@ -160,18 +154,28 @@ Item{
                                 font.pixelSize: 20
                             }
 
-                            Label{
-                                text: settingsPage.currentEmail
-                                color: "white"
-                                font.pixelSize: 18
-                            }
-
                             Rectangle{
+                                Layout.preferredHeight: 50
                                 Layout.preferredWidth: 300
-                                color: "#ACACAC"
-                                Layout.preferredHeight: 2
-                                radius: 8
-                                opacity: 0.3
+                                radius: 20
+                                color: "#252D36"
+                                border.color: "#555"
+                                border.width: 1
+
+                                RowLayout{
+                                    anchors.fill: parent
+                                    anchors.margins: 15
+                                    
+                                    Text{
+                                        Layout.fillWidth: true
+                                        Layout.alignment: Qt.AlignVCenter
+                                        text: settingsPage.currentEmail
+                                        font.pixelSize: 16
+                                        color: "#ACACAC"
+                                        font.bold: true
+                                        elide: Text.ElideRight
+                                    }
+                                }
                             }
                         }
 
