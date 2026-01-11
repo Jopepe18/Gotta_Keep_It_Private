@@ -201,15 +201,43 @@ class VaultManager:
             if not encrypt_service.verify_password(request.current_password, user.password_hash):
                 return {"success": False, "message": "Invalid current password"}
 
-            # Update to New Password
+            # RE-ENCRYPT ALL VAULT DATA
+            # 1. Fetch Vault
+            vault = db.query(VaultModel).filter(VaultModel.user_id == request.user_id).first()
+            if not vault:
+                
+                 pass
+            else:
+                 # 2. Derive OLD KEK
+                 # We need the salt used for the OLD password.
+                 if not vault.kdf_salt or not vault.encrypted_vault_key:
+                      return {"success": False, "message": "Vault is corrupted or missing encryption data."}
+
+                 old_kek = self.key_manager.derive_key(request.current_password, vault.kdf_salt)
+                 
+                 # 3. Decrypt DEK (Unwrap)
+                 try:
+                    vault_dek = self.encrypt_service.decrypt_data(vault.encrypted_vault_key, old_kek)
+                 except Exception as e:
+                     return {"success": False, "message": f"Failed to decrypt vault with current password: {e}"}
+
+                 # 4. Generate NEW Salt and KEK
+                 new_kdf_salt = self.key_manager.generate_Salt()
+                 new_kek = self.key_manager.derive_key(request.new_password, new_kdf_salt)
+                 
+                 # 5. Re-Encrypt DEK (Wrap)
+                 new_encrypted_vault_key = self.encrypt_service.encrypt_data(vault_dek, new_kek)
+                 
+                 # 6. Update Vault Records
+                 vault.kdf_salt = new_kdf_salt
+                 vault.encrypted_vault_key = new_encrypted_vault_key
+
+            # Update to New Password Hash
             new_hash = encrypt_service.hash_password(request.new_password)
             user.password_hash = new_hash
 
-            # TODO: RE-ENCRYPT ALL VAULT DATA HERE
-
-
             db.commit()
-            return {"success": True, "message": "Password updated successfully (Re-encryption pending)"}
+            return {"success": True, "message": "Password updated and Vault re-encrypted successfully"}
         except Exception as e:
             return {"success": False, "message": str(e)}
         finally:
