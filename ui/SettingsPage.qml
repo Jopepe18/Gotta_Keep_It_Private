@@ -7,6 +7,84 @@ Item{
     width: 1500
     height: 1080
 
+    property string userId: ""
+    property string pendingAction: "" // "email" or "password"
+    property string currentUsername: "Loading..."
+    property string currentEmail: "Loading..."
+
+    Component.onCompleted: {
+        if(userId !== "") {
+            vaultBackend.getUserInfo(userId)
+        }
+    }
+    
+    onUserIdChanged: {
+         if(userId !== "") {
+            vaultBackend.getUserInfo(userId)
+        }
+    }
+
+    Connections {
+        target: vaultBackend
+        function onUserInfoReceived(username, email) {
+            settingsPage.currentUsername = username
+            settingsPage.currentEmail = email
+        }
+
+        function onOperation_finished(success, message) {
+            console.log("Operation finished: " + success + " - " + message)
+            
+            resultPopup.titleText = success ? "Success" : "Error"
+            resultPopup.messageText = message
+            resultPopup.isSuccess = success
+            resultPopup.open()
+            
+            // Refund fields or update UI if success
+            if (success) {
+                 if (settingsPage.pendingAction === "email") {
+                     settingsPage.currentEmail = newEmailTextField.text // Optimistic update or refetch
+                     newEmailTextField.text = ""
+                     newEmailPasswordVerifTextField.text = ""
+                 } else if (settingsPage.pendingAction === "password") {
+                     currentPasswordTextField.text = ""
+                     newPasswordfTextField.text = ""
+                     confirmNewPasswordfTextField.text = ""
+                 }
+            }
+        }
+
+        function onVaultDeleted(success, message) {
+            if (!success) {
+                resultPopup.titleText = "Error"
+                resultPopup.messageText = message
+                resultPopup.isSuccess = false
+                resultPopup.open()
+            }
+        }
+    }
+
+    ResultPopup {
+        id: resultPopup
+    }
+
+    DeleteVaultPopup {
+        id: deleteVaultPopup
+        onConfirmed: function(password) {
+            vaultBackend.deleteVault(settingsPage.userId, password)
+        }
+    }
+
+    ConfirmationPopup {
+        id: confirmationPopup
+        onConfirmed: {
+            if (settingsPage.pendingAction === "email") {
+                vaultBackend.changeEmail(settingsPage.userId, newEmailTextField.text, newEmailPasswordVerifTextField.text)
+            } else if (settingsPage.pendingAction === "password") {
+                vaultBackend.changeMasterPassword(settingsPage.userId, currentPasswordTextField.text, newPasswordfTextField.text)
+            }
+        }
+    }
+
    Rectangle{
     color: "#1E2634"
     anchors.fill: parent
@@ -45,27 +123,23 @@ Item{
                                 Layout.preferredHeight: 50
                                 Layout.preferredWidth: 300
                                 radius: 20
-                                color: "#1E2634"
-                                border.color: "white"
+                                color: "#252D36"
+                                border.color: "#555"
+                                border.width: 1
 
                                 RowLayout{
                                     anchors.fill: parent
-                                    anchors.topMargin:5
-                                    anchors.bottomMargin: 5
-                                    anchors.leftMargin: 15
-                                    anchors.rightMargin: 15
+                                    anchors.margins: 15
                                     spacing: 10
 
-                                    TextField{
+                                    Text{
                                         Layout.fillWidth: true
-                                        Layout.fillHeight: true
-                                        text: "User"
+                                        Layout.alignment: Qt.AlignVCenter
+                                        text: settingsPage.currentUsername
                                         font.pixelSize: 16
-                                        id: userNameTextField
-
-                                        background: Rectangle{
-                                            color: "transparent"
-                                        }
+                                        color: "#ACACAC"
+                                        font.bold: true
+                                        elide: Text.ElideRight
                                     }
                                 }
                             }  
@@ -80,18 +154,28 @@ Item{
                                 font.pixelSize: 20
                             }
 
-                            Label{
-                                text: "useremail@gmail.com"
-                                color: "white"
-                                font.pixelSize: 18
-                            }
-
                             Rectangle{
+                                Layout.preferredHeight: 50
                                 Layout.preferredWidth: 300
-                                color: "#ACACAC"
-                                Layout.preferredHeight: 2
-                                radius: 8
-                                opacity: 0.3
+                                radius: 20
+                                color: "#252D36"
+                                border.color: "#555"
+                                border.width: 1
+
+                                RowLayout{
+                                    anchors.fill: parent
+                                    anchors.margins: 15
+                                    
+                                    Text{
+                                        Layout.fillWidth: true
+                                        Layout.alignment: Qt.AlignVCenter
+                                        text: settingsPage.currentEmail
+                                        font.pixelSize: 16
+                                        color: "#ACACAC"
+                                        font.bold: true
+                                        elide: Text.ElideRight
+                                    }
+                                }
                             }
                         }
 
@@ -145,7 +229,7 @@ Item{
                                     ColorAnimation { duration: 150}
                                     }
                                 }
-
+                                onClicked: deleteVaultPopup.open()
                             }
                         }
                     }
@@ -208,6 +292,8 @@ Item{
                                         text: ""
                                         font.pixelSize: 16
                                         id: newEmailTextField
+                                        color: "#eaeaea"
+                                        placeholderText: "Enter new email"
 
                                         background: Rectangle{
                                             color: "transparent"
@@ -221,7 +307,7 @@ Item{
                             }
 
                             Label{
-                                text:"Pasword (required)"
+                                text:"Password (required)"
                                 color: "white"
                                 font.pixelSize: 20
                             }
@@ -247,6 +333,9 @@ Item{
                                         text: ""
                                         font.pixelSize: 16
                                         id: newEmailPasswordVerifTextField
+                                        color: "#eaeaea"
+                                        echoMode: TextInput.Password
+                                        placeholderText: "Confirm password"
 
                                         background: Rectangle{
                                             color: "transparent"
@@ -275,11 +364,19 @@ Item{
 
                                 background: Rectangle{
                                     radius:20
-                                    color: changeEmailButton.pressed ? "#F76262" : (changeEmailButton.hovered? "#F54040" : "#E22323" )
+                                    color: changeEmailButton.pressed ? "#619DEC" : (changeEmailButton.hovered ? "#4F91E8" : "#4080D4")
 
                                     Behavior on color{
                                         ColorAnimation { duration: 150}
                                     }
+                                }
+                                onClicked: {
+                                    if(newEmailTextField.text === "" || newEmailPasswordVerifTextField.text === "") return;
+                                    settingsPage.pendingAction = "email"
+                                    confirmationPopup.titleText = "Change Email"
+                                    confirmationPopup.messageText = "Are you sure you want to change your email to " + newEmailTextField.text + "?"
+                                    confirmationPopup.confirmButtonText = "Confirm"
+                                    confirmationPopup.open()
                                 }
                             }
                             }
@@ -363,7 +460,7 @@ Item{
                     spacing: 10
 
                     Label{
-                        text: "Change Passord"
+                        text: "Change Password"
                         color: "white"
                         font.pixelSize: 20
                     }
@@ -407,6 +504,8 @@ Item{
                                         text: ""
                                         font.pixelSize: 16
                                         id: currentPasswordTextField
+                                        color: "#eaeaea"
+                                        echoMode: TextInput.Password
 
                                         background: Rectangle{
                                             color: "transparent"
@@ -446,6 +545,8 @@ Item{
                                         text: ""
                                         font.pixelSize: 16
                                         id: newPasswordfTextField
+                                        color: "#eaeaea"
+                                        echoMode: TextInput.Password
 
                                         background: Rectangle{
                                             color: "transparent"
@@ -485,6 +586,8 @@ Item{
                                         text: ""
                                         font.pixelSize: 16
                                         id: confirmNewPasswordfTextField
+                                        color: "#eaeaea"
+                                        echoMode: TextInput.Password
 
                                         background: Rectangle{
                                             color: "transparent"
@@ -513,11 +616,27 @@ Item{
 
                                     background: Rectangle{
                                         radius:20
-                                        color: changePasswordButton.pressed ? "#F76262" : (changePasswordButton.hovered? "#F54040" : "#E22323" )
+                                        color:  changePasswordButton.pressed ? "#619DEC" : (changePasswordButton.hovered ? "#4F91E8" : "#4080D4")
 
                                         Behavior on color{
                                             ColorAnimation { duration: 150}
                                         }
+                                    }
+                                    onClicked: {
+                                        if(currentPasswordTextField.text === "" || newPasswordfTextField.text === "" || confirmNewPasswordfTextField.text === "") return;
+                                        if (newPasswordfTextField.text !== confirmNewPasswordfTextField.text) {
+                                            confirmationPopup.titleText = "Error"
+                                            confirmationPopup.messageText = "Passwords do not match."
+                                            confirmationPopup.confirmButtonText = "OK"
+                                            confirmationPopup.open()
+                                            return;
+                                        }
+
+                                        settingsPage.pendingAction = "password"
+                                        confirmationPopup.titleText = "Change Password"
+                                        confirmationPopup.messageText = "Are you sure you want to change your master password?"
+                                        confirmationPopup.confirmButtonText = "Confirm"
+                                        confirmationPopup.open()
                                     }
                                 }
                             }

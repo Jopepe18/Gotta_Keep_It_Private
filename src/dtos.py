@@ -1,6 +1,7 @@
-from dataclasses import dataclass
+from dataclasses import dataclass ,field
 from typing import Optional
-
+from datetime import datetime
+from typing import List, Any 
 # --- Requests (Inputs) ---
 
 @dataclass
@@ -82,3 +83,26 @@ class PasswordDTO:
     username: str
     website: str
     is_favorite: bool
+
+@dataclass
+class SecurityReport:
+    weak_count: int = 0
+    reused_count: int = 0
+    breached_count: int = 0
+    average_entropy: float = 0.0
+    timestamp: datetime = field(default_factory=datetime.now)
+    weak_credentials: List[Any] = field(default_factory=list)
+    reused_credentials: List[Any] = field(default_factory=list)
+    breached_credentials: List[Any] = field(default_factory=list)
+
+@dataclass
+class ChangeEmailRequest:
+    user_id: str
+    new_email: str
+    current_password: str
+
+@dataclass
+class ChangeMasterPasswordRequest:
+    user_id: str
+    current_password: str
+    new_password: str

@@ -11,6 +11,16 @@ Item{
     property string currentPage: "passwords"
     property string userIdString: ""
 
+    Connections {
+        target: vaultBackend
+        function onVaultDeleted(success, message){
+            if(success){
+                console.log("SideMenu: Vault deleted. Logging out.")
+                root.logoutClicked()
+            }
+        }
+    }
+
     function updatePage() {
         var page;
         var props = {};
@@ -20,9 +30,15 @@ Item{
                 props = {"userId": root.userIdString};
                 break;
             case "cards": page = "CardsPage.qml"; break;
-            case "watchTower": page = "WatchTowerPage.qml"; break;
+            case "watchTower": // ΝΕΟ
+                page = "WatchTowerPage.qml"; 
+                props = {"userId": root.userIdString}; 
+                break;
             case "generator": page = "GeneratorPage.qml"; break;
-            case "settings": page = "SettingsPage.qml"; break;
+            case "settings": 
+                page = "SettingsPage.qml"; 
+                props = {"userId": root.userIdString};
+                break;
         }
         if(page) stack.replace(page, props);
     }

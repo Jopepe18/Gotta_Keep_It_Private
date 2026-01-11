@@ -40,6 +40,7 @@ Window {
         }
 
         initialItem: 
+        
         Login {
             onRegisterRequested: {
                 stackView.push(registerComponent)
@@ -58,12 +59,15 @@ Window {
             }
         }
         
+        
         /*
         loadMainScreenComponent
             SideMenu{
                 onLogoutClicked: stackView.pop(null)
             }
         */
+
+
 
         Component {
             id: registerComponent
@@ -99,7 +103,10 @@ Window {
             id: loadMainScreenComponent
             SideMenu {
                 userIdString: window.currentUserId
-                onLogoutClicked: stackView.pop(null) //Pop to root (Login)
+                onLogoutClicked: {
+                    stackView.pop(null) //Pop to root (Login)
+                stackView.currentItem.emptyFields()
+                }
             }
         }
 

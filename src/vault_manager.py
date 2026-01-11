@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import VaultModel, PasswordEntry
-from dtos import VaultCreationRequest, VaultCreationResult, PasswordDTO
-
+from dtos import VaultCreationRequest, VaultCreationResult, PasswordDTO, ChangeEmailRequest, ChangeMasterPasswordRequest
+#σαν να είναι το Handle Credential μας, to be changed 
 class VaultManager:
     """
     Manages logic for Vault creation and management.
@@ -16,7 +16,7 @@ class VaultManager:
 
     def create_new_vault(self, request: VaultCreationRequest) -> VaultCreationResult:
         print(f"VaultManager: Creating vault for User {request.user_id} with Name {request.vault_name}")
-        
+
         if request.password != request.confirm_password:
              return VaultCreationResult(success=False, message="Vault passwords do not match")
 
@@ -30,10 +30,10 @@ class VaultManager:
             db.add(new_vault)
             db.commit()
             db.refresh(new_vault)
-            
+
             print("VaultManager: Vault created successfully in DB")
             # Return Result
-            
+
             return VaultCreationResult(
                 success=True, 
                 message="Vault Created Successfully", 
@@ -54,7 +54,7 @@ class VaultManager:
             if not vault:
                 print("VaultManager: No vault found for user")
                 return False
-            
+
             # Create Password Entry
             new_pass = PasswordEntry(
                 vault_id=vault.vault_id,
@@ -81,9 +81,9 @@ class VaultManager:
             #βρίσκει και εμφανιζει το vault που έχει ως user id του vault, του συνδεδεμένου χρήστη
             if not vault:
                 return []
-            
+
             passwords = db.query(PasswordEntry).filter(PasswordEntry.vault_id == vault.vault_id).all()
-            
+
             # Convert to DTOs
             return [
                 PasswordDTO(
@@ -94,5 +94,124 @@ class VaultManager:
                     is_favorite=p.is_favorite
                 ) for p in passwords
             ]
+        finally:
+            db.close()
+
+    def change_email(self, request: 'ChangeEmailRequest') -> dict:
+        """
+        Changes the user's email address.
+        
+        """
+
+        from encryption_service import EncryptionService
+        encrypt_service = EncryptionService()
+
+        db: Session = self.get_db()
+        try:
+            from models import UserModel
+            user = db.query(UserModel).filter(UserModel.user_id == request.user_id).first()
+            if not user:
+                return {"success": False, "message": "User not found"}
+
+            # Verify password
+            if not encrypt_service.verify_password(request.current_password, user.password_hash):
+                return {"success": False, "message": "Invalid current password"}
+
+            # Check if new email exists
+            existing_email = db.query(UserModel).filter(UserModel.email == request.new_email).first()
+            if existing_email:
+                return {"success": False, "message": "Email already in use"}
+
+            # Update Email
+            user.email = request.new_email
+            db.commit()
+            return {"success": True, "message": "Email updated successfully"}
+        except Exception as e:
+            return {"success": False, "message": str(e)}
+        finally:
+            db.close()
+
+    def change_master_password(self, request: 'ChangeMasterPasswordRequest') -> dict:
+        """
+        TODO
+        προσοχή, εδώ αλλάζει το login password, όχι τον τρόπο αποκρυπτογράφησης των εγγραφών. 
+        !!!να αλλαχθεί !! θα πρέπει να επανακρυπτογραφεί τις εγγραφές
+        """
+        from encryption_service import EncryptionService
+        encrypt_service = EncryptionService()
+
+        db: Session = self.get_db()
+        try:
+            from models import UserModel
+            user = db.query(UserModel).filter(UserModel.user_id == request.user_id).first()
+            if not user:
+                return {"success": False, "message": "User not found"}
+
+            # Verify current password
+            if not encrypt_service.verify_password(request.current_password, user.password_hash):
+                return {"success": False, "message": "Invalid current password"}
+
+            # Update to New Password
+            new_hash = encrypt_service.hash_password(request.new_password)
+            user.password_hash = new_hash
+
+            # TODO: RE-ENCRYPT ALL VAULT DATA HERE
+
+
+            db.commit()
+            return {"success": True, "message": "Password updated successfully (Re-encryption pending)"}
+        except Exception as e:
+            return {"success": False, "message": str(e)}
+        finally:
+            db.close()
+
+    def get_user_info(self, user_id: str) -> dict:
+        """
+        Fetches username and email for user_id.
+        """
+        db: Session = self.get_db()
+        try:
+            from models import UserModel
+            user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
+            if not user:
+                return {"success": False, "message": "User not found"}
+
+            return {
+                "success": True, 
+                "username": user.username, 
+                "email": user.email
+            }
+        except Exception as e:
+            return {"success": False, "message": str(e)}
+        finally:
+            db.close()
+
+    def delete_vault(self, user_id: str, password: str) -> dict:
+        """
+        Deletes the user account, vault, and all data.
+        Verifies password first.
+        """
+        from encryption_service import EncryptionService
+        encrypt_service = EncryptionService()
+        
+        db: Session = self.get_db()
+        try:
+            from models import UserModel
+            user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
+            if not user:
+                return {"success": False, "message": "User not found"}
+            
+            # Verify password
+            if not encrypt_service.verify_password(password, user.password_hash):
+                return {"success": False, "message": "Invalid password"}
+            
+            # Delete User (Cascade should handle the rest)
+            print(f"VaultManager: Deleting user {user_id} and all associated data.")
+            db.delete(user)
+            db.commit()
+            return {"success": True, "message": "Vault deleted successfully"}
+        except Exception as e:
+            print(f"VaultManager: Error deleting account: {e}")
+            return {"success": False, "message": str(e)}
         finally:
             db.close()
