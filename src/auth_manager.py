@@ -16,6 +16,7 @@ from dtos import (
 #  "users_db: list[User]". not used (yet)
 # 
 
+from Key_Manager import KeyManager
 from encryption_service import EncryptionService
 
 class AuthenticationManager:
@@ -23,9 +24,11 @@ class AuthenticationManager:
     Manages user authentication, registration, and password management using SQLite.
     """
     encrypt_service: EncryptionService
+    key_manager: KeyManager
 
     def __init__(self):
         self.encrypt_service = EncryptionService()
+        self.key_manager = KeyManager()
         # Create tables if they don't exist
         Base.metadata.create_all(bind=engine)
 
@@ -52,7 +55,7 @@ class AuthenticationManager:
             hashed_pw = self.encrypt_service.hash_password(request.password)
 
             # 4. Generate Secret Key
-            secret_key = self.encrypt_service.generate_secret_key()
+            secret_key = self.key_manager.generate_secret_key()
 
             # 5. Create new User
             new_user_id = str(uuid.uuid4())#random user id generated
@@ -85,7 +88,7 @@ class AuthenticationManager:
             # 2. Verify password
             if self.encrypt_service.verify_password(request.password, found_user.password_hash):
                 # 3. Success -> Generate Token
-                token = self.encrypt_service.generate_token()
+                token = self.key_manager.generate_token()
                 # Check if user has vaults
                 has_vault = len(found_user.vaults) > 0
                 return AuthenticationResult(success=True, message="Login Successful", token=token, secret_key=found_user.secret_key, user_id=found_user.user_id, has_vault=has_vault)

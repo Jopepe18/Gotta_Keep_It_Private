@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String, Boolean, DateTime
 from sqlalchemy.orm import declarative_base
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text 
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, LargeBinary
 from sqlalchemy.orm import relationship, declarative_base 
 from sqlalchemy.sql import func 
 import uuid 
@@ -49,6 +49,10 @@ class VaultModel(Base):
   #!!!εδώ γινεται η διασύνδεση vault με user id
   name = Column(String(100), default="Main Vault")
   created_at = Column(DateTime(timezone=True), server_default=func.now())
+  kdf_salt = Column(LargeBinary, nullable=False)          # Salt για το Password
+  encrypted_vault_key = Column(LargeBinary, nullable=False)
+  recovery_salt = Column(LargeBinary, nullable=True)           # Salt αποκλειστικά για το Recovery Key
+  recovery_encrypted_key = Column(LargeBinary, nullable=True)
   user = relationship("UserModel", back_populates="vaults")
   passwords = relationship("PasswordEntry", back_populates="vault", cascade="all, delete-orphan")
   cards = relationship("CreditCardEntry", back_populates="vault", cascade="all, delete-orphan")

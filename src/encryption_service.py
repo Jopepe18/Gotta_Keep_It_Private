@@ -1,6 +1,8 @@
 import hashlib
 import secrets
 import base64
+import os
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 class EncryptionService:
     """
@@ -34,17 +36,50 @@ class EncryptionService:
             # Malformed hash
             return False
 
-    def generate_token(self) -> str:
+    def encrypt_data(self, data: str | bytes, key: bytes) -> bytes:
         """
-        Generates a secure random string token.
+        KeyManager was previously handling encryption. Now EncryptionService does.
+        Encrypts data (String or Bytes) using AES-GCM.
+        
+        Args:
+            data: The text or bytes to encrypt.
+            key: The encryption key (must be 32 bytes).
         """
-        return secrets.token_urlsafe(32)
+        # 1. Convert to bytes if string
+        if isinstance(data, str):
+            data_bytes = data.encode('utf-8')
+        else:
+            data_bytes = data
 
-    def generate_secret_key(self) -> str:
+        # 2. Create AES-GCM Instance
+        aesgcm = AESGCM(key)
+
+        # 3. Create Nonce
+        nonce = os.urandom(12)
+
+        # 4. Encrypt
+        ciphertext = aesgcm.encrypt(nonce, data_bytes, None)
+
+        # 5. Return [Nonce] + [Ciphertext]
+        return nonce + ciphertext
+
+    def decrypt_data(self, encrypted_packet: bytes, key: bytes) -> bytes:
         """
-        Generates a 16-character alphanumeric secret key.
+        Decrypts the data.
+        Returns bytes! Decode if you need string.
         """
-        # Format: XXXX-XXXX-XXXX-XXXX
-        # Simple implementation
-        raw = secrets.token_hex(8).upper() # 16 chars
-        return f"{raw[:4]}-{raw[4:8]}-{raw[8:12]}-{raw[12:]}"
+        try:
+            # 1. Create AES-GCM Instance
+            aesgcm = AESGCM(key)
+
+            # 2. Separate Nonce from Ciphertext
+            nonce = encrypted_packet[:12]
+            ciphertext = encrypted_packet[12:]
+
+            # 3. Decrypt & Verify
+            plain_bytes = aesgcm.decrypt(nonce, ciphertext, None)
+            
+            return plain_bytes
+            
+        except Exception as e:
+            raise ValueError("Decryption failed. Wrong Key or Corrupted Data.") from e

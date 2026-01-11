@@ -2,6 +2,10 @@ from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import VaultModel, PasswordEntry
 from dtos import VaultCreationRequest, VaultCreationResult, PasswordDTO, ChangeEmailRequest, ChangeMasterPasswordRequest
+from Key_Manager import KeyManager
+from encryption_service import EncryptionService
+import os
+
 #σαν να είναι το Handle Credential μας, to be changed 
 class VaultManager:
     """
@@ -9,7 +13,8 @@ class VaultManager:
     Interacts with Database.
     """
     def __init__(self):
-        pass
+        self.key_manager = KeyManager()
+        self.encrypt_service = EncryptionService()
 
     def get_db(self):
         return SessionLocal()
@@ -22,30 +27,55 @@ class VaultManager:
 
         db: Session = self.get_db()
         try:
-            # Create Vault Entity!
+            # 1. Generate Salt (Τώρα ο KeyManager επιστρέφει bytes, οπότε είμαστε σωστοί)
+            kdf_salt = self.key_manager.generate_Salt()
+            
+            # 2. Generate DEK (Data Encryption Key) - Το κλειδί που κρυπτογραφεί τα δεδομένα
+            vault_dek = self.key_manager.generate_DEK()
+            
+            # 3. Derive KEK (Key Encryption Key) από το Password + Salt
+            # Το derive_key του KeyManager περιμένει (str, bytes), που είναι ακριβώς αυτά που έχουμε τώρα.
+            kek = self.key_manager.derive_key(request.password, kdf_salt)
+            
+            # 4. Encrypt the DEK (Key Wrapping)
+            # Το encrypt_data επιστρέφει bytes, άρα το αποθηκεύουμε απευθείας.
+            encrypted_vault_key = self.encrypt_service.encrypt_data(vault_dek, kek)
+
+            print(f"DEBUG: Salt type: {type(kdf_salt)}, Encrypted Key type: {type(encrypted_vault_key)}")
+
+            # 5. Create Vault Entity
             new_vault = VaultModel(
-                user_id=request.user_id, #!!!εδώ γινεται η διασύνδεση vault με user id
-                name=request.vault_name
+                user_id=request.user_id,
+                name=request.vault_name,
+                kdf_salt=kdf_salt,                 # LargeBinary (bytes)
+                encrypted_vault_key=encrypted_vault_key, # LargeBinary (bytes)
+                recovery_salt=None,
+                recovery_encrypted_key=None
             )
+            
             db.add(new_vault)
             db.commit()
             db.refresh(new_vault)
 
             print("VaultManager: Vault created successfully in DB")
-            # Return Result
 
             return VaultCreationResult(
                 success=True, 
                 message="Vault Created Successfully", 
                 vault_id=new_vault.vault_id,
-                recovery_key="generated-recovery-key-placeholder"  #not used yet, επειδή μάλλον θα υλοποιήσουμε recovery στο state του user, και όχι στο vault
+                recovery_key="pending-implementation"
             )
+
         except Exception as e:
-            print(f"VaultManager: Error creating vault: {e}")
-            return VaultCreationResult(success=False, message=str(e))
+            db.rollback() # Πολύ σημαντικό να κάνουμε rollback σε error
+            print(f"VaultManager ERROR: {e}")
+            import traceback
+            traceback.print_exc() # Αυτό θα σου δείξει όλο το error στο τερματικό
+            return VaultCreationResult(success=False, message=f"System Error: {str(e)}")
+            
         finally:
             db.close()
-
+            
     def add_debug_password(self, user_id: str) -> bool:
         db: Session = self.get_db()
         try:
