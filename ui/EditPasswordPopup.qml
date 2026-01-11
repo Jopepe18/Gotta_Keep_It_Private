@@ -7,12 +7,12 @@ Window {
     id: root
     width: 500
     height: 720
-    title: "Edit Password"
+    title: "Edit password" // Changed
     modality: Qt.ApplicationModal
     flags: Qt.Dialog
     color: "#1E2634"
 
-    // Aliases για να γεμίζουν τα πεδία αυτόματα
+    // Aliases για να περνάμε τα δεδομένα από το PasswordsPage
     property int itemId: -1
     property alias titleText: titleInput.text
     property alias usernameText: usernameInput.text
@@ -28,7 +28,7 @@ Window {
         spacing: 20
 
         Label {
-            text: "Edit Password"
+            text: "Edit password" // Changed
             color: "white"
             font.pixelSize: 24
             font.bold: true
@@ -146,7 +146,7 @@ Window {
             }
 
             Button {
-                text: "Save Changes"
+                text: "Save changes" // Changed
                 font.pixelSize: 16
                 Layout.preferredWidth: 160
                 Layout.preferredHeight: 45
@@ -159,4 +159,3 @@ Window {
             }
         }
     }
-}
