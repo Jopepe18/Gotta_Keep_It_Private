@@ -5,10 +5,6 @@ from dtos import VaultCreationRequest, VaultCreationResult, PasswordDTO, ChangeE
 from encryption_service import EncryptionService
 
 class VaultManager:
-    """
-    Manages logic for Vault creation, item management (CRUD), and settings.
-    Interacts directly with the Database.
-    """
     def __init__(self):
         self.encrypt_service = EncryptionService()
 
