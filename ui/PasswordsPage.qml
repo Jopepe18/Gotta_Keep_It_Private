@@ -199,7 +199,7 @@ Item{
                             Layout.preferredHeight:45
                             padding:0
                             text: "Debug Add"
-                            visible: false
+                            visible: true
                             
                             contentItem: Text {
                                 text: addPasswordDebug.text

@@ -38,7 +38,7 @@ if __name__ == "__main__":
     engine.rootContext().setContextProperty("menuBackend", menu_backend)
     engine.rootContext().setContextProperty("vaultBackend", vault_backend)
 
-    #root_context.setContextProperty("watchTowerBackend", watchtower_backend)
+    engine.rootContext().setContextProperty("watchTowerBackend", watchtower_backend)
     
     current_dir = os.path.dirname(os.path.abspath(__file__))
     qml_file_path = os.path.join(current_dir, "../ui/Main.qml")
