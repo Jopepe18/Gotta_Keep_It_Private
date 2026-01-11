@@ -7,7 +7,7 @@ Window {
     id: root
     width: 500
     height: 720
-    title: "Add password" // Changed
+    title: "Add Password"
     modality: Qt.ApplicationModal 
     flags: Qt.Dialog
     color: "#1E2634"
@@ -20,7 +20,7 @@ Window {
         spacing: 20
 
         Label {
-            text: "Add new password" // Changed
+            text: "Add New Password"
             color: "white"
             font.pixelSize: 24
             font.bold: true
@@ -30,7 +30,7 @@ Window {
         // Title
         ColumnLayout {
             spacing: 5
-            Label { text: "Title"; color: "#B5B5B5"; font.pixelSize: 14 }
+            Label { text: "Title (e.g. Gmail)"; color: "#B5B5B5"; font.pixelSize: 14 }
             TextField {
                 id: titleInput
                 Layout.fillWidth: true
@@ -44,7 +44,7 @@ Window {
         // Username
         ColumnLayout {
             spacing: 5
-            Label { text: "Username / email"; color: "#B5B5B5"; font.pixelSize: 14 } // Changed
+            Label { text: "Username / Email"; color: "#B5B5B5"; font.pixelSize: 14 }
             TextField {
                 id: usernameInput
                 Layout.fillWidth: true
