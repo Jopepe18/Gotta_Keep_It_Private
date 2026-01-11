@@ -132,6 +132,44 @@ class AuthenticationManager:
             if request.new_password != request.confirm_password:
                 return False
 
+            # --- RECOVERY LOGIC (UC-CP) ---
+            from models import VaultModel
+            vault = db.query(VaultModel).filter(VaultModel.user_id == user.user_id).first()
+            
+            if not vault:
+                print("AuthManager: No vault found for user during recovery.")
+                # if no vault, just update password 
+            
+            # If vault exists, we MUST re-encrypt keys
+            if vault and vault.recovery_encrypted_key and vault.recovery_salt:
+                 print("AuthManager: Attempting to recover vault keys...")
+                 try:
+                     # 2.1 Derive Recovery CEK
+                     recovery_cek = self.key_manager.derive_key(request.secret_key, vault.recovery_salt)
+                     
+                     # 2.2 Decrypt DEK (Unwrap)
+                     vault_dek = self.encrypt_service.decrypt_data(vault.recovery_encrypted_key, recovery_cek)
+                     
+                     # 2.3 Derive NEW KEK
+                     
+                     new_kdf_salt = self.key_manager.generate_Salt()
+                     new_kek = self.key_manager.derive_key(request.new_password, new_kdf_salt)
+                     
+                     # 2.4 Re-Encrypt DEK (Rewrap)
+                     new_encrypted_vault_key = self.encrypt_service.encrypt_data(vault_dek, new_kek)
+                     
+                     # 2.5 Update Vault
+                     vault.kdf_salt = new_kdf_salt
+                     vault.encrypted_vault_key = new_encrypted_vault_key
+                     print("AuthManager: Vault keys re-encrypted successfully.")
+                     
+                 except Exception as e:
+                     print(f"AuthManager: Failed to recover vault keys: {e}")
+                     return False
+            elif vault:
+                print("AuthManager: Vault exists but NO RECOVERY DATA found. Data will be LOST.")
+              
+            
             # 3. Update Password
             user.password_hash = self.encrypt_service.hash_password(request.new_password)
             db.commit()

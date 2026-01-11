@@ -41,6 +41,26 @@ class VaultManager:
             # Το encrypt_data επιστρέφει bytes, άρα το αποθηκεύουμε απευθείας.
             encrypted_vault_key = self.encrypt_service.encrypt_data(vault_dek, kek)
 
+            # --- RECOVERY KEY INTEGRATION (UC-SK) ---
+            from models import UserModel
+            user = db.query(UserModel).filter(UserModel.user_id == request.user_id).first()
+            
+            recovery_salt = None
+            recovery_encrypted_key = None
+            
+            if user and user.secret_key:
+                print(f"VaultManager: Encrypting Vault Key with Recovery Key for User {request.user_id}")
+                # 4.1 Generate Recovery Salt
+                recovery_salt = self.key_manager.generate_Salt()
+                
+                # 4.2 Derive Recovery KEK (Key Encryption Key) from Secret Key
+                recovery_cek = self.key_manager.derive_key(user.secret_key, recovery_salt)
+                
+                # 4.3 Encrypt the DEK with the Recovery KEK
+                recovery_encrypted_key = self.encrypt_service.encrypt_data(vault_dek, recovery_cek)
+            else:
+                print("VaultManager: WARNING - No secret_key found for user. Vault will NOT be recoverable via Forgot Password.")
+
             print(f"DEBUG: Salt type: {type(kdf_salt)}, Encrypted Key type: {type(encrypted_vault_key)}")
 
             # 5. Create Vault Entity
@@ -49,8 +69,8 @@ class VaultManager:
                 name=request.vault_name,
                 kdf_salt=kdf_salt,                 # LargeBinary (bytes)
                 encrypted_vault_key=encrypted_vault_key, # LargeBinary (bytes)
-                recovery_salt=None,
-                recovery_encrypted_key=None
+                recovery_salt=recovery_salt,       # LargeBinary (bytes)
+                recovery_encrypted_key=recovery_encrypted_key # LargeBinary (bytes)
             )
             
             db.add(new_vault)
