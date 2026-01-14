@@ -15,7 +15,7 @@ Item {
     height: 1080
 
     signal loginRequested()
-    signal registerSuccess(string key, string userId)
+    signal registerSuccess(string key, string userId, string password)
 
     property bool visiblePassword: false
 
@@ -26,7 +26,7 @@ Item {
                 console.log("Registration successful: " + message)
                 message_text.color = "green"
                 message_text.text = "Success"
-                root.registerSuccess(secret_key, user_id)
+                root.registerSuccess(secret_key, user_id, textfield_password.text)
             } else {
                 console.log("Registration failed: " + message)
                 message_text.color = "#c50000"

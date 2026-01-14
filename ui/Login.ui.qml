@@ -8,7 +8,7 @@ Item {
     height: 1080
 
     signal registerRequested()
-    signal loginSuccess(string secretKey, string userId, bool hasVault)
+    signal loginSuccess(string secretKey, string userId, bool hasVault, string password)
     signal forgotPasswordRequested()
     signal loadMain()
 
@@ -24,7 +24,7 @@ Item {
                 console.log("Login success: " + message)
                 message_text.color = "green"
                 message_text.text = message
-                root.loginSuccess(secret_key, user_id, has_vault)
+                root.loginSuccess(secret_key, user_id, has_vault, textfield_password.text)
             } else {
                 console.log("Login failed: " + message)
                 message_text.color = "#c50000"

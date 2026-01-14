@@ -97,7 +97,9 @@ Item {
                         opacity: enabled ? 1.0 : 0.5
                         onClicked: {
                             console.log("Creating vault for user: " + root.userIdString)
-                            vaultBackend.create_vault(root.userIdString, "My New Vault", "", "")
+                            // Use the captured password from Main (window)
+                            var pwd = window.currentTempPassword
+                            vaultBackend.create_vault(root.userIdString, "My New Vault", pwd, pwd)
                         }
                     }
 

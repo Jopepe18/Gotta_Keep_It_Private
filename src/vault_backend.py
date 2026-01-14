@@ -82,18 +82,24 @@ class VaultBackend(QObject):
                 "title": p.title,
                 "username": p.username,
                 "website": p.website,
-                "is_favorite": p.is_favorite
+                "is_favorite": p.is_favorite,
+                "password": p.encrypted_password, # currently returning encrypted, TODO: decrypt if needed
+                "note": p.note,
+                "created_at": p.created_at.strftime("%Y-%m-%d %H:%M:%S") if p.created_at else "",
+                "last_modified": p.last_modified.strftime("%Y-%m-%d %H:%M:%S") if p.last_modified else ""
             }
             for p in passwords
         ]
         print(f"VaultBackend: Emitting {len(passwords_list)} passwords")
         self.passwords_updated.emit(passwords_list)
         
-    # @Slot
-    #def toggleFavorite(self, user_id, password_id):
-    #print(f"Vault Backend: Toggle favoirte for password {password_id}")
-    #result = self.manager.toggle_favorite(password_id)
-    #if result["success"]:
-    #self.getPasswords(user_id)
-    #else: 
-    #print(f"VaultBackend: Failed to toggle favoirte - {result.get('message')}")
+    @Slot(int, str)
+    def deletePassword(self, password_id, user_id):
+        print(f"VaultBackend: Deleting password {password_id} for user {user_id}")
+        result = self.manager.delete_password(password_id)
+        if result["success"]:
+            self.operation_finished.emit(True, result["message"])
+            # Refresh the list
+            self.getPasswords(user_id)
+        else:
+            self.operation_finished.emit(False, result["message"])

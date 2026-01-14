@@ -4,8 +4,9 @@ import QtQuick.Layouts
 
 Item{
     id: passwordsPage
-    width: 1300
-    height: 1080
+    // width: 1300  <-- Removed to allow responsive resizing
+    // height: 1080 <-- Removed to allow responsive resizing
+    anchors.fill: parent
 
     property bool showFavorites: false
     property bool visibilityOn: false
@@ -251,103 +252,111 @@ Item{
                         }
                     }
 
-                    ScrollView{
-                        id: passwordItemsScrollView
-                        Layout.fillHeight:true
+                    ListView {
+                        id: passwordListView
+                        Layout.fillHeight: true
                         Layout.fillWidth: true
-                        clip: true // Ensure content doesn't overflow
-                        
-                        ColumnLayout {
-                            width: passwordItemsScrollView.width
-                            spacing: 10
-                            
-                            Repeater {
-                                model: passwordsPage.passwordsList
+                        clip: true
+                        spacing: 10
+                        model: passwordsPage.passwordsList
 
-                                delegate: Rectangle {
-                                    id: delegateRect
-                                    height: 70
-                                    width: parent.width
-                                    radius: 10
+                        delegate: Rectangle {
+                            id: delegateRect
+                            height: 70
+                            width: passwordListView.width // Use ListView width
+                            radius: 10
 
-                                    property bool selected: false
-                                    property bool hovered: false
+                            property bool selected: false
+                            property bool hovered: false
 
-
-                                    color: (selectedPassword && selectedPassword.id === modelData.id) ? "#111B2C" : 
-                                    (selected ? "#424D61" : 
-                                     hovered ? "#2A3444" : "#1E2634")
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        onEntered: delegateRect.hovered = true
-                                        onExited: delegateRect.hovered = false
-                                        onPressed: delegateRect.selected = true
-                                        onReleased: delegateRect.selected = false
-                                        onClicked:{
-                                            passwordsPage.selectedPassword = modelData
-                                            console.log("Selected password: ", modelData.title)
-                                        }
-                                    }
+                            color: (selectedPassword && selectedPassword.id === modelData.id) ? "#111B2C" : 
+                            (selected ? "#424D61" : 
+                                hovered ? "#2A3444" : "#1E2634")
+                            MouseArea {
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                onEntered: delegateRect.hovered = true
+                                onExited: delegateRect.hovered = false
+                                onPressed: delegateRect.selected = true
+                                onReleased: delegateRect.selected = false
+                                onClicked:{
+                                    passwordsPage.selectedPassword = modelData
+                                    console.log("Selected password: ", modelData.title)
                                     
-                                    RowLayout {
-                                        anchors.fill: parent
-                                        anchors.leftMargin: 30
-                                        anchors.topMargin: 10
-                                        anchors.bottomMargin: 10
-                                        spacing: 45
-                                        
-                                        Button{
-                                            Layout.preferredHeight: 40
-                                            Layout.preferredWidth: 40
-                                            background: Rectangle{
-                                                color: "transparent"
-                                            }
+                                    // Open View Popup
+                                    viewPasswordPopUp.itemId = modelData.id
+                                    viewPasswordPopUp.userId = passwordsPage.userId
+                                    viewPasswordPopUp.titleText = modelData.title || ""
+                                    viewPasswordPopUp.usernameText = modelData.username || ""
+                                    viewPasswordPopUp.passwordText = modelData.password || ""
+                                    viewPasswordPopUp.websiteText = modelData.website || ""
+                                    viewPasswordPopUp.noteText = modelData.note || ""
+                                    viewPasswordPopUp.createdText = modelData.created_at || ""
+                                    viewPasswordPopUp.lastModifiedText = modelData.last_modified || ""
+                                    viewPasswordPopUp.show()
+                                }
+                            }
+                            
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 30
+                                anchors.topMargin: 10
+                                anchors.bottomMargin: 10
+                                spacing: 45
+                                
+                                Button{
+                                    Layout.preferredHeight: 40
+                                    Layout.preferredWidth: 40
+                                    background: Rectangle{
+                                        color: "transparent"
+                                    }
 
-                                            contentItem: Image {
-                                                source: modelData.is_favorite ? "../imgs/favorite.png" : "../imgs/not_favoriteStar.png"
-                                                width: 20
-                                                height: 20
-                                            }
-                                            onClicked:{
-                                                modelData.is_favorite = !modelData.is_favorite
-                                            }    
-                                        }
+                                    contentItem: Image {
+                                        source: modelData.is_favorite ? "../imgs/favorite.png" : "../imgs/not_favoriteStar.png"
+                                        width: 20
+                                        height: 20
+                                    }
+                                    onClicked:{
+                                        modelData.is_favorite = !modelData.is_favorite
+                                    }    
+                                }
 
-                                        Image{
-                                            source: "https://www.google.com/s2/favicons?domain="+ modelData.Website + "&sz=40"
-                                            Layout.preferredWidth: 45
-                                            Layout.preferredHeight: 45
+                                Image{
+                                    source: "https://www.google.com/s2/favicons?domain="+ modelData.Website + "&sz=40"
+                                    Layout.preferredWidth: 45
+                                    Layout.preferredHeight: 45
 
-                                            onStatusChanged: {
-                                                if(status === Image.Error){
-                                                    source = "../imgs/placeholders/google.png"
-                                                }
-                                            }
-                                        }
-                                        
-                                        ColumnLayout{
-                                            Layout.fillHeight: true
-                                            Layout.fillWidth: true
-
-                                            // Title
-                                        Text {
-                                            text: modelData.title
-                                            color: "white"
-                                            font.pixelSize: 18
-                                            Layout.fillWidth: true
-                                        }
-                                        
-                                        // Updates
-                                        Text {
-                                            text: modelData.username
-                                            color: "#B5B5B5"
-                                            font.pixelSize: 14
-                                        }
+                                    onStatusChanged: {
+                                        if(status === Image.Error){
+                                            source = "../imgs/placeholders/google.png"
                                         }
                                     }
                                 }
+                                
+                                ColumnLayout{
+                                    Layout.fillHeight: true
+                                    Layout.fillWidth: true
+
+                                    // Title
+                                    Text {
+                                        text: modelData.title
+                                        color: "white"
+                                        font.pixelSize: 18
+                                        Layout.fillWidth: true
+                                    }
+                                    
+                                    // Updates
+                                    Text {
+                                        text: modelData.username
+                                        color: "#B5B5B5"
+                                        font.pixelSize: 14
+                                    }
+                                }
                             }
+                        }
+                        
+                        footer: Item {
+                            height: 50
                         }
                     }
 
@@ -756,5 +765,10 @@ Item{
                 }
 
             }
-        }    
+        }
+
+    
+    ViewPasswordPopUp {
+        id: viewPasswordPopUp
+    }    
 }

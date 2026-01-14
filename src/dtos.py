@@ -83,6 +83,10 @@ class PasswordDTO:
     username: str
     website: str
     is_favorite: bool
+    encrypted_password: str = ""
+    note: Optional[str] = None
+    created_at: Optional[datetime] = None
+    last_modified: Optional[datetime] = None
 
 @dataclass
 class SecurityReport:

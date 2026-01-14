@@ -141,7 +141,11 @@ class VaultManager:
                     title=p.title,
                     username=p.username,
                     website=p.website,
-                    is_favorite=p.is_favorite
+                    is_favorite=p.is_favorite,
+                    encrypted_password=p.encrypted_password,
+                    note=p.note,
+                    created_at=p.created_at,
+                    last_modified=p.last_modified
                 ) for p in passwords
             ]
         finally:
@@ -290,6 +294,26 @@ class VaultManager:
             return {"success": True, "message": "Vault deleted successfully"}
         except Exception as e:
             print(f"VaultManager: Error deleting account: {e}")
+            return {"success": False, "message": str(e)}
+        finally:
+            db.close()
+
+    def delete_password(self, password_id: int) -> dict:
+        """
+        Deletes a password entry by its ID.
+        """
+        db: Session = self.get_db()
+        try:
+            password_entry = db.query(PasswordEntry).filter(PasswordEntry.id == password_id).first()
+            if not password_entry:
+                return {"success": False, "message": "Password entry not found"}
+            
+            db.delete(password_entry)
+            db.commit()
+            print(f"VaultManager: Password {password_id} deleted successfully")
+            return {"success": True, "message": "Password deleted successfully"}
+        except Exception as e:
+            print(f"VaultManager: Error deleting password: {e}")
             return {"success": False, "message": str(e)}
         finally:
             db.close()

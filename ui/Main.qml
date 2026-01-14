@@ -8,6 +8,7 @@ Window {
     visible: true
     title: qsTr("Gotta Keep It Private")
     property string currentUserId: ""
+    property string currentTempPassword: "" // Store for vault creation
     property bool userHasVault: false
 
     StackView {
@@ -45,10 +46,11 @@ Window {
             onRegisterRequested: {
                 stackView.push(registerComponent)
             }
-            onLoginSuccess: function(secretKey, userId, hasVault) {
+            onLoginSuccess: function(secretKey, userId, hasVault, password) {
                 // Set Global User ID and Vault State
                 window.currentUserId = userId
                 window.userHasVault = hasVault
+                window.currentTempPassword = password
                 console.log("Main: User ID set to " + userId + ", HasVault=" + hasVault)
                 
                 // Navigate
@@ -73,9 +75,10 @@ Window {
             id: registerComponent
             Register {
                 onLoginRequested: stackView.pop()
-                onRegisterSuccess: function(key, userId) {
+                onRegisterSuccess: function(key, userId, password) {
                      window.currentUserId = userId
                      window.userHasVault = false // New users don't have vaults
+                     window.currentTempPassword = password
                      console.log("Main: User ID set to " + userId)
                      stackView.push(secretKeyComponent, {secretKey: key})
                 }
