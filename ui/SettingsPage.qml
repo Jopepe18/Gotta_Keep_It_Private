@@ -108,18 +108,18 @@ Item{
         nameFilters: ["JSON files (*.json)"]
         
         onAccepted: {
-            // Step 3: Send to Python!
-            // selectedFile gives a URL like "file:///C:/path/file.json"
-            let path = selectedFile.toString()
+            // selectedFile gives a URL like "file:///path/file.json"
+            // Convert to local path for Python by removing the "file://" prefix
+            let path = selectedFile.toString().replace(/^file:\/\//, "")
             
-            // Call your python function
-            vaultBackend.export_vault(settingsPage.userId, settingsPage._exportPassCache, path)
+            // Call python function
+            vaultBackend.export_vault(settingsPage.userId, settingsPage._tempPass, path)
             
             // Safety: Clear the password cache
-            settingsPage._exportPassCache = ""
+            settingsPage._tempPass = ""
         }
         onRejected: {
-            settingsPage._exportPassCache = "" // Clear if they cancel
+            settingsPage._tempPass = "" // Clear if they cancel
         }
     }
 
@@ -488,8 +488,8 @@ Item{
 
                                 onClicked: {
                                     settingsPage.pendingAction = "EXPORT"
+                                    genericPasswordPopup.titleText = "Enter Password to Export Vault"
                                     genericPasswordPopup.open()
-                                    genericPasswordPopup.title = "Enter Password to Export Vault"
                                 }
                             }
                         }

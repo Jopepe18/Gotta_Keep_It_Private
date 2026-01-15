@@ -19,6 +19,7 @@ Item {
     property alias rectangle_subColor: rectangle_login_sub.color
 
     property string userIdString: ""
+    property string vaultPassword: "" // Password for vault creation
     property bool hasExistingVault: false
 
     signal logoutClicked()
@@ -96,10 +97,8 @@ Item {
                         enabled: !root.hasExistingVault
                         opacity: enabled ? 1.0 : 0.5
                         onClicked: {
-                            console.log("Creating vault for user: " + root.userIdString)
-                            // Use the captured password from Main (window)
-                            var pwd = window.currentTempPassword
-                            vaultBackend.create_vault(root.userIdString, "My New Vault", pwd, pwd)
+                            console.log("Creating vault for user: " + root.userIdString + " with password length: " + root.vaultPassword.length)
+                            vaultBackend.create_vault(root.userIdString, "My New Vault", root.vaultPassword, root.vaultPassword)
                         }
                     }
 

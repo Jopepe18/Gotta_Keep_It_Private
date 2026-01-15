@@ -96,6 +96,7 @@ Window {
             id: vaultRouterComponent
             VaultRouterScreen {
                 userIdString: window.currentUserId
+                vaultPassword: window.currentTempPassword
                 hasExistingVault: window.userHasVault
                 onLogoutClicked: stackView.pop(null) // Pop to root (Login)
                 onLoadMain: stackView.push(loadMainScreenComponent)

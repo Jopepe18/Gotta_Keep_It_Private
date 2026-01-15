@@ -82,12 +82,29 @@ class VaultBackend(QObject):
                 "title": p.title,
                 "username": p.username,
                 "website": p.website,
-                "is_favorite": p.is_favorite
+                "is_favorite": p.is_favorite,
+                "password": "••••••••",  # Placeholder - actual password decrypted on demand
+                "note": p.note or "",
+                "created_at": p.created_at.strftime("%Y-%m-%d %H:%M:%S") if p.created_at else "",
+                "last_modified": p.last_modified.strftime("%Y-%m-%d %H:%M:%S") if p.last_modified else ""
             }
             for p in passwords
         ]
         print(f"VaultBackend: Emitting {len(passwords_list)} passwords")
         self.passwords_updated.emit(passwords_list)
+
+    # Signal to return decrypted password details
+    password_decrypted = Signal(bool, str, str)  # success, password, message
+    
+    @Slot(str, int)
+    def decryptPassword(self, user_id, password_id):
+        """Decrypt a single password entry for viewing"""
+        print(f"VaultBackend: Decrypting password {password_id} for user {user_id}")
+        result = self.manager.get_decrypted_password(user_id, password_id)
+        if result["success"]:
+            self.password_decrypted.emit(True, result["password"], "")
+        else:
+            self.password_decrypted.emit(False, "", result["message"])
         
     # @Slot
     #def toggleFavorite(self, user_id, password_id):
@@ -98,10 +115,24 @@ class VaultBackend(QObject):
     #else: 
     #print(f"VaultBackend: Failed to toggle favoirte - {result.get('message')}")
 
-    @Slot(str, str) # Takes user_id and password
-    def handle_export(self, user_id, password):
+    @Slot(int, str)
+    def deletePassword(self, password_id, user_id):
+        print(f"VaultBackend: Deleting password {password_id} for user {user_id}")
+        result = self.manager.delete_password(password_id)
+        if result["success"]:
+            self.operation_finished.emit(True, result["message"])
+            # Refresh the list
+            self.getPasswords(user_id)
+        else:
+            self.operation_finished.emit(False, result["message"])
 
-        result = self.manager.export_vault(user_id, password, "passwords.json")
-        print(result["message"])
+    @Slot(str, str, str) # User ID, Password, File Path
+    def export_vault(self, user_id, password, file_path):
+        print(f"VaultBackend: Exporting vault for {user_id} to {file_path}")
+        result = self.manager.export_vault(user_id, password, file_path)
+        if result["success"]:
+             self.operation_finished.emit(True, result["message"])
+        else:
+             self.operation_finished.emit(False, result["message"])
 
     

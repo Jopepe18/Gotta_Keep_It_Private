@@ -21,6 +21,14 @@ Item{
             console.log("Passwords Page: List updated with " + updatedList.length + " items")
             passwordsPage.passwordsList = updatedList
         }
+        function onPassword_decrypted(success, password, message) {
+            if (success) {
+                viewPasswordPopUp.passwordText = password
+            } else {
+                console.log("Failed to decrypt password: " + message)
+                viewPasswordPopUp.passwordText = "[Decryption failed]"
+            }
+        }
     }
 
     onUserIdChanged: {
@@ -288,12 +296,15 @@ Item{
                                     viewPasswordPopUp.userId = passwordsPage.userId
                                     viewPasswordPopUp.titleText = modelData.title || ""
                                     viewPasswordPopUp.usernameText = modelData.username || ""
-                                    viewPasswordPopUp.passwordText = modelData.password || ""
+                                    viewPasswordPopUp.passwordText = "Loading..."  // Will be updated async
                                     viewPasswordPopUp.websiteText = modelData.website || ""
                                     viewPasswordPopUp.noteText = modelData.note || ""
                                     viewPasswordPopUp.createdText = modelData.created_at || ""
                                     viewPasswordPopUp.lastModifiedText = modelData.last_modified || ""
                                     viewPasswordPopUp.show()
+                                    
+                                    // Request password decryption
+                                    vaultBackend.decryptPassword(passwordsPage.userId, modelData.id)
                                 }
                             }
                             

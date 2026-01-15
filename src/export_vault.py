@@ -5,7 +5,8 @@ from Key_Manager import KeyManager
 from encryption_service import EncryptionService
 from models import VaultModel, PasswordEntry, UserModel
 import os 
-
+#currently not used,, export vault implemented from vault_manager.py
+#  sorry ιωαννα :)
 
 class export_vault:
 

@@ -22,6 +22,7 @@ class VaultManager:
 
     def create_new_vault(self, request: VaultCreationRequest) -> VaultCreationResult:
         print(f"VaultManager: Creating vault for User {request.user_id} with Name {request.vault_name}")
+        print(f"VaultManager DEBUG: Password received (length): {len(request.password)}")
 
         if request.password != request.confirm_password:
              return VaultCreationResult(success=False, message="Vault passwords do not match")
@@ -98,29 +99,53 @@ class VaultManager:
             db.close()
             
     def add_debug_password(self, user_id: str) -> bool:
+        """
+        Adds a debug password entry. 
+        NOTE: This creates an entry with a properly encrypted password.
+        We use the recovery key to decrypt the DEK since we don't have the user's password here.
+        """
         db: Session = self.get_db()
         try:
-            # Get Vault ID
+            # Get Vault and User
             vault = db.query(VaultModel).filter(VaultModel.user_id == user_id).first()
             if not vault:
                 print("VaultManager: No vault found for user")
                 return False
+            
+            user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
+            if not user or not user.secret_key:
+                print("VaultManager: No user or secret key found")
+                return False
+            
+            # Decrypt the DEK using the recovery key
+            if not vault.recovery_salt or not vault.recovery_encrypted_key:
+                print("VaultManager: No recovery data - cannot encrypt debug password")
+                return False
+            
+            recovery_kek = self.key_manager.derive_key(user.secret_key, vault.recovery_salt)
+            vault_dek = self.encrypt_service.decrypt_data(vault.recovery_encrypted_key, recovery_kek)
+            
+            # Encrypt the debug password properly
+            debug_plain_password = "DebugPassword123!"
+            encrypted_password = self.encrypt_service.encrypt_data(debug_plain_password, vault_dek)
 
-            # Create Password Entry
+            # Create Password Entry with PROPERLY ENCRYPTED password
             new_pass = PasswordEntry(
                 vault_id=vault.vault_id,
                 title="Debug Password Service",
                 username="debug_user@example.com",
                 website="www.debug-service.com",
-                encrypted_password="encrypted_dummy_password", 
+                encrypted_password=encrypted_password,  # Now properly encrypted!
                 note="This is a debug entry, remove before release"
             )
             db.add(new_pass)
             db.commit()
-            print("VaultManager: Debug password added")
+            print("VaultManager: Debug password added (encrypted)")
             return True
         except Exception as e:
             print(f"VaultManager: Error adding debug password: {e}")
+            import traceback
+            traceback.print_exc()
             return False
         finally:
             db.close()
@@ -149,6 +174,46 @@ class VaultManager:
                     last_modified=p.last_modified
                 ) for p in passwords
             ]
+        finally:
+            db.close()
+
+    def get_decrypted_password(self, user_id: str, password_id: int) -> dict:
+        """
+        Decrypts a single password entry using the recovery key.
+        Used when user wants to view the actual password.
+        """
+        db: Session = self.get_db()
+        try:
+            # Get user, vault, and password entry
+            user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
+            if not user or not user.secret_key:
+                return {"success": False, "message": "User not found or missing secret key"}
+            
+            vault = db.query(VaultModel).filter(VaultModel.user_id == user_id).first()
+            if not vault:
+                return {"success": False, "message": "Vault not found"}
+            
+            password_entry = db.query(PasswordEntry).filter(PasswordEntry.id == password_id).first()
+            if not password_entry:
+                return {"success": False, "message": "Password entry not found"}
+            
+            # Decrypt DEK using recovery key
+            if not vault.recovery_salt or not vault.recovery_encrypted_key:
+                return {"success": False, "message": "Vault recovery data missing"}
+            
+            recovery_kek = self.key_manager.derive_key(user.secret_key, vault.recovery_salt)
+            vault_dek = self.encrypt_service.decrypt_data(vault.recovery_encrypted_key, recovery_kek)
+            
+            # Decrypt the password
+            decrypted_password = self.encrypt_service.decrypt_data(password_entry.encrypted_password, vault_dek)
+            
+            return {
+                "success": True,
+                "password": decrypted_password.decode('utf-8')
+            }
+        except Exception as e:
+            print(f"VaultManager: Error decrypting password: {e}")
+            return {"success": False, "message": str(e)}
         finally:
             db.close()
 
@@ -324,6 +389,9 @@ class VaultManager:
     def export_vault(self, user_id: str, provided_password: str, file_path: str) -> dict:
         db: Session = self.get_db()
         try:
+            print(f"EXPORT DEBUG: Starting export for user {user_id}")
+            print(f"EXPORT DEBUG: Password received (length): {len(provided_password)}")
+            
             # 1. Fetch the vault and its entries and the User
             user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
             if not user:
@@ -332,15 +400,28 @@ class VaultManager:
             if not vault:
                 return {"success": False, "message": "Vault not found"}
 
+            print(f"EXPORT DEBUG: User found, vault_id={vault.vault_id}")
+            print(f"EXPORT DEBUG: kdf_salt type={type(vault.kdf_salt)}, length={len(vault.kdf_salt) if vault.kdf_salt else 'None'}")
+            print(f"EXPORT DEBUG: encrypted_vault_key type={type(vault.encrypted_vault_key)}, length={len(vault.encrypted_vault_key) if vault.encrypted_vault_key else 'None'}")
+
             # 2. VERIFY: Check if the password is correct before proceeding
             if not self.encrypt_service.verify_password(provided_password, user.password_hash):
                 return {"success": False, "message": "Invalid Master Password"}
 
+            print("EXPORT DEBUG: Password verification PASSED")
+
+            # 2.5. VALIDATE: Check vault has required encryption data
+            if not vault.kdf_salt or not vault.encrypted_vault_key:
+                return {"success": False, "message": "Vault encryption data is missing or corrupted. Please delete and recreate your vault."}
 
             # 3. UNWRAP: Derive KEK to decrypt the Vault's DEK
-            # Assuming your KeyManager has a derive_key function
+            print(f"EXPORT DEBUG: Deriving KEK from password (length {len(provided_password)}) and salt")
             kek = self.key_manager.derive_key(provided_password, vault.kdf_salt)
+            print(f"EXPORT DEBUG: KEK derived, length={len(kek)}")
+            
+            print(f"EXPORT DEBUG: Attempting to decrypt vault key...")
             dek = self.encrypt_service.decrypt_data(vault.encrypted_vault_key, kek)
+            print(f"EXPORT DEBUG: DEK decrypted successfully, length={len(dek)}")
             
             
             # 4. DECRYPT ENTRIES: Get all passwords and decrypt them
