@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Dialogs // for FileDialog
 
 Item{
     id: settingsPage
@@ -11,6 +12,8 @@ Item{
     property string pendingAction: "" // "email" or "password"
     property string currentUsername: "Loading..."
     property string currentEmail: "Loading..."
+    property string _tempPass: ""  //save password while the user picks a file location
+    
 
     Component.onCompleted: {
         if(userId !== "") {
@@ -82,6 +85,41 @@ Item{
             } else if (settingsPage.pendingAction === "password") {
                 vaultBackend.changeMasterPassword(settingsPage.userId, currentPasswordTextField.text, newPasswordfTextField.text)
             }
+        }
+    }
+
+    //import and export
+    PasswordPrompt {
+        id: genericPasswordPopup
+        onConfirmed: (password) => {
+            if (settingsPage.pendingAction === "EXPORT") {
+                settingsPage._tempPass = password
+                exportFileDialog.open()
+            } else if (settingsPage.pendingAction === "IMPORT") {
+                // open import dialog...
+            }
+        }
+    }
+
+    FileDialog {
+        id: exportFileDialog
+        title: "Choose where to save your export"
+        fileMode: FileDialog.SaveFile
+        nameFilters: ["JSON files (*.json)"]
+        
+        onAccepted: {
+            // Step 3: Send to Python!
+            // selectedFile gives a URL like "file:///C:/path/file.json"
+            let path = selectedFile.toString()
+            
+            // Call your python function
+            vaultBackend.export_vault(settingsPage.userId, settingsPage._exportPassCache, path)
+            
+            // Safety: Clear the password cache
+            settingsPage._exportPassCache = ""
+        }
+        onRejected: {
+            settingsPage._exportPassCache = "" // Clear if they cancel
         }
     }
 
@@ -446,6 +484,12 @@ Item{
                                     Behavior on color{
                                         ColorAnimation { duration: 150}
                                     }
+                                }
+
+                                onClicked: {
+                                    settingsPage.pendingAction = "EXPORT"
+                                    genericPasswordPopup.title = "Enter Password to Export Vault"
+                                    genericPasswordPopup.open()
                                 }
                             }
                         }
