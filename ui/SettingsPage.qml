@@ -488,8 +488,8 @@ Item{
 
                                 onClicked: {
                                     settingsPage.pendingAction = "EXPORT"
-                                    genericPasswordPopup.title = "Enter Password to Export Vault"
                                     genericPasswordPopup.open()
+                                    genericPasswordPopup.title = "Enter Password to Export Vault"
                                 }
                             }
                         }
