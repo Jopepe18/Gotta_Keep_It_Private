@@ -1,2 +1,3 @@
 PySide6==6.10.1
 SQLAlchemy==2.0.44
+cryptography==46.0.3

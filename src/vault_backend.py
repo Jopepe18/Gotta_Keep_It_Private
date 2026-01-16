@@ -105,15 +105,6 @@ class VaultBackend(QObject):
             self.password_decrypted.emit(True, result["password"], "")
         else:
             self.password_decrypted.emit(False, "", result["message"])
-        
-    # @Slot
-    #def toggleFavorite(self, user_id, password_id):
-    #print(f"Vault Backend: Toggle favoirte for password {password_id}")
-    #result = self.manager.toggle_favorite(password_id)
-    #if result["success"]:
-    #self.getPasswords(user_id)
-    #else: 
-    #print(f"VaultBackend: Failed to toggle favoirte - {result.get('message')}")
 
     @Slot(int, str)
     def deletePassword(self, password_id, user_id):
@@ -134,5 +125,21 @@ class VaultBackend(QObject):
              self.operation_finished.emit(True, result["message"])
         else:
              self.operation_finished.emit(False, result["message"])
+
+
+    @Slot(str, int, bool)
+    def setFavorite(self, user_id, password_id, is_favorite):
+        print(
+            f"VaultBackend: Setting favorite for password {password_id} "
+            f"to {is_favorite}"
+        )
+
+        result = self.manager.set_favorite(user_id, password_id, is_favorite)
+
+        if result["success"]:
+           pass
+        else:
+            print("Failed to update favorite:", result.get("message"))
+
 
     

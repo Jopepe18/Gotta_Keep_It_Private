@@ -12,19 +12,24 @@ Item{
     property bool visibilityOn: false
     property string userId: ""
     property var selectedPassword: null
+    property string decryptedPassword: ""
 
     property var passwordsList: []
+    property var filteredPasswordsList: []
     
     Connections {
         target: vaultBackend
         function onPasswords_updated(updatedList) {
             console.log("Passwords Page: List updated with " + updatedList.length + " items")
             passwordsPage.passwordsList = updatedList
+            filterPasswords()
         }
         function onPassword_decrypted(success, password, message) {
             if (success) {
+                decryptedPassword = password
                 viewPasswordPopUp.passwordText = password
             } else {
+                decryptedPassword = ""
                 console.log("Failed to decrypt password: " + message)
                 viewPasswordPopUp.passwordText = "[Decryption failed]"
             }
@@ -43,6 +48,20 @@ Item{
             console.log("PasswordsPage Loaded (onCompleted). Fetching passwords for: " + passwordsPage.userId)
             vaultBackend.getPasswords(passwordsPage.userId)
         }
+    }
+
+    function filterPasswords()
+    {
+        if(!passwordsSearchTextField.text || passwordsSearchTextField.text.trim() === ""){
+            filteredPasswordsList =  passwordsList
+            return
+        }
+
+        var query = passwordsSearchTextField.text.toLowerCase()
+
+        filteredPasswordsList = passwordsList.filter(function(item){
+            return (item.title && item.title.toLowerCase().includes(query))
+        })
     }
 
     RowLayout{
@@ -105,8 +124,9 @@ Item{
                                     Layout.fillHeight: true
                                     placeholderText: "Search..."
                                     color: "white"
-                                    font.pixelSize: 16
+                                    font.pixelSize: 14
                                     id: passwordsSearchTextField
+                                    onTextChanged: filterPasswords()
 
                                     background: Rectangle{
                                         color: "transparent"
@@ -266,7 +286,7 @@ Item{
                         Layout.fillWidth: true
                         clip: true
                         spacing: 10
-                        model: passwordsPage.passwordsList
+                        model: passwordsPage.filteredPasswordsList
 
                         delegate: Rectangle {
                             id: delegateRect
@@ -290,20 +310,7 @@ Item{
                                 onClicked:{
                                     passwordsPage.selectedPassword = modelData
                                     console.log("Selected password: ", modelData.title)
-                                    
-                                    // Open View Popup
-                                    viewPasswordPopUp.itemId = modelData.id
-                                    viewPasswordPopUp.userId = passwordsPage.userId
-                                    viewPasswordPopUp.titleText = modelData.title || ""
-                                    viewPasswordPopUp.usernameText = modelData.username || ""
-                                    viewPasswordPopUp.passwordText = "Loading..."  // Will be updated async
-                                    viewPasswordPopUp.websiteText = modelData.website || ""
-                                    viewPasswordPopUp.noteText = modelData.note || ""
-                                    viewPasswordPopUp.createdText = modelData.created_at || ""
-                                    viewPasswordPopUp.lastModifiedText = modelData.last_modified || ""
-                                    viewPasswordPopUp.show()
-                                    
-                                    // Request password decryption
+                                     // Request password decryption
                                     vaultBackend.decryptPassword(passwordsPage.userId, modelData.id)
                                 }
                             }
@@ -329,6 +336,12 @@ Item{
                                     }
                                     onClicked:{
                                         modelData.is_favorite = !modelData.is_favorite
+
+                                        vaultBackend.setFavorite(
+                                            passwordsPage.userId,
+                                            modelData.id,
+                                            modelData.is_favorite
+                                        )
                                     }    
                                 }
 
@@ -339,7 +352,7 @@ Item{
 
                                     onStatusChanged: {
                                         if(status === Image.Error){
-                                            source = "../imgs/placeholders/google.png"
+                                            source = "../imgs/placeholders/default_image.png"
                                         }
                                     }
                                 }
@@ -422,7 +435,7 @@ Item{
 
                                          onStatusChanged: {
                                                 if(status === Image.Error){
-                                                    source = "../imgs/placeholders/google.png"
+                                                    source = "../imgs/placeholders/default_image.png"
                                                 }
                                             }
                                             
@@ -504,7 +517,9 @@ Item{
 
                                         Label{
                                             id: passDetailsPasswordLabel
-                                            text: selectedPassword ? (visibilityOn? selectedPassword.password : "**********") : (visibilityOn? "1234567890" : "**********")
+                                            text: selectedPassword ?
+                                             (visibilityOn ? decryptedPassword : "**********") 
+                                             : "******"
                                             color: "#B5B5B5"
                                             font.pixelSize: 15
                                         }
@@ -609,6 +624,7 @@ Item{
                                 TextField{
                                     id: passAddANote
                                     placeholderText: "Add a Note..."
+                                    text: selectedPassword ? selectedPassword.noteText : null
                                     color: "white"
 
                                     background: Rectangle{
@@ -648,36 +664,14 @@ Item{
                                 anchors.rightMargin: 20 
                                 anchors.leftMargin: 20
                                 anchors.fill:parent
-                                spacing: 20
+                                spacing: 15
 
-
-                                /*--------------Last Edited Row------------*/
-                                RowLayout{
-                                        spacing: 5
-
-                                        Label{
-                                            text: "Last edited:"
-                                            color: "white"
-                                            font.pixelSize: 15
-                                        }
-
-                                        Item{
-                                            Layout.fillWidth: true
-                                        }
-
-                                        Label{
-                                            id: passDetailsLastEditedLabel
-                                            text: "12/20/2025"
-                                            color: "#B5B5B5"
-                                            font.pixelSize: 15
-                                        }
-                                    }
                                 /*--------------Created Row------------*/
                                 RowLayout{
                                         spacing: 5
 
                                         Label{
-                                            text: "Created:"
+                                            text: "Created at:"
                                             color: "white"
                                             font.pixelSize: 15
                                         }
@@ -688,18 +682,18 @@ Item{
 
                                         Label{
                                             id: passDetailsCreatedLabel
-                                            text: "12/20/2025"
+                                            text: selectedPassword ? selectedPassword.created_at : ""
                                             color: "#B5B5B5"
                                             font.pixelSize: 15
                                         }
                                     }
 
-                                /*--------------Password Updated------------*/
+                                /*--------------Last Modified------------*/
                                 RowLayout{
                                         spacing: 10
 
                                         Label{
-                                            text: "Password Updated:"
+                                            text: "Last Modified:"
                                             color: "white"
                                             font.pixelSize: 15
                                         }
@@ -710,7 +704,7 @@ Item{
 
                                         Label{
                                             id: passDetailsUpdatedPasswordLabel
-                                            text: "12/20/2025"
+                                            text: selectedPassword ? selectedPassword.last_modified : ""
                                             color: "#B5B5B5"
                                             font.pixelSize: 15
                                         }
@@ -745,8 +739,26 @@ Item{
                                 Behavior on color{
                                     ColorAnimation { duration: 150}
                                 }
+                                }
+
+                                onClicked:{
+                                    // Open View Popup
+                                    viewPasswordPopUp.itemId = selectedPassword.id
+                                    viewPasswordPopUp.userId = passwordsPage.userId
+                                    viewPasswordPopUp.titleText = selectedPassword.title || ""
+                                    viewPasswordPopUp.usernameText = selectedPassword.username || ""
+                                    viewPasswordPopUp.passwordText = "Loading..."  // Will be updated async
+                                    viewPasswordPopUp.websiteText = selectedPassword.website || ""
+                                    viewPasswordPopUp.noteText = selectedPassword.note || ""
+                                    viewPasswordPopUp.createdText = selectedPassword.created_at || ""
+                                    viewPasswordPopUp.lastModifiedText = selectedPassword.last_modified || ""
+                                    viewPasswordPopUp.show()
+                                    
+                                    // Request password decryption
+                                    vaultBackend.decryptPassword(passwordsPage.userId, selectedPassword.id)
+                                }
                             }
-                            }
+
 
                             Item{
                                 Layout.fillWidth: true

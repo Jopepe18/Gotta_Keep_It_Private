@@ -449,3 +449,25 @@ class VaultManager:
             return {"success": False, "message": f"Export failed: {str(e)}"}
         finally:
             db.close()
+
+    def set_favorite(self, user_id: str, password_id: int, is_favorite: bool):
+            db: Session = self.get_db()
+            try:
+                password_entry = db.query(PasswordEntry).filter(PasswordEntry.id == password_id).first()
+
+                if not password_entry:
+                    return {"success": False, "message": "Password entry not found"}
+                
+                password_entry.is_favorite = is_favorite
+                db.commit()
+
+                print(f"VaultManager: Password {password_id} favorite status set to {is_favorite}")
+                return {"success": True, "message": "Favorite status updated"}
+                
+            except Exception as e:
+                db.rollback()
+                print(f"VaultManager: Failed to update favorite: {e}")
+                return {"success": False, "message": str(e)}
+            finally:
+                db.close()
+
