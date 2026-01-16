@@ -173,6 +173,11 @@ class AuthenticationManager:
             # 3. Update Password
             user.password_hash = self.encrypt_service.hash_password(request.new_password)
             db.commit()
-            return True
+            
+            return {
+                "success": True, 
+                "user_id": user.user_id, 
+                "has_vault": bool(vault)
+            }
         finally:
             db.close()

@@ -17,7 +17,13 @@ Window {
         Component {
             id: changeForgotPasswordComponent
             ChangeForgotPassword {
-                onChangePasswordSuccess: {
+                onChangePasswordSuccess: function(userId, hasVault, newPassword) {
+                    // Update global state with recovered credentials
+                    window.currentUserId = userId
+                    window.userHasVault = hasVault
+                    window.currentTempPassword = newPassword
+                    console.log("Main: Password recovered. User ID set to " + userId + ", HasVault=" + hasVault)
+                    
                     stackView.push(vaultRouterComponent)
                 }
                 onBackRequested: {
