@@ -9,7 +9,7 @@ Page {
     property string username: ""
     property string secretKey: ""
     
-    signal changePasswordSuccess()
+    signal changePasswordSuccess(string userId, bool hasVault, string newPassword)
     signal backRequested()
     
     // Background
@@ -137,11 +137,11 @@ Page {
     
     Connections {
         target: forgotPasswordBackend
-        function onVerify_status(success, message) {
+        function onVerify_status(success, message, userId, hasVault) {
             if (success && message === "Password Changed Successfully") {
                 message_text.color = "green"
                 message_text.text = "Success!"
-                root.changePasswordSuccess()
+                root.changePasswordSuccess(userId, hasVault, textfield_newpass.text)
             } else if (!success) {
                 message_text.color = "red"
                 message_text.text = message
