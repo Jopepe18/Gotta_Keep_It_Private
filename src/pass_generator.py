@@ -5,6 +5,8 @@ from typing import Optional, Dict
 import hashlib
 import getpass
 
+#CLI Interface. υλοποιημένο με front end στο generator_backend.py
+
 class PasswordGenerator:
     def __init__(self):
         self.lowercase = string.ascii_lowercase

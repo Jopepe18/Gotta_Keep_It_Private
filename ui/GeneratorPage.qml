@@ -7,6 +7,20 @@ Item{
     width: 1500
     height: 1080
 
+    // Connection to receive generated password from backend
+    Connections {
+        target: generatorBackend
+        function onPassword_generated(password, strength) {
+            generatedRandomPassword.text = password
+            console.log("Generated password with strength: " + strength)
+        }
+    }
+
+    // Generate password on page load
+    Component.onCompleted: {
+        generatorBackend.generateDefaultPassword()
+    }
+
     Rectangle{
         color: "#1E2634"
         anchors.fill: parent
@@ -45,7 +59,7 @@ Item{
 
                     Label{
                     id: generatedRandomPassword
-                    text: "39jrfe22012DEje23"
+                    text: "Click generate to create password"
                     color: "white"
                     font.pointSize: 16
                     }
@@ -70,6 +84,18 @@ Item{
                             fillMode: Image.PreserveAspectFit
                         }
 
+                        onClicked: {
+                            var len = parseInt(lengthTextField.text) || 16
+                            generatorBackend.generatePassword(
+                                len,
+                                upperCaseCheck.checked,
+                                lowerCaseCheck.checked,
+                                digitsCheck.checked,
+                                specialCheck.checked,
+                                avoidAmbiguousCheck.checked
+                            )
+                        }
+
                     }
 
                     Button{
@@ -88,8 +114,21 @@ Item{
                             fillMode: Image.PreserveAspectFit
                         }
 
+                        onClicked: {
+                            // Copy to clipboard
+                            textHelper.text = generatedRandomPassword.text
+                            textHelper.selectAll()
+                            textHelper.copy()
+                            console.log("Password copied to clipboard")
+                        }
+
                     }
 
+                    // Hidden helper for clipboard access
+                    TextEdit {
+                        id: textHelper
+                        visible: false
+                    }
 
                 }
             }
@@ -183,26 +222,30 @@ Item{
                         spacing: 20
 
                         CheckBox{
+                            id: upperCaseCheck
                             text: "A-Z"
-                            checked: false
+                            checked: true
                             font.pixelSize: 16
                         }
 
                         CheckBox{
+                            id: lowerCaseCheck
                             text: "a-z"
-                            checked: false
+                            checked: true
                             font.pixelSize: 16                            
                         }
 
                         CheckBox{
+                            id: digitsCheck
                             text: "0-9"
-                            checked: false
+                            checked: true
                             font.pixelSize: 16 
                         }
 
                         CheckBox{
+                            id: specialCheck
                             text: "!@#$%^&*"
-                            checked: false
+                            checked: true
                             font.pixelSize: 16 
                         }
 
@@ -294,6 +337,7 @@ Item{
                 }
                 
                  CheckBox{
+                            id: avoidAmbiguousCheck
                             text: "Avoid ambiguous characters"
                             checked: false
                             font.pixelSize: 16
