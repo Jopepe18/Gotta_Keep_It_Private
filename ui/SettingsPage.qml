@@ -64,6 +64,32 @@ Item{
                 resultPopup.open()
             }
         }
+
+        function onPasswordVerified(success, message) {
+            if (success) {
+                // password correct
+                genericPasswordPopup.close()
+                
+                if (settingsPage.pendingAction === "EXPORT") {
+                    exportFileDialog.open()
+                } else if (settingsPage.pendingAction === "IMPORT") {
+                    importFileDialog.open()
+                }
+            } else {
+                // failed. change warning label message
+                genericPasswordPopup.showErrorMessage(message)  //"Wrong Password. Please try again."
+            }
+        }
+
+        //if i want import/export final success message
+        function onVaultHandled(success, message) {
+            resultPopup.titleText = success ? "Success" : "Error"
+            resultPopup.messageText = message
+            resultPopup.isSuccess = success
+            resultPopup.open()      
+            // Safety: Wipe password from memory
+            settingsPage._tempPass = ""   
+        }
     }
 
     ResultPopup {
@@ -92,12 +118,10 @@ Item{
     PasswordPrompt {
         id: genericPasswordPopup
         onConfirmed: (password) => {
-            if (settingsPage.pendingAction === "EXPORT") {
-                settingsPage._tempPass = password
-                exportFileDialog.open()
-            } else if (settingsPage.pendingAction === "IMPORT") {
-                // open import dialog...
-            }
+            // Store password for the later export/import call
+            settingsPage._tempPass = password       
+            // Ask Python to verify BEFORE opening FileDialog
+            vaultBackend.check_password_before_action(settingsPage.userId, password)
         }
     }
 
@@ -113,13 +137,24 @@ Item{
             let path = selectedFile.toString().replace(/^file:\/\//, "")
             
             // Call python function
-            vaultBackend.export_vault(settingsPage.userId, settingsPage._tempPass, path)
-            
-            // Safety: Clear the password cache
-            settingsPage._tempPass = ""
+            vaultBackend.export_vault(settingsPage.userId, settingsPage._tempPass, path)        
         }
-        onRejected: {
-            settingsPage._tempPass = "" // Clear if they cancel
+    }
+
+    FileDialog{
+        id:importFileDialog
+        title: "Choose what file to import"
+        fileMode: FileDialog.OpenFile
+        nameFilters: ["JSON files (*.json)"]
+        onAccepted: {
+            //let clean_path = selectedFile.toString().replace(/^file:\/\/\//, "").replace(/^file:\/\//, "");
+            let clean_path = selectedFile.toString().replace(/^(file:\/{2,3})/, "");
+            // This transforms "/C:/Users/..." into "C:/Users/..."
+            if (Qt.platform.os === "windows" && cleanPath.startsWith("/")) {
+                cleanPath = cleanPath.substring(1);
+            }
+            //send to Python
+            vaultBackend.import_vault(userId, settingsPage._tempPass, clean_path)
         }
     }
 
@@ -464,6 +499,12 @@ Item{
                                         ColorAnimation { duration: 150}
                                     }
                                 }
+
+                                onClicked: {
+                                    settingsPage.pendingAction = "IMPORT"         
+                                    genericPasswordPopup.open()
+                                    //genericPasswordPopup.titleText = "Enter Password to Import Vault"
+                                }
                             }
 
                             Item{
@@ -488,8 +529,8 @@ Item{
 
                                 onClicked: {
                                     settingsPage.pendingAction = "EXPORT"
-                                    genericPasswordPopup.titleText = "Enter Password to Export Vault"
                                     genericPasswordPopup.open()
+                                    //genericPasswordPopup.titleText = "Enter Password to Export Vault"
                                 }
                             }
                         }

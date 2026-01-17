@@ -1,3 +1,5 @@
+import os
+import sys
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import VaultModel, PasswordEntry, UserModel
@@ -495,9 +497,35 @@ class VaultManager:
         finally:
             db.close()
 
-
-    
+    #verify password promt 
+    def check_password(self, user_id, provided_password):
+        db = self.get_db()
+        try:
+            user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
+            if not user:
+                return {"success": False, "message": "User not found"}
+            
+            # Use your encryption service
+            if self.encrypt_service.verify_password(provided_password, user.password_hash):
+                return {"success": True, "message": "Verified"}
+            else:
+                return {"success": False, "message": "Invalid Master Password"}
+        finally:
+            db.close()
+            
     def export_vault(self, user_id: str, provided_password: str, file_path: str) -> dict:
+        #Verify file path 
+        # Ensure the path is actually valid for the OS
+        if sys.platform == "win32":
+            # If it somehow still has a leading slash, strip it
+            if file_path.startswith("/") or file_path.startswith("\\"):
+                file_path = file_path.lstrip("/\\")
+            
+            # Convert forward slashes to backslashes if needed (Python handles both, but this is safer)
+            file_path = os.path.normpath(file_path)
+
+        print(f"DEBUG: Final path being used by Python: {file_path}")
+  
         db: Session = self.get_db()
         try:
             print(f"EXPORT DEBUG: Starting export for user {user_id}")

@@ -8,6 +8,9 @@ class VaultBackend(QObject):
     operation_finished = Signal(bool, str) # Generic signal for updates
     userInfoReceived = Signal(str, str) # username, email
     vaultDeleted = Signal(bool, str) # success, message
+    passwordVerified = Signal(bool,str) #signal if pass is correct
+    vaultHandled = Signal(bool,str)  # success n msg  for export/import
+
 
     def __init__(self, manager):
         super().__init__()
@@ -117,14 +120,26 @@ class VaultBackend(QObject):
         else:
             self.operation_finished.emit(False, result["message"])
 
+
+
+    @Slot(str, str)
+    def check_password_before_action(self, user_id, password):
+        print(f"VaultBackend: Checking if password exists for {user_id}")
+        result = self.manager.check_password(user_id, password)
+        self.passwordVerified.emit(result["success"], result["message"])
+
     @Slot(str, str, str) # User ID, Password, File Path
     def export_vault(self, user_id, password, file_path):
         print(f"VaultBackend: Exporting vault for {user_id} to {file_path}")
         result = self.manager.export_vault(user_id, password, file_path)
-        if result["success"]:
-             self.operation_finished.emit(True, result["message"])
-        else:
-             self.operation_finished.emit(False, result["message"])
+        self.vaultHandled.emit(result["success"], result["message"])
+
+    @Slot(str, str, str) # User ID, Password, File Path
+    def import_vault(self, user_id, password, file_path):
+        print(f"VaultBackend: Importing vault for {user_id} to {file_path}")
+        result = self.manager.import_vault(user_id, password, file_path)
+        self.vaultHandled.emit(result["success"], result["message"])
+
 
 
     @Slot(str, str, str, str, str, str, str)
