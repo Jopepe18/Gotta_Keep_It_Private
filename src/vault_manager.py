@@ -515,15 +515,9 @@ class VaultManager:
             
 
     #helper method for neeter code 
-    def _prepare_vault_session(self, db, user_id, password, file_path):
-        """Internal helper with full debugging for path, user, and encryption."""
-        # 1. Path Verification & Cleaning
-        if sys.platform == "win32":
-            if file_path.startswith("/") or file_path.startswith("\\"):
-                file_path = file_path.lstrip("/\\")
-            file_path = os.path.normpath(file_path)
-
-        print(f"DEBUG: Final path being used by Python: {file_path}")
+    def _prepare_vault_session(self, db, user_id, password):
+        """Internal helper with full debugging for user, and encryption."""
+    
         print(f"DEBUG: Starting operation for user {user_id}")
         print(f"DEBUG: Password received (length): {len(password)}")
 
@@ -562,14 +556,26 @@ class VaultManager:
         dek = self.encrypt_service.decrypt_data(vault.encrypted_vault_key, kek)
         print(f"DEBUG: DEK decrypted successfully, length={len(dek)}")
         
-        return vault, dek, file_path
+        return vault, dek
+
+    def clean_filepath(self, file_path: str):
+        #for Path Verification & Cleaning
+        if sys.platform == "win32":
+            if file_path.startswith("/") or file_path.startswith("\\"):
+                file_path = file_path.lstrip("/\\")
+            file_path = os.path.normpath(file_path)
+
+        print(f"DEBUG: Final path being used by Python: {file_path}")
+
+        return file_path
 
 
     def export_vault(self, user_id: str, provided_password: str, file_path: str) -> dict:
         db = self.get_db()
         try:
-            # Get everything from the helper
-            vault, dek, clean_path = self._prepare_vault_session(db, user_id, provided_password, file_path)
+            # Get everything from the helpers
+            clean_path = self.clean_filepath(file_path)
+            vault, dek = self._prepare_vault_session(db, user_id, provided_password)
             
             # 4. DECRYPT ENTRIES
             passwords = db.query(PasswordEntry).filter(PasswordEntry.vault_id == vault.vault_id).all()
@@ -603,8 +609,9 @@ class VaultManager:
     def import_vault(self, user_id: str, provided_password: str, file_path: str) -> dict:
         db = self.get_db()
         try:
-            # Get everything from the helper
-            vault, dek, clean_path = self._prepare_vault_session(db, user_id, provided_password, file_path)
+            # Get everything from the helpers
+            clean_path = self.clean_filepath(file_path)
+            vault, dek = self._prepare_vault_session(db, user_id, provided_password)
 
             if not os.path.exists(clean_path):
                 return {"success": False, "message": f"File not found: {clean_path}"}
