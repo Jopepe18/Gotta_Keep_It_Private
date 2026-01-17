@@ -566,77 +566,35 @@ class VaultManager:
 
 
     def export_vault(self, user_id: str, provided_password: str, file_path: str) -> dict:
-        db: Session = self.get_db()
-        try:     
-            #Verify file path 
-            # Ensure the path is actually valid for the OS
-            if sys.platform == "win32":
-                # If it somehow still has a leading slash, strip it
-                if file_path.startswith("/") or file_path.startswith("\\"):
-                    file_path = file_path.lstrip("/\\")
-                
-                # Convert forward slashes to backslashes if needed (Python handles both, but this is safer)
-                file_path = os.path.normpath(file_path)
-
-            print(f"DEBUG: Final path being used by Python: {file_path}")
-  
-            print(f"EXPORT DEBUG: Starting export for user {user_id}")
-            print(f"EXPORT DEBUG: Password received (length): {len(provided_password)}")
+        db = self.get_db()
+        try:
+            # Get everything from the helper
+            vault, dek, clean_path = self._prepare_vault_session(db, user_id, provided_password, file_path)
             
-            # 1. Fetch the vault and its entries and the User
-            user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
-            if not user:
-                return {"success": False, "message": "User not found"}
-            vault = db.query(VaultModel).filter(VaultModel.user_id == user_id).first()
-            if not vault:
-                return {"success": False, "message": "Vault not found"}
-
-            print(f"EXPORT DEBUG: User found, vault_id={vault.vault_id}")
-            print(f"EXPORT DEBUG: kdf_salt type={type(vault.kdf_salt)}, length={len(vault.kdf_salt) if vault.kdf_salt else 'None'}")
-            print(f"EXPORT DEBUG: encrypted_vault_key type={type(vault.encrypted_vault_key)}, length={len(vault.encrypted_vault_key) if vault.encrypted_vault_key else 'None'}")
-
-            # 2. VERIFY: Check if the password is correct before proceeding
-            if not self.encrypt_service.verify_password(provided_password, user.password_hash):
-                return {"success": False, "message": "Invalid Master Password"}
-
-            print("EXPORT DEBUG: Password verification PASSED")
-
-            # 2.5. VALIDATE: Check vault has required encryption data
-            if not vault.kdf_salt or not vault.encrypted_vault_key:
-                return {"success": False, "message": "Vault encryption data is missing or corrupted. Please delete and recreate your vault."}
-
-            # 3. UNWRAP: Derive KEK to decrypt the Vault's DEK
-            print(f"EXPORT DEBUG: Deriving KEK from password (length {len(provided_password)}) and salt")
-            kek = self.key_manager.derive_key(provided_password, vault.kdf_salt)
-            print(f"EXPORT DEBUG: KEK derived, length={len(kek)}")
-            
-            print(f"EXPORT DEBUG: Attempting to decrypt vault key...")
-            dek = self.encrypt_service.decrypt_data(vault.encrypted_vault_key, kek)
-            print(f"EXPORT DEBUG: DEK decrypted successfully, length={len(dek)}")
-            
-            
-            # 4. DECRYPT ENTRIES: Get all passwords and decrypt them
+            # 4. DECRYPT ENTRIES
             passwords = db.query(PasswordEntry).filter(PasswordEntry.vault_id == vault.vault_id).all()
             decrypted_list = []
-
             
+            print(f"DEBUG: Found {len(passwords)} passwords to decrypt.")
+
             for p in passwords:
                 plain_pass_bytes = self.encrypt_service.decrypt_data(p.encrypted_password, dek)
                 decrypted_list.append({
                     "title": p.title,
                     "username": p.username,
                     "website": p.website,
-                    "password": plain_pass_bytes.decode('utf-8'), # Convert bytes to string
+                    "password": plain_pass_bytes.decode('utf-8'),
                     "note": p.note
                 })
 
-            # 4. Write to JSON file
-            with open(file_path, 'w', encoding='utf-8') as f:
+            # 5. Write to JSON file
+            with open(clean_path, 'w', encoding='utf-8') as f:
                 json.dump(decrypted_list, f, indent=4)
 
-            return {"success": True, "message": f"Exported {len(decrypted_list)} items to {file_path}"}
+            return {"success": True, "message": f"Exported {len(decrypted_list)} items to {clean_path}"}
         
         except Exception as e:
+            print(f"DEBUG: Export Exception: {str(e)}")
             return {"success": False, "message": f"Export failed: {str(e)}"}
         finally:
             db.close()
