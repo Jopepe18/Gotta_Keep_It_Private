@@ -1,0 +1,24 @@
+qml: Login success: Login Successful
+qml: Main: User ID set to e22182b7-f84c-4a1b-9c3c-da6e054d57b0, HasVault=true
+qml: PasswordsPage: userId changed to e22182b7-f84c-4a1b-9c3c-da6e054d57b0. Fetching passwords.
+qml: PasswordsPage Loaded (onCompleted). Fetching passwords for: e22182b7-f84c-4a1b-9c3c-da6e054d57b0
+qml: Passwords Page: List updated with 6 items
+file:///Users/konstantinos/Gotta_Keep_It_Private/ui/PasswordsPage.qml:361:33: QML QQuickImage: Error transferring https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://undefined&size=40 - server replied with status code 404
+file:///Users/konstantinos/Gotta_Keep_It_Private/ui/PasswordsPage.qml:361:33: QML QQuickImage: Error transferring https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://undefined&size=40 - server replied with status code 404
+file:///Users/konstantinos/Gotta_Keep_It_Private/ui/PasswordsPage.qml:361:33: QML QQuickImage: Error transferring https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://undefined&size=40 - server replied with status code 404
+file:///Users/konstantinos/Gotta_Keep_It_Private/ui/PasswordsPage.qml:361:33: QML QQuickImage: Error transferring https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://undefined&size=40 - server replied with status code 404
+file:///Users/konstantinos/Gotta_Keep_It_Private/ui/PasswordsPage.qml:361:33: QML QQuickImage: Error transferring https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://undefined&size=40 - server replied with status code 404
+file:///Users/konstantinos/Gotta_Keep_It_Private/ui/PasswordsPage.qml:361:33: QML QQuickImage: Error transferring https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://undefined&size=40 - server replied with status code 404
+file:///Users/konstantinos/Gotta_Keep_It_Private/ui/PasswordsPage.qml:640:37: Unable to assign [undefined] to QString
+qml: Selected password:  123
+file:///Users/konstantinos/Gotta_Keep_It_Private/ui/PasswordsPage.qml:441:41: QML QQuickImage: Error transferring https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://undefined&size=60 - server replied with status code 404
+2026-01-17 13:00:03.257 Python[75697:757895] TSMSendMessageToUIServer: CFMessagePortSendRequest FAILED(-1) to send to port com.apple.tsm.uiserver
+2026-01-17 13:00:03.257 Python[75697:757895] TSMSendMessageToUIServer: CFMessagePortSendRequest FAILED(-1) to send to port com.apple.tsm.uiserver
+2026-01-17 13:00:03.258 Python[75697:757895] TSMSendMessageToUIServer: CFMessagePortSendRequest FAILED(-1) to send to port com.apple.tsm.uiserver
+Python: Login attempt for Username=kys3
+Python: Επιτυχία. UserID=e22182b7-f84c-4a1b-9c3c-da6e054d57b0, HasVault=True
+VaultBackend: Fetching passwords for user e22182b7-f84c-4a1b-9c3c-da6e054d57b0
+VaultBackend: Emitting 6 passwords
+VaultBackend: Fetching passwords for user e22182b7-f84c-4a1b-9c3c-da6e054d57b0
+VaultBackend: Emitting 6 passwords
+VaultBackend: Decrypting password 120 for user e22182b7-f84c-4a1b-9c3c-da6e054d57b0

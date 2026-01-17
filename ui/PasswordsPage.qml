@@ -11,6 +11,7 @@ Item{
     property bool showFavorites: false
     property bool visibilityOn: false
     property string userId: ""
+    property string masterPassword: ""
     property var selectedPassword: null
     property string decryptedPassword: ""
 
@@ -218,6 +219,19 @@ Item{
                                 Behavior on color{
                                     ColorAnimation { duration: 150}
                                 }
+                            }
+                            onClicked: {
+                                // Open PopUp in ADD mode
+                                viewPasswordPopUp.isAdding = true
+                                viewPasswordPopUp.isEditing = false
+                                viewPasswordPopUp.userId = passwordsPage.userId
+                                viewPasswordPopUp.masterPassword = passwordsPage.masterPassword
+                                
+                                // Reset fields logic
+                                viewPasswordPopUp.resetFields()
+                                viewPasswordPopUp.itemId = -1
+                                
+                                viewPasswordPopUp.show()
                             }
                         }
 
@@ -624,7 +638,7 @@ Item{
                                 TextField{
                                     id: passAddANote
                                     placeholderText: "Add a Note..."
-                                    text: selectedPassword ? selectedPassword.noteText : null
+                                    text: selectedPassword ? selectedPassword.note : ""
                                     color: "white"
 
                                     background: Rectangle{
@@ -682,7 +696,7 @@ Item{
 
                                         Label{
                                             id: passDetailsCreatedLabel
-                                            text: selectedPassword ? selectedPassword.created_at : ""
+                                            text: (selectedPassword && selectedPassword.created_at) ? selectedPassword.created_at : ""
                                             color: "#B5B5B5"
                                             font.pixelSize: 15
                                         }
@@ -704,7 +718,7 @@ Item{
 
                                         Label{
                                             id: passDetailsUpdatedPasswordLabel
-                                            text: selectedPassword ? selectedPassword.last_modified : ""
+                                            text: (selectedPassword && selectedPassword.last_modified) ? selectedPassword.last_modified : ""
                                             color: "#B5B5B5"
                                             font.pixelSize: 15
                                         }
@@ -733,9 +747,9 @@ Item{
 
                              background: Rectangle{
                                 radius:20
-                                color: passEditButton.pressed ? "#313A4B" : (passEditButton.hovered? "#222B3A" : "#161C26" )
-                                border.color: "white"
-
+                                color: passEditButton.pressed ? "#5093E9" : (passEditButton.hovered? "#3E82DB" : "#2F72CA" )
+                                // border.color: "white" // Removed border for cleaner look, or keep if preferred. User asked for color diff.
+                                
                                 Behavior on color{
                                     ColorAnimation { duration: 150}
                                 }
@@ -743,15 +757,21 @@ Item{
 
                                 onClicked:{
                                     // Open View Popup
+                                    viewPasswordPopUp.isAdding = false
+                                    viewPasswordPopUp.isEditing = true
                                     viewPasswordPopUp.itemId = selectedPassword.id
                                     viewPasswordPopUp.userId = passwordsPage.userId
+                                    viewPasswordPopUp.masterPassword = passwordsPage.masterPassword
                                     viewPasswordPopUp.titleText = selectedPassword.title || ""
                                     viewPasswordPopUp.usernameText = selectedPassword.username || ""
-                                    viewPasswordPopUp.passwordText = "Loading..."  // Will be updated async
+                                    // viewPasswordPopUp.passwordText = "Loading..."  // Removed to avoid overwriting if already decrypted? No, we need to show loading or fetch it.
+                                    // Actually, let's keep it as is, but we need to ensure the field is populated.
+                                    viewPasswordPopUp.passwordText = "Loading..." 
                                     viewPasswordPopUp.websiteText = selectedPassword.website || ""
                                     viewPasswordPopUp.noteText = selectedPassword.note || ""
                                     viewPasswordPopUp.createdText = selectedPassword.created_at || ""
                                     viewPasswordPopUp.lastModifiedText = selectedPassword.last_modified || ""
+                                    viewPasswordPopUp.populateFields() // Explicitly populate fields
                                     viewPasswordPopUp.show()
                                     
                                     // Request password decryption

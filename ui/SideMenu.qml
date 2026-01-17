@@ -10,6 +10,7 @@ Item{
     signal logoutClicked()
     property string currentPage: "passwords"
     property string userIdString: ""
+    property string masterPassword: ""
 
     Connections {
         target: vaultBackend
@@ -27,7 +28,7 @@ Item{
         switch(currentPage){
             case "passwords": 
                 page = "PasswordsPage.qml"; 
-                props = {"userId": root.userIdString};
+                props = {"userId": root.userIdString, "masterPassword": root.masterPassword};
                 break;
             case "cards": page = "CardsPage.qml"; break;
             case "watchTower": // ΝΕΟ
@@ -391,6 +392,7 @@ Item{
             id: firstPasswordPage
             PasswordsPage {
                 userId: root.userIdString
+                masterPassword: root.masterPassword
             }
         }
 

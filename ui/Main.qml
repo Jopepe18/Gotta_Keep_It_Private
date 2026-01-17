@@ -113,6 +113,7 @@ Window {
             id: loadMainScreenComponent
             SideMenu {
                 userIdString: window.currentUserId
+                masterPassword: window.currentTempPassword
                 onLogoutClicked: {
                     stackView.pop(null) //Pop to root (Login)
                 stackView.currentItem.emptyFields()

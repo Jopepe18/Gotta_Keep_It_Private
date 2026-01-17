@@ -150,6 +150,117 @@ class VaultManager:
         finally:
             db.close()
 
+    def add_password(self, user_id: str, master_password: str, entry_data: dict) -> dict:
+        """
+        Adds a new password entry to the vault.
+        """
+        db: Session = self.get_db()
+        try:
+            # 1. Fetch User and Vault
+            user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
+            if not user:
+                return {"success": False, "message": "User not found"}
+            
+            vault = db.query(VaultModel).filter(VaultModel.user_id == user_id).first()
+            if not vault:
+                return {"success": False, "message": "Vault not found"}
+
+            # 2. Verify Master Password (and derive KEK same time)
+            if not self.encrypt_service.verify_password(master_password, user.password_hash):
+                return {"success": False, "message": "Invalid Master Password"}
+
+            # 3. Derive KEK and Decrypt DEK
+            if not vault.kdf_salt or not vault.encrypted_vault_key:
+                return {"success": False, "message": "Vault encryption data missing"}
+            
+            kek = self.key_manager.derive_key(master_password, vault.kdf_salt)
+            dek = self.encrypt_service.decrypt_data(vault.encrypted_vault_key, kek)
+            
+            if not dek:
+                return {"success": False, "message": "Failed to decrypt vault key"}
+
+            # 4. Encrypt the new password
+            encrypted_password = self.encrypt_service.encrypt_data(entry_data.get('password', ''), dek)
+
+            # 5. Create Entry
+            new_entry = PasswordEntry(
+                vault_id=vault.vault_id,
+                title=entry_data.get('title', 'Untitled'),
+                username=entry_data.get('username', ''),
+                website=entry_data.get('website', ''),
+                encrypted_password=encrypted_password,
+                note=entry_data.get('note', '')
+            )
+            
+            db.add(new_entry)
+            db.commit()
+            return {"success": True, "message": "Password added successfully"}
+
+        except Exception as e:
+            print(f"VaultManager: Error adding password: {e}")
+            traceback.print_exc()
+            return {"success": False, "message": str(e)}
+        finally:
+            db.close()
+
+    def update_password(self, user_id: str, password_id: int, master_password: str, entry_data: dict) -> dict:
+        """
+        Updates an existing password entry.
+        """
+        db: Session = self.get_db()
+        try:
+            # 1. Fetch User, Vault, and Password Entry
+            user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
+            if not user:
+                return {"success": False, "message": "User not found"}
+            
+            vault = db.query(VaultModel).filter(VaultModel.user_id == user_id).first()
+            if not vault:
+                return {"success": False, "message": "Vault not found"}
+            
+            password_entry = db.query(PasswordEntry).filter(PasswordEntry.id == password_id).first()
+            if not password_entry:
+                return {"success": False, "message": "Password entry not found"}
+
+            # 2. Verify Master Password (and derive KEK same time)
+            if not self.encrypt_service.verify_password(master_password, user.password_hash):
+                return {"success": False, "message": "Invalid Master Password"}
+
+            # 3. Derive KEK and Decrypt DEK
+            if not vault.kdf_salt or not vault.encrypted_vault_key:
+                return {"success": False, "message": "Vault encryption data missing"}
+            
+            kek = self.key_manager.derive_key(master_password, vault.kdf_salt)
+            dek = self.encrypt_service.decrypt_data(vault.encrypted_vault_key, kek)
+            
+            if not dek:
+                return {"success": False, "message": "Failed to decrypt vault key"}
+
+            # 4. Encrypt the password (it might have changed)
+            encrypted_password = self.encrypt_service.encrypt_data(entry_data.get('password', ''), dek)
+
+            # 5. Update Entry
+            password_entry.title = entry_data.get('title', 'Untitled')
+            password_entry.username = entry_data.get('username', '')
+            password_entry.website = entry_data.get('website', '')
+            password_entry.encrypted_password = encrypted_password
+            password_entry.note = entry_data.get('note', '')
+            
+            # Update last_modified implicitly via onupdate in model or explicitly here if needed.
+            # Usually SQLAlchemy handles onupdate=func.now(), but explicit is safer if not set.
+            from datetime import datetime
+            password_entry.last_modified = datetime.utcnow()
+            
+            db.commit()
+            return {"success": True, "message": "Password updated successfully"}
+
+        except Exception as e:
+            print(f"VaultManager: Error updating password: {e}")
+            traceback.print_exc()
+            return {"success": False, "message": str(e)}
+        finally:
+            db.close()
+
     def get_passwords(self, user_id: str) -> list[PasswordDTO]:
         db: Session = self.get_db()
         try:

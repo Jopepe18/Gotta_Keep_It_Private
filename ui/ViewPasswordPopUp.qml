@@ -10,12 +10,13 @@ Window {
     title: "Password Details"
     modality: Qt.ApplicationModal
     flags: Qt.Dialog
-    color: "#1E2634"
+    color: "#2B3441"
 
     // Properties to accept data
     property int itemId: -1
     property string titleText: ""
-    property string userId: "" // Needed for delete
+    property string userId: "" // Needed for delete/add
+    property string masterPassword: "" // Needed for encryption
     property string usernameText: ""
     property string passwordText: ""
     property string websiteText: ""
@@ -23,6 +24,10 @@ Window {
     property string lastModifiedText: ""
     property string createdText: ""
     property bool isFavorite: false
+    
+    // Mode
+    property bool isAdding: false
+    property bool isEditing: false
 
     ConfirmationPopup {
         id: deleteConfirmationPopup
@@ -35,6 +40,40 @@ Window {
             root.close()
         }
     }
+    
+    // Signal for operation completion
+    Connections {
+        target: vaultBackend
+        function onOperation_finished(success, message) {
+            if(success && (root.isAdding || root.isEditing)) {
+                console.log("Save success, closing popup")
+                root.close()
+            }
+        }
+    }
+
+    // Helper to reset fields
+    function resetFields() {
+        titleField.text = ""
+        usernameField.text = ""
+        passwordField.text = ""
+        websiteField.text = ""
+        noteField.text = ""
+    }
+
+    // Helper to populate fields from properties (restoring data)
+    function populateFields() {
+        titleField.text = root.titleText
+        usernameField.text = root.usernameText
+        passwordField.text = root.passwordText
+        websiteField.text = root.websiteText
+        noteField.text = root.noteText
+    }
+
+    // Ensure password field updates when the property changes (async decryption)
+    onPasswordTextChanged: {
+        passwordField.text = root.passwordText
+    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -42,7 +81,7 @@ Window {
         spacing: 20
 
         Label {
-            text: root.titleText
+            text: root.isAdding ? "Add New Password" : (root.isEditing ? "Edit Password" : root.titleText)
             color: "white"
             font.pixelSize: 24
             font.bold: true
@@ -50,24 +89,40 @@ Window {
             elide: Text.ElideRight
             Layout.maximumWidth: parent.width
         }
+        
+        TextField {
+            id: titleField
+            placeholderText: "Title (e.g. Gmail)"
+            placeholderTextColor: "#B5B5B5"
+            // text: binding removed, handled by populateFields/resetFields
+            visible: root.isAdding || root.isEditing
+            Layout.fillWidth: true
+            Layout.preferredHeight: 45
+            font.pixelSize: 16
+            color: "white"
+            background: Rectangle { color: "#1E2634"; radius: 10 }
+        }
 
         ScrollView {
+            id: scrollView
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
 
             ColumnLayout {
-                width: parent.width
+                width: scrollView.availableWidth // Explicitly bind to ScrollView width
                 spacing: 20
 
                 // Username
                 ColumnLayout {
                     spacing: 5
+                    Layout.fillWidth: true
                     Label { text: "Username"; color: "#B5B5B5"; font.pixelSize: 14 }
                     TextField {
-                        text: root.usernameText
-                        readOnly: true
-                        Layout.fillWidth: true
+                        id: usernameField
+                        // text: binding removed
+                        readOnly: !root.isAdding && !root.isEditing
+                        Layout.fillWidth: true // Fill the parent ColumnLayout
                         Layout.preferredHeight: 45
                         font.pixelSize: 16
                         color: "white"
@@ -78,20 +133,20 @@ Window {
                 // Password
                 ColumnLayout {
                     spacing: 5
+                    Layout.fillWidth: true
                     Label { text: "Password"; color: "#B5B5B5"; font.pixelSize: 14 }
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 45
-                        color: "#303946"
+                        color: "#1E2634"
                         radius: 10
-                        border.color: "white"
-                        border.width: 1
                         RowLayout {
                             anchors.fill: parent
                             anchors.margins: 5
                             TextField {
-                                text: root.passwordText
-                                readOnly: true
+                                id: passwordField
+                                // text: binding removed
+                                readOnly: !root.isAdding && !root.isEditing
                                 Layout.fillWidth: true
                                 font.pixelSize: 16
                                 color: "white"
@@ -116,10 +171,12 @@ Window {
                 // Website
                 ColumnLayout {
                     spacing: 5
+                    Layout.fillWidth: true
                     Label { text: "Website"; color: "#B5B5B5"; font.pixelSize: 14 }
                     TextField {
-                        text: root.websiteText
-                        readOnly: true
+                        id: websiteField
+                        // text: binding removed
+                        readOnly: !root.isAdding && !root.isEditing
                         Layout.fillWidth: true
                         Layout.preferredHeight: 45
                         font.pixelSize: 16
@@ -131,10 +188,12 @@ Window {
                 // Note
                 ColumnLayout {
                     spacing: 5
+                    Layout.fillWidth: true
                     Label { text: "Note"; color: "#B5B5B5"; font.pixelSize: 14 }
                     TextArea {
-                        text: root.noteText
-                        readOnly: true
+                        id: noteField
+                        // text: binding removed
+                        readOnly: !root.isAdding && !root.isEditing
                         wrapMode: Text.Wrap
                         Layout.fillWidth: true
                         Layout.preferredHeight: 100
@@ -147,6 +206,7 @@ Window {
                 // Dates
                 RowLayout {
                     spacing: 20
+                    visible: !root.isAdding
                     Label { text: "Created: " + root.createdText; color: "#B5B5B5"; font.pixelSize: 12 }
                     Label { text: "Modified: " + root.lastModifiedText; color: "#B5B5B5"; font.pixelSize: 12 }
                 }
@@ -157,10 +217,48 @@ Window {
         RowLayout {
             Layout.alignment: Qt.AlignHCenter
             spacing: 20
+            
+            // Save Button (Only visible in Add mode)
+            Button {
+                text: "Save"
+                font.pixelSize: 16
+                visible: root.isAdding || root.isEditing
+                Layout.preferredWidth: 140
+                Layout.preferredHeight: 45
+                background: Rectangle { color: "#27ae60"; radius: 20 }
+                contentItem: Text { text: parent.text; color: "white"; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                onClicked: {
+                    if (root.isAdding) {
+                        console.log("Saving new password for user: " + root.userId)
+                        vaultBackend.addPassword(
+                            root.userId,
+                            root.masterPassword,
+                            titleField.text,
+                            usernameField.text,
+                            passwordField.text,
+                            websiteField.text,
+                            noteField.text
+                        )
+                    } else if (root.isEditing) {
+                        console.log("Updating password id: " + root.itemId)
+                        vaultBackend.updatePassword(
+                            root.userId,
+                            root.itemId,
+                            root.masterPassword,
+                            titleField.text,
+                            usernameField.text,
+                            passwordField.text,
+                            websiteField.text,
+                            noteField.text
+                        )
+                    }
+                }
+            }
 
             Button {
                 text: "Delete"
                 font.pixelSize: 16
+                visible: !root.isAdding
                 Layout.preferredWidth: 140
                 Layout.preferredHeight: 45
                 background: Rectangle { color: "transparent"; border.color: "#F76262"; border.width: 2; radius: 20 }

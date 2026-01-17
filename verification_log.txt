@@ -1,0 +1,19 @@
+qml: Login success: Login Successful
+qml: Main: User ID set to e22182b7-f84c-4a1b-9c3c-da6e054d57b0, HasVault=true
+qml: PasswordsPage: userId changed to e22182b7-f84c-4a1b-9c3c-da6e054d57b0. Fetching passwords.
+qml: PasswordsPage Loaded (onCompleted). Fetching passwords for: e22182b7-f84c-4a1b-9c3c-da6e054d57b0
+qml: Passwords Page: List updated with 5 items
+file:///Users/konstantinos/Gotta_Keep_It_Private/ui/PasswordsPage.qml:361:33: QML QQuickImage: Error transferring https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://undefined&size=40 - server replied with status code 404
+file:///Users/konstantinos/Gotta_Keep_It_Private/ui/PasswordsPage.qml:361:33: QML QQuickImage: Error transferring https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://undefined&size=40 - server replied with status code 404
+file:///Users/konstantinos/Gotta_Keep_It_Private/ui/PasswordsPage.qml:361:33: QML QQuickImage: Error transferring https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://undefined&size=40 - server replied with status code 404
+file:///Users/konstantinos/Gotta_Keep_It_Private/ui/PasswordsPage.qml:361:33: QML QQuickImage: Error transferring https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://undefined&size=40 - server replied with status code 404
+file:///Users/konstantinos/Gotta_Keep_It_Private/ui/PasswordsPage.qml:361:33: QML QQuickImage: Error transferring https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://undefined&size=40 - server replied with status code 404
+qml: Selected password:  Debug Password Service
+file:///Users/konstantinos/Gotta_Keep_It_Private/ui/PasswordsPage.qml:441:41: QML QQuickImage: Error transferring https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://undefined&size=60 - server replied with status code 404
+Python: Login attempt for Username=kys3
+Python: Επιτυχία. UserID=e22182b7-f84c-4a1b-9c3c-da6e054d57b0, HasVault=True
+VaultBackend: Fetching passwords for user e22182b7-f84c-4a1b-9c3c-da6e054d57b0
+VaultBackend: Emitting 5 passwords
+VaultBackend: Fetching passwords for user e22182b7-f84c-4a1b-9c3c-da6e054d57b0
+VaultBackend: Emitting 5 passwords
+VaultBackend: Decrypting password 105 for user e22182b7-f84c-4a1b-9c3c-da6e054d57b0

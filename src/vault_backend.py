@@ -127,6 +127,44 @@ class VaultBackend(QObject):
              self.operation_finished.emit(False, result["message"])
 
 
+    @Slot(str, str, str, str, str, str, str)
+    def addPassword(self, user_id, master_password, title, username, password, website, note):
+        """Add a new password entry"""
+        print(f"VaultBackend: Adding password for user {user_id}")
+        entry_data = {
+            "title": title,
+            "username": username,
+            "password": password,
+            "website": website,
+            "note": note
+        }
+        result = self.manager.add_password(user_id, master_password, entry_data)
+        
+        if result["success"]:
+            self.operation_finished.emit(True, result["message"])
+            self.getPasswords(user_id) # Refresh list
+        else:
+            self.operation_finished.emit(False, result["message"])
+
+    @Slot(str, int, str, str, str, str, str, str)
+    def updatePassword(self, user_id, password_id, master_password, title, username, password, website, note):
+        """Update an existing password entry"""
+        print(f"VaultBackend: Updating password {password_id} for user {user_id}")
+        entry_data = {
+            "title": title,
+            "username": username,
+            "password": password,
+            "website": website,
+            "note": note
+        }
+        result = self.manager.update_password(user_id, password_id, master_password, entry_data)
+        
+        if result["success"]:
+            self.operation_finished.emit(True, result["message"])
+            self.getPasswords(user_id) # Refresh list
+        else:
+            self.operation_finished.emit(False, result["message"])
+
     @Slot(str, int, bool)
     def setFavorite(self, user_id, password_id, is_favorite):
         print(
