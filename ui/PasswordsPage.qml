@@ -779,6 +779,14 @@ Item{
                                     ColorAnimation { duration: 150}
                                 }
                             }
+
+                            onClicked: {
+                                if (passwordsPage.selectedPassword) {
+                                    console.log("Deleting password ID: " + passwordsPage.selectedPassword.id)
+                                    vaultBackend.deletePassword(passwordsPage.selectedPassword.id, passwordsPage.userId)
+                                    passwordsPage.selectedPassword = null // Clear selection
+                                }
+                            }
                             }
                         }
 
