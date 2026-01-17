@@ -134,7 +134,7 @@ Item{
         onAccepted: {
             // selectedFile gives a URL like "file:///path/file.json"
             // Convert to local path for Python by removing the "file://" prefix
-            let path = selectedFile.toString().replace(/^file:\/\//, "")
+            let path = selectedFile.toString().replace(/^(file:\/{2,3})/, "");
             
             // Call python function
             vaultBackend.export_vault(settingsPage.userId, settingsPage._tempPass, path)        
@@ -150,8 +150,8 @@ Item{
             //let clean_path = selectedFile.toString().replace(/^file:\/\/\//, "").replace(/^file:\/\//, "");
             let clean_path = selectedFile.toString().replace(/^(file:\/{2,3})/, "");
             // This transforms "/C:/Users/..." into "C:/Users/..."
-            if (Qt.platform.os === "windows" && cleanPath.startsWith("/")) {
-                cleanPath = cleanPath.substring(1);
+            if (Qt.platform.os === "windows" && clean_path.startsWith("/")) {
+                clean_path = clean_path.substring(1);
             }
             //send to Python
             vaultBackend.import_vault(userId, settingsPage._tempPass, clean_path)

@@ -513,21 +513,73 @@ class VaultManager:
         finally:
             db.close()
             
-    def export_vault(self, user_id: str, provided_password: str, file_path: str) -> dict:
-        #Verify file path 
-        # Ensure the path is actually valid for the OS
+
+    #helper method for neeter code 
+    def _prepare_vault_session(self, db, user_id, password, file_path):
+        """Internal helper with full debugging for path, user, and encryption."""
+        # 1. Path Verification & Cleaning
         if sys.platform == "win32":
-            # If it somehow still has a leading slash, strip it
             if file_path.startswith("/") or file_path.startswith("\\"):
                 file_path = file_path.lstrip("/\\")
-            
-            # Convert forward slashes to backslashes if needed (Python handles both, but this is safer)
             file_path = os.path.normpath(file_path)
 
         print(f"DEBUG: Final path being used by Python: {file_path}")
-  
+        print(f"DEBUG: Starting operation for user {user_id}")
+        print(f"DEBUG: Password received (length): {len(password)}")
+
+        # 2. Fetch User & Vault
+        user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
+        if not user:
+            print("DEBUG: User not found!")
+            raise Exception("User not found")
+
+        vault = db.query(VaultModel).filter(VaultModel.user_id == user_id).first()
+        if not vault:
+            print("DEBUG: Vault not found!")
+            raise Exception("Vault not found")
+
+        print(f"DEBUG: User found, vault_id={vault.vault_id}")
+        print(f"DEBUG: kdf_salt type={type(vault.kdf_salt)}, length={len(vault.kdf_salt) if vault.kdf_salt else 'None'}")
+        print(f"DEBUG: encrypted_vault_key type={type(vault.encrypted_vault_key)}, length={len(vault.encrypted_vault_key) if vault.encrypted_vault_key else 'None'}")
+
+        # 3. VERIFY: Password Check
+        if not self.encrypt_service.verify_password(password, user.password_hash):
+            print("DEBUG: Password verification FAILED")
+            raise Exception("Invalid Master Password")
+
+        print("DEBUG: Password verification PASSED")
+
+        # 4. VALIDATE: Encryption data check
+        if not vault.kdf_salt or not vault.encrypted_vault_key:
+            print("DEBUG: Vault encryption data missing")
+            raise Exception("Vault encryption data is missing or corrupted.")
+
+        # 5. UNWRAP: Derive KEK and decrypt DEK
+        print(f"DEBUG: Deriving KEK from password and salt")
+        kek = self.key_manager.derive_key(password, vault.kdf_salt)
+        
+        print(f"DEBUG: Attempting to decrypt vault key...")
+        dek = self.encrypt_service.decrypt_data(vault.encrypted_vault_key, kek)
+        print(f"DEBUG: DEK decrypted successfully, length={len(dek)}")
+        
+        return vault, dek, file_path
+
+
+    def export_vault(self, user_id: str, provided_password: str, file_path: str) -> dict:
         db: Session = self.get_db()
-        try:
+        try:     
+            #Verify file path 
+            # Ensure the path is actually valid for the OS
+            if sys.platform == "win32":
+                # If it somehow still has a leading slash, strip it
+                if file_path.startswith("/") or file_path.startswith("\\"):
+                    file_path = file_path.lstrip("/\\")
+                
+                # Convert forward slashes to backslashes if needed (Python handles both, but this is safer)
+                file_path = os.path.normpath(file_path)
+
+            print(f"DEBUG: Final path being used by Python: {file_path}")
+  
             print(f"EXPORT DEBUG: Starting export for user {user_id}")
             print(f"EXPORT DEBUG: Password received (length): {len(provided_password)}")
             
@@ -588,6 +640,49 @@ class VaultManager:
             return {"success": False, "message": f"Export failed: {str(e)}"}
         finally:
             db.close()
+
+
+    def import_vault(self, user_id: str, provided_password: str, file_path: str) -> dict:
+        db = self.get_db()
+        try:
+            # Get everything from the helper
+            vault, dek, clean_path = self._prepare_vault_session(db, user_id, provided_password, file_path)
+
+            if not os.path.exists(clean_path):
+                return {"success": False, "message": f"File not found: {clean_path}"}
+
+            # 4. READ AND ENCRYPT
+            with open(clean_path, 'r', encoding='utf-8') as f:
+                imported_data = json.load(f)
+
+            print(f"DEBUG: Importing {len(imported_data)} items from JSON.")
+
+            for item in imported_data:
+                # Re-encrypt for database
+                encrypted_pass = self.encrypt_service.encrypt_data(item["password"].encode('utf-8'), dek)
+                
+                new_entry = PasswordEntry(
+                    vault_id=vault.vault_id,
+                    title=item.get("title", "Imported Entry"),
+                    username=item.get("username", ""),
+                    website=item.get("website", ""),
+                    encrypted_password=encrypted_pass,
+                    note=item.get("note", "")
+                )
+                db.add(new_entry)
+
+            db.commit()
+            print("DEBUG: Import committed successfully.")
+            return {"success": True, "message": f"Imported {len(imported_data)} items successfully."}
+
+        except Exception as e:
+            db.rollback()
+            print(f"DEBUG: Import Exception: {str(e)}")
+            return {"success": False, "message": f"Import failed: {str(e)}"}
+        finally:
+            db.close()
+
+
 
     def set_favorite(self, user_id: str, password_id: int, is_favorite: bool):
             db: Session = self.get_db()

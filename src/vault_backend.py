@@ -121,7 +121,6 @@ class VaultBackend(QObject):
             self.operation_finished.emit(False, result["message"])
 
 
-
     @Slot(str, str)
     def check_password_before_action(self, user_id, password):
         print(f"VaultBackend: Checking if password exists for {user_id}")
