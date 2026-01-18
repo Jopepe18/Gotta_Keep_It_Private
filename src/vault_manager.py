@@ -6,8 +6,9 @@ from models import VaultModel, PasswordEntry, UserModel
 from dtos import VaultCreationRequest, VaultCreationResult, PasswordDTO, ChangeEmailRequest, ChangeMasterPasswordRequest
 from Key_Manager import KeyManager
 from encryption_service import EncryptionService
-
+from PasswordEvaluator import PasswordAnalyser 
 import json
+from watchtower_page import Watchtower
 
 #σαν να είναι το Handle Credential μας, to be changed 
 class VaultManager:
@@ -18,6 +19,7 @@ class VaultManager:
     def __init__(self):
         self.key_manager = KeyManager()
         self.encrypt_service = EncryptionService()
+        self.PasswordHandler = PasswordAnalyser()
 
     def get_db(self):
         return SessionLocal()
@@ -46,7 +48,6 @@ class VaultManager:
             encrypted_vault_key = self.encrypt_service.encrypt_data(vault_dek, kek)
 
             # --- RECOVERY KEY INTEGRATION (UC-SK) ---
-            from models import UserModel
             user = db.query(UserModel).filter(UserModel.user_id == request.user_id).first()
             
             recovery_salt = None
@@ -200,6 +201,7 @@ class VaultManager:
 
         except Exception as e:
             print(f"VaultManager: Error adding password: {e}")
+            import traceback
             traceback.print_exc()
             return {"success": False, "message": str(e)}
         finally:
@@ -258,6 +260,7 @@ class VaultManager:
 
         except Exception as e:
             print(f"VaultManager: Error updating password: {e}")
+            import traceback
             traceback.print_exc()
             return {"success": False, "message": str(e)}
         finally:
@@ -336,18 +339,14 @@ class VaultManager:
         
         """
 
-        from encryption_service import EncryptionService
-        encrypt_service = EncryptionService()
-
         db: Session = self.get_db()
         try:
-            from models import UserModel
             user = db.query(UserModel).filter(UserModel.user_id == request.user_id).first()
             if not user:
                 return {"success": False, "message": "User not found"}
 
             # Verify password
-            if not encrypt_service.verify_password(request.current_password, user.password_hash):
+            if not self.encrypt_service.verify_password(request.current_password, user.password_hash):
                 return {"success": False, "message": "Invalid current password"}
 
             # Check if new email exists
@@ -370,8 +369,7 @@ class VaultManager:
         προσοχή, εδώ αλλάζει το login password, όχι τον τρόπο αποκρυπτογράφησης των εγγραφών. 
         !!!να αλλαχθεί !! θα πρέπει να επανακρυπτογραφεί τις εγγραφές
         """
-        from encryption_service import EncryptionService
-        encrypt_service = EncryptionService()
+        
 
         db: Session = self.get_db()
         try:
@@ -381,7 +379,7 @@ class VaultManager:
                 return {"success": False, "message": "User not found"}
 
             # Verify current password
-            if not encrypt_service.verify_password(request.current_password, user.password_hash):
+            if not self.encrypt_service.verify_password(request.current_password, user.password_hash):
                 return {"success": False, "message": "Invalid current password"}
 
             # RE-ENCRYPT ALL VAULT DATA
@@ -416,7 +414,7 @@ class VaultManager:
                  vault.encrypted_vault_key = new_encrypted_vault_key
 
             # Update to New Password Hash
-            new_hash = encrypt_service.hash_password(request.new_password)
+            new_hash = self.encrypt_service.hash_password(request.new_password)
             user.password_hash = new_hash
 
             db.commit()
@@ -432,7 +430,6 @@ class VaultManager:
         """
         db: Session = self.get_db()
         try:
-            from models import UserModel
             user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
             if not user:
                 return {"success": False, "message": "User not found"}
@@ -452,8 +449,7 @@ class VaultManager:
         Deletes the user account, vault, and all data.
         Verifies password first.
         """
-        from encryption_service import EncryptionService
-        encrypt_service = EncryptionService()
+
         
         db: Session = self.get_db()
         try:
@@ -463,7 +459,7 @@ class VaultManager:
                 return {"success": False, "message": "User not found"}
             
             # Verify password
-            if not encrypt_service.verify_password(password, user.password_hash):
+            if not self.encrypt_service.verify_password(password, user.password_hash):
                 return {"success": False, "message": "Invalid password"}
             
             # Delete User (Cascade should handle the rest)
@@ -670,3 +666,55 @@ class VaultManager:
             finally:
                 db.close()
 
+
+    def scan_vault(self, user_id: str, master_password: str) -> dict:
+        print("VaultManager: Starting Watchtower scan...")
+        db = self.get_db()
+        
+        # Αρχικοποίηση (ή το έχεις στο __init__)
+        analyzer = Watchtower() 
+
+        try:
+            # 1. AUTH & DECRYPT (Μένει ίδιο)
+            try:
+                vault, dek = self._prepare_vault_session(db, user_id, master_password)
+            except Exception as e:
+                return {"success": False, "message": str(e)}
+
+            # 2. FETCH (Μένει ίδιο)
+            passwords = db.query(PasswordEntry).filter(PasswordEntry.vault_id == vault.vault_id).all()
+            decrypted_objects = []
+
+            # 3. DECRYPT LOOP (Μένει ίδιο)
+            for entry in passwords:
+                try:
+                    plain_pass_bytes = self.encrypt_service.decrypt_data(entry.encrypted_password, dek)
+                    entry.password = plain_pass_bytes.decode('utf-8')
+                    decrypted_objects.append(entry)
+                except Exception:
+                    continue
+
+            # 4. ANALYZE (Μένει ίδιο)
+            # Ο Analyzer κάνει τη δουλειά και γεμίζει τα status
+            report = analyzer.analyze_vault(decrypted_objects)
+
+            # 5. COMMIT (Σώζουμε τα WEAK/REUSED στη βάση)
+            db.commit()
+            
+            # --- Η ΜΕΓΑΛΗ ΑΛΛΑΓΗ ΕΔΩ ---
+            # 6. FORMATTING: Ζητάμε το έτοιμο JSON από τον Analyzer!
+            # Δεν έχουμε πια serialize methods εδώ μέσα.
+            response_data = analyzer.format_json_response(report, len(decrypted_objects))
+            
+            # 7. CLEANUP (Μένει ίδιο)
+            for entry in decrypted_objects:
+                if hasattr(entry, 'password'): del entry.password
+
+            print("Watchtower: Scan complete.")
+            return response_data
+
+        except Exception as e:
+            print(f"Watchtower Error: {e}")
+            return {"success": False, "message": str(e)}
+        finally:
+            db.close()

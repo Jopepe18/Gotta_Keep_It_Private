@@ -1,24 +1,40 @@
 import hashlib
 import requests
 
-
 class BreachAPIService:
-  def check_pwned(self, password: str) -> bool:
-        """Ελέγχει αν ο κωδικός έχει διαρρεύσει χωρίς να τον στείλει ολόκληρο."""        
+    def get_breach_count(self, password: str) -> int:
+        """
+        Ελέγχει τον κωδικό και επιστρέφει τον ΑΡΙΘΜΟ των διαρροών (Count).
+        Επιστρέφει 0 αν ο κωδικός είναι ασφαλής ή αν υπάρξει σφάλμα δικτύου.
+        """        
+        # 1. SHA-1 Hash (όπως ακριβώς το είχες)
         sha1_password = hashlib.sha1(password.encode('utf-8')).hexdigest().upper()
         prefix, suffix = sha1_password[:5], sha1_password[5:]
         
         try:
+            # 2. Κλήση στο API (k-anonymity)
             url = f"https://api.pwnedpasswords.com/range/{prefix}"
-            response = requests.get(url, timeout=2)
-            if response.status_code != 200:
-                return False
+            response = requests.get(url, timeout=2) # Timeout για να μην κολλάει το UI
             
-            # Ελέγχουμε αν το suffix υπάρχει στην απάντηση
+            if response.status_code != 200:
+                print(f"BreachAPI Error: {response.status_code}")
+                return 0
+            
+            # 3. Parsing της απάντησης
+            # Η απάντηση είναι πολλές γραμμές: HASH_SUFFIX:COUNT
             hashes = (line.split(':') for line in response.text.splitlines())
+            
             for h, count in hashes:
                 if h == suffix:
-                    return True # Βρέθηκε σε διαρροή
-            return False
-        except:
-            return False 
+                    # ΒΡΕΘΗΚΕ! Επιστρέφουμε το count ως ακέραιο
+                    return int(count)
+            
+            # Αν τελειώσει η λούπα και δεν το βρούμε, είναι ασφαλές
+            return 0
+
+        except requests.exceptions.Timeout:
+            print("BreachAPI: Timeout reached.")
+            return 0
+        except Exception as e:
+            print(f"BreachAPI Error: {e}")
+            return 0
