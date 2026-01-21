@@ -2,7 +2,7 @@ import os
 import sys
 from sqlalchemy.orm import Session
 from database import SessionLocal
-from models import VaultModel, PasswordEntry, UserModel
+from models import VaultModel, PasswordEntry, UserModel, CreditCardEntry
 from dtos import VaultCreationRequest, VaultCreationResult, PasswordDTO, ChangeEmailRequest, ChangeMasterPasswordRequest
 from Key_Manager import KeyManager
 from encryption_service import EncryptionService
@@ -100,6 +100,8 @@ class VaultManager:
             
         finally:
             db.close()
+
+    
             
     def add_debug_password(self, user_id: str) -> bool:
         """
@@ -715,6 +717,273 @@ class VaultManager:
 
         except Exception as e:
             print(f"Watchtower Error: {e}")
+            return {"success": False, "message": str(e)}
+        finally:
+            db.close()
+
+
+    def add_debug_card(self, user_id: str) -> bool:
+        """
+        Adds a debug card entry. 
+        NOTE: This creates an entry with a properly encrypted card.
+        We use the recovery key to decrypt the DEK since we don't have the user's card here.
+        """
+        db: Session = self.get_db()
+        try:
+            # Get Vault and User
+            vault = db.query(VaultModel).filter(VaultModel.user_id == user_id).first()
+            if not vault:
+                print("VaultManager: No vault found for user")
+                return False
+            
+            user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
+            if not user or not user.secret_key:
+                print("VaultManager: No user or secret key found")
+                return False
+            
+            # Decrypt the DEK using the recovery key
+            if not vault.recovery_salt or not vault.recovery_encrypted_key:
+                print("VaultManager: No recovery data - cannot encrypt debug password")
+                return False
+            
+            recovery_kek = self.key_manager.derive_key(user.secret_key, vault.recovery_salt)
+            vault_dek = self.encrypt_service.decrypt_data(vault.recovery_encrypted_key, recovery_kek)
+            
+            # Encrypt the debug card Number and cvv properly
+            debug_plain_cardNumber = "1234 5678 1234 5678"
+            encrypted_cardNumber = self.encrypt_service.encrypt_data(debug_plain_cardNumber, vault_dek)
+            debug_plain_cardCvv = "830"
+            encrypted_cvv = self.encrypt_service.encrypt_data(debug_plain_cardCvv, vault_dek)
+
+            # Create Password Entry with PROPERLY ENCRYPTED password
+            new_card = CreditCardEntry(
+                vault_id = vault.vault_id,
+                title = "Debug Card",
+                cardholder_name = "Name",
+                card_type = "Mastercard",
+                expiration_date = "8/2028",
+                encrypted_number = encrypted_cardNumber,  # Now properly encrypted!
+                encrypted_cvv = encrypted_cvv,
+                note="This is a debug entry, remove before release",
+            )
+            db.add(new_card)
+            db.commit()
+            print("VaultManager: Debug card added (encrypted)")
+            return True
+        except Exception as e:
+            print(f"VaultManager: Error adding debug card: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+        finally:
+            db.close()
+
+    def get_cards(self, user_id: str) -> list:
+        db: Session = self.get_db()
+        try:
+            vault = db.query(VaultModel).filter(VaultModel.user_id == user_id).first()
+            if not vault:
+                return []
+
+            cards = db.query(CreditCardEntry).filter(CreditCardEntry.vault_id == vault.vault_id).all()
+            return cards
+        finally:
+            db.close()
+
+    def get_decrypted_card(self, user_id: str, card_id: int) -> dict:
+    
+        db: Session = self.get_db()
+        try:
+            # Get user, vault, and card entry
+            user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
+            if not user or not user.secret_key:
+                return {"success": False, "message": "User not found or missing secret key"}
+            
+            vault = db.query(VaultModel).filter(VaultModel.user_id == user_id).first()
+            if not vault:
+                return {"success": False, "message": "Vault not found"}
+            
+            card_entry = db.query(CreditCardEntry).filter(CreditCardEntry.id == card_id).first()
+            if not card_entry:
+                return {"success": False, "message": "Card entry not found"}
+            
+            # Decrypt DEK using recovery key
+            if not vault.recovery_salt or not vault.recovery_encrypted_key:
+                return {"success": False, "message": "Vault recovery data missing"}
+            
+            recovery_kek = self.key_manager.derive_key(user.secret_key, vault.recovery_salt)
+            vault_dek = self.encrypt_service.decrypt_data(vault.recovery_encrypted_key, recovery_kek)
+            
+            # Decrypt the card details
+            decrypted_number = self.encrypt_service.decrypt_data(card_entry.encrypted_number, vault_dek)
+            decrypted_cvv = self.encrypt_service.decrypt_data(card_entry.encrypted_cvv, vault_dek)
+            
+            return {
+                "success": True,
+                "card_number": decrypted_number.decode('utf-8'),
+                "cvv": decrypted_cvv.decode('utf-8')
+            }
+        except Exception as e:
+            print(f"VaultManager: Error decrypting card: {e}")
+            return {"success": False, "message": str(e)}
+        finally:
+            db.close()
+
+    def delete_card(self, card_id: int) -> dict:
+        """
+        Deletes a credit card entry by its ID.
+        """
+        db: Session = self.get_db()
+        try:
+            card_entry = db.query(CreditCardEntry).filter(CreditCardEntry.id == card_id).first()
+            if not card_entry:
+                return {"success": False, "message": "Card entry not found"}
+            
+            db.delete(card_entry)
+            db.commit()
+            print(f"VaultManager: Card {card_id} deleted successfully")
+            return {"success": True, "message": "Card deleted successfully"}
+        except Exception as e:
+            print(f"VaultManager: Error deleting card: {e}")
+            return {"success": False, "message": str(e)}
+        finally:
+            db.close()
+
+    def add_card(self, user_id: str, master_password: str, card_data: dict) -> dict:
+        """
+        Adds a new credit card entry to the vault.
+        """
+        db: Session = self.get_db()
+        try:
+            # 1. Fetch User and Vault
+            user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
+            if not user:
+                return {"success": False, "message": "User not found"}
+            
+            vault = db.query(VaultModel).filter(VaultModel.user_id == user_id).first()
+            if not vault:
+                return {"success": False, "message": "Vault not found"}
+
+            # 2. Verify Master Password
+            if not self.encrypt_service.verify_password(master_password, user.password_hash):
+                return {"success": False, "message": "Invalid Master Password"}
+
+            # 3. Derive KEK and Decrypt DEK
+            if not vault.kdf_salt or not vault.encrypted_vault_key:
+                return {"success": False, "message": "Vault encryption data missing"}
+            
+            kek = self.key_manager.derive_key(master_password, vault.kdf_salt)
+            dek = self.encrypt_service.decrypt_data(vault.encrypted_vault_key, kek)
+            
+            if not dek:
+                return {"success": False, "message": "Failed to decrypt vault key"}
+
+            # 4. Encrypt the card details
+            encrypted_number = self.encrypt_service.encrypt_data(card_data.get('card_number', ''), dek)
+            encrypted_cvv = self.encrypt_service.encrypt_data(card_data.get('cvv', ''), dek)
+
+            # 5. Create Entry
+            new_entry = CreditCardEntry(
+                vault_id=vault.vault_id,
+                title=card_data.get('title', 'Untitled Card'),
+                cardholder_name=card_data.get('cardholder_name', ''),
+                card_type=card_data.get('card_type', ''),
+                expiration_date=card_data.get('expiration_date', ''),
+                encrypted_number=encrypted_number,
+                encrypted_cvv=encrypted_cvv,
+                note=card_data.get('note', '')
+            )
+            
+            db.add(new_entry)
+            db.commit()
+            return {"success": True, "message": "Card added successfully"}
+
+        except Exception as e:
+            print(f"VaultManager: Error adding card: {e}")
+            import traceback
+            traceback.print_exc()
+            return {"success": False, "message": str(e)}
+        finally:
+            db.close()
+
+    def update_card(self, user_id: str, card_id: int, master_password: str, card_data: dict) -> dict:
+        """
+        Updates an existing credit card entry.
+        """
+        db: Session = self.get_db()
+        try:
+            # 1. Fetch User, Vault, and Card Entry
+            user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
+            if not user:
+                return {"success": False, "message": "User not found"}
+            
+            vault = db.query(VaultModel).filter(VaultModel.user_id == user_id).first()
+            if not vault:
+                return {"success": False, "message": "Vault not found"}
+            
+            card_entry = db.query(CreditCardEntry).filter(CreditCardEntry.id == card_id).first()
+            if not card_entry:
+                return {"success": False, "message": "Card entry not found"}
+
+            # 2. Verify Master Password
+            if not self.encrypt_service.verify_password(master_password, user.password_hash):
+                return {"success": False, "message": "Invalid Master Password"}
+
+            # 3. Derive KEK and Decrypt DEK
+            if not vault.kdf_salt or not vault.encrypted_vault_key:
+                return {"success": False, "message": "Vault encryption data missing"}
+            
+            kek = self.key_manager.derive_key(master_password, vault.kdf_salt)
+            dek = self.encrypt_service.decrypt_data(vault.encrypted_vault_key, kek)
+            
+            if not dek:
+                return {"success": False, "message": "Failed to decrypt vault key"}
+
+            # 4. Encrypt the card details
+            encrypted_number = self.encrypt_service.encrypt_data(card_data.get('card_number', ''), dek)
+            encrypted_cvv = self.encrypt_service.encrypt_data(card_data.get('cvv', ''), dek)
+
+            # 5. Update Entry
+            card_entry.title = card_data.get('title', 'Untitled Card')
+            card_entry.cardholder_name = card_data.get('cardholder_name', '')
+            card_entry.card_type = card_data.get('card_type', '')
+            card_entry.expiration_date = card_data.get('expiration_date', '')
+            card_entry.encrypted_number = encrypted_number
+            card_entry.encrypted_cvv = encrypted_cvv
+            card_entry.note = card_data.get('note', '')
+            
+            from datetime import datetime
+            card_entry.last_modified = datetime.utcnow()
+            
+            db.commit()
+            return {"success": True, "message": "Card updated successfully"}
+
+        except Exception as e:
+            print(f"VaultManager: Error updating card: {e}")
+            import traceback
+            traceback.print_exc()
+            return {"success": False, "message": str(e)}
+        finally:
+            db.close()
+
+    def set_card_favorite(self, user_id: str, card_id: int, is_favorite: bool):
+        """Set favorite status for a card entry"""
+        db: Session = self.get_db()
+        try:
+            card_entry = db.query(CreditCardEntry).filter(CreditCardEntry.id == card_id).first()
+
+            if not card_entry:
+                return {"success": False, "message": "Card entry not found"}
+            
+            card_entry.is_favorite = is_favorite
+            db.commit()
+
+            print(f"VaultManager: Card {card_id} favorite status set to {is_favorite}")
+            return {"success": True, "message": "Favorite status updated"}
+            
+        except Exception as e:
+            db.rollback()
+            print(f"VaultManager: Failed to update card favorite: {e}")
             return {"success": False, "message": str(e)}
         finally:
             db.close()

@@ -30,7 +30,10 @@ Item{
                 page = "PasswordsPage.qml"; 
                 props = {"userId": root.userIdString, "masterPassword": root.masterPassword};
                 break;
-            case "cards": page = "CardsPage.qml"; break;
+            case "cards":
+                page = "CardsPage.qml";
+                props = {"userId": root.userIdString, "masterPassword": root.masterPassword};
+                break;
             case "watchTower": // ΝΕΟ
                 page = "WatchTowerPage.qml"; 
                 props = {"userId": root.userIdString}; 

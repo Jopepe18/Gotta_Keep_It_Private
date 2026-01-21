@@ -4,13 +4,15 @@ from vault_manager import VaultManager
 
 class VaultBackend(QObject):
     vault_created = Signal(bool, str)
-    passwords_updated = Signal(list)
     operation_finished = Signal(bool, str) # Generic signal for updates
     userInfoReceived = Signal(str, str) # username, email
     vaultDeleted = Signal(bool, str) # success, message
     passwordVerified = Signal(bool,str) #signal if pass is correct
     vaultHandled = Signal(bool,str)  # success n msg  for export/import
 
+    passwords_updated = Signal(list)
+    cards_updated = Signal(list)
+    card_decrypted = Signal(bool, dict, str)
 
     def __init__(self, manager):
         super().__init__()
@@ -65,6 +67,9 @@ class VaultBackend(QObject):
         else:
             print(f"VaultBackend: Failure - {result.message}")
             self.vault_created.emit(False, result.message)
+
+
+    #---------------------Password Handling ----------------------
 
     @Slot(str)
     def addDebugPassword(self, user_id):
@@ -193,5 +198,114 @@ class VaultBackend(QObject):
         else:
             print("Failed to update favorite:", result.get("message"))
 
+    @Slot(str)
+    def getCards(self, user_id):
+        print(f"VaultBackend: Fetching cards for user {user_id}")
+        cards = self.manager.get_cards(user_id)
+        cards_list = [
+            {
+                "id": c.id,
+                "title": c.title,
+                "cardholder_name": c.cardholder_name,
+                "is_favorite": c.is_favorite,
+                "card_type": c.card_type,
+                "card_number": "•••• •••• •••• ••••",  # Placeholder - actual password decrypted on demand
+                "cvv": "•••",
+                "expiration_date": c.expiration_date,
+                "note": c.note or "",
+                "created_at": c.created_at.strftime("%Y-%m-%d %H:%M:%S") if c.created_at else "",
+                "last_modified": c.last_modified.strftime("%Y-%m-%d %H:%M:%S") if c.last_modified else ""
+            }
+            for c in cards
+        ]
+        print(f"VaultBackend: Emitting {len(cards_list)} cards")
+        self.cards_updated.emit(cards_list)
+
+    @Slot(str, int)
+    def decryptCard(self, user_id, card_id):
+        """Decrypt a single card entry for viewing"""
+        print(f"VaultBackend: Decrypting card {card_id} for user {user_id}")
+        result = self.manager.get_decrypted_card(user_id, card_id)
+        if result["success"]:
+            card_data = {
+                "card_number": result["card_number"],
+                "cvv": result["cvv"],
+                "pin": result.get("pin", "")
+            }
+            self.card_decrypted.emit(True, card_data, "")
+        else:
+            self.card_decrypted.emit(False, {}, result["message"])
+        
+    @Slot(int, str)
+    def deleteCard(self, card_id, user_id):
+        """Delete a credit card entry"""
+        print(f"VaultBackend: Deleting card {card_id} for user {user_id}")
+        result = self.manager.delete_card(card_id)
+        if result["success"]:
+            self.operation_finished.emit(True, result["message"])
+            # Refresh the list
+            self.getCards(user_id)
+        else:
+            self.operation_finished.emit(False, result["message"])
 
     
+    @Slot(str, str, str, str, str, str, str, str, str)
+    def addCard(self, user_id, master_password, title, cardholder_name, card_number, cvv, card_type, expiration_date, note):
+        """Add a new credit card entry"""
+        print(f"VaultBackend: Adding card for user {user_id}")
+        card_data = {
+            "title": title,
+            "cardholder_name": cardholder_name,
+            "card_number": card_number,
+            "cvv": cvv,
+            "card_type": card_type,
+            "expiration_date": expiration_date,
+            "note": note
+        }
+        result = self.manager.add_card(user_id, master_password, card_data)
+        
+        if result["success"]:
+            self.operation_finished.emit(True, result["message"])
+            self.getCards(user_id)  # Refresh list
+        else:
+            self.operation_finished.emit(False, result["message"])
+
+    @Slot(str)
+    def addDebugCard(self, user_id):
+        print(f"VaultBackend: Adding debug card for user {user_id}")
+        success = self.manager.add_debug_card(user_id)
+        if success:
+            self.getCards(user_id)
+        else:
+            print("VaultBackend: Failed to add debug card")
+
+    @Slot(str, int, str, str, str, str, str, str, str)
+    def updateCard(self, user_id, card_id, master_password, title, cardholder_name, card_number, cvv, card_type, expiration_date, note):
+        """Update an existing card entry"""
+        print(f"VaultBackend: Updating card {card_id} for user {user_id}")
+        card_data = {
+            "title": title,
+            "cardholder_name": cardholder_name,
+            "card_number": card_number,
+            "cvv": cvv,
+            "card_type": card_type,
+            "expiration_date": expiration_date,
+            "note": note
+        }
+        result = self.manager.update_card(user_id, card_id, master_password, card_data)
+        
+        if result["success"]:
+            self.operation_finished.emit(True, result["message"])
+            self.getCards(user_id) # Refresh list
+        else:
+            self.operation_finished.emit(False, result["message"])
+
+    @Slot(str, int, bool)
+    def setCardFavorite(self, user_id, card_id, is_favorite):
+        print(f"VaultBackend: Setting favorite for card {card_id} to {is_favorite}")
+        result = self.manager.set_card_favorite(user_id, card_id, is_favorite)
+        if result["success"]:
+            pass
+        else:
+            print("Failed to update card favorite:", result.get("message"))
+        

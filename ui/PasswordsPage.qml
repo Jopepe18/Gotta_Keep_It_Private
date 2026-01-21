@@ -242,7 +242,7 @@ Item{
                             Layout.preferredHeight:45
                             padding:0
                             text: "Debug Add"
-                            visible: true
+                            visible: false
                             
                             contentItem: Text {
                                 text: addPasswordDebug.text
@@ -360,7 +360,7 @@ Item{
                                 }
 
                                 Image{
-                                    source: "https://www.google.com/s2/favicons?domain="+ modelData.Website + "&sz=40"
+                                    source: "https://www.google.com/s2/favicons?domain="+ modelData.website + "&sz=40"
                                     Layout.preferredWidth: 45
                                     Layout.preferredHeight: 45
 
@@ -443,8 +443,8 @@ Item{
                                         id: detailImage
                                         Layout.preferredHeight: 60
                                         Layout.preferredWidth: 60
-                                        source:  selectedPassword? "https://www.google.com/s2/favicons?domain="+ selectedPassword.Website + "&sz=60" : "../imgs/placeholders/google.png"
-                                        fillMode: Image.PreserveAspectCrop
+                                        source:  selectedPassword ? ("https://www.google.com/s2/favicons?domain="+ selectedPassword.website + "&sz=40") : "../imgs/placeholders/default_image.png"
+                                        fillMode: Image.PreserveAspectFit
                                         smooth: true
 
                                          onStatusChanged: {
@@ -459,13 +459,13 @@ Item{
 
                                             Label{
                                                 id: detailPassNameLabel
-                                                text: selectedPassword ? selectedPassword.title : "Title"
+                                                text: selectedPassword ? selectedPassword.title : " "
                                                 font.pixelSize: 20
                                             }
 
                                             Label{
                                                 id: detailPassLastModLabel
-                                                text: selectedPassword ? selectedPassword.last_modified : "12.12.12"
+                                                text: selectedPassword ? selectedPassword.last_modified : " "
                                                 color: "#B5B5B5"
                                                 font.pixelSize: 16
                                             }
@@ -495,7 +495,7 @@ Item{
 
                                         Label{
                                             id: passDetailsUsernameLabel
-                                            text: selectedPassword ? selectedPassword.username : "User"
+                                            text: selectedPassword ? selectedPassword.username : " "
                                             color: "#B5B5B5"
                                             font.pixelSize: 15
                                         }
@@ -551,6 +551,7 @@ Item{
                                             }
 
                                             onClicked:{
+                                                if(!selectedPassword) return
                                                 visibilityOn = !visibilityOn
                                             }
                                         }
@@ -584,7 +585,7 @@ Item{
 
                                         Label{
                                             id: passDetailsWebsiteLabel
-                                            text: selectedPassword ? selectedPassword.website : "www.website.com"
+                                            text: selectedPassword ? selectedPassword.website : " "
                                             color: "#B5B5B5"
                                             font.pixelSize: 15
                                         }

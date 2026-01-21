@@ -67,16 +67,6 @@ Window {
             }
         }
         
-        
-        /*
-        loadMainScreenComponent
-            SideMenu{
-                onLogoutClicked: stackView.pop(null)
-            }
-        */
-
-
-
         Component {
             id: registerComponent
             Register {

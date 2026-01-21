@@ -86,7 +86,7 @@ class CreditCardEntry(Base):
     note = Column(Text, nullable=True) 
     encrypted_number = Column(Text, nullable=False) 
     encrypted_cvv = Column(Text, nullable=False) 
-    encrypted_pin = Column(Text, nullable=True) 
     is_favorite = Column(Boolean, default=False) 
+    created_at = Column(DateTime(timezone=True), server_default=func.now()) 
     last_modified = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now()) 
     vault = relationship("VaultModel", back_populates="cards")

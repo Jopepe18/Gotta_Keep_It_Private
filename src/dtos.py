@@ -89,6 +89,22 @@ class PasswordDTO:
     last_modified: Optional[datetime] = None
 
 @dataclass
+class CardDTO:
+    id: int
+    title: str
+    cardholder_name: str
+    card_type: str
+    expiration_date: str
+    is_favorite: bool
+    encrypted_number: str = ""
+    encrypted_cvv: str = ""
+    note: Optional[str] = None
+    created_at: Optional[datetime] = None
+    last_modified: Optional[datetime] = None
+
+
+
+@dataclass
 class SecurityReport:
     weak_count: int = 0
     reused_count: int = 0

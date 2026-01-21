@@ -8,8 +8,64 @@ Item{
     height: 1080
 
     property bool showFavorites: false
-    property bool visibilityOn: false
+    property bool cvvVisibilityOn: false
     property bool cardNumberVisibilityOn: false
+    property string userId: ""
+    property string masterPassword: ""
+    property var selectedCard: null
+    property string decryptedCardNumber: ""
+    property string decryptedCvv: ""
+
+    property var cardsList: []
+    property var filteredCardsList: []
+
+    Connections {
+        target: vaultBackend
+        function onCards_updated(updatedList) {
+            console.log("Cards Page: List updated with " + updatedList.length + " items")
+            cardsPage.cardsList = updatedList
+            filterCards()
+        }
+        function onCard_decrypted(success, card, message) {
+            if (success) {
+                decryptedCardNumber = card.card_number
+                decryptedCvv = card.cvv
+            } else {
+                decryptedCardNumber = ""
+                decryptedCvv = ""
+                console.log("Failed to decrypt card: " + message)
+            }
+        }
+    }
+
+    onUserIdChanged: {
+        if(cardsPage.userId !== "") {
+            console.log("CardsPage: userId changed to " + cardsPage.userId + ". Fetching cards.")
+            vaultBackend.getCards(cardsPage.userId)
+        }
+    }
+
+    Component.onCompleted: {
+        if(cardsPage.userId !== "") {
+            console.log("CardsPage Loaded (onCompleted). Fetching cards for: " + cardsPage.userId)
+            vaultBackend.getCards(cardsPage.userId)
+        }
+    }
+
+    function filterCards()
+    {
+        if(!cardsSearchTextField.text || cardsSearchTextField.text.trim() === ""){
+            filteredCardsList = cardsList
+            return
+        }
+
+        var query = cardsSearchTextField.text.toLowerCase()
+
+        filteredCardsList = cardsList.filter(function(item){
+            return (item.title && item.title.toLowerCase().includes(query))
+        })
+    }
+
 
     RowLayout{
         anchors.fill: parent
@@ -71,7 +127,7 @@ Item{
                                     Layout.fillHeight: true
                                     placeholderText: "Search..."
                                     color: "white"
-                                    font.pixelSize: 16
+                                    font.pixelSize: 14
                                     id: cardsSearchTextField
 
                                     background: Rectangle{
@@ -125,9 +181,9 @@ Item{
                             }
                         }
 
-                        /*------------Add New Password Button-----------*/
+                        /*------------Add New Card Button-----------*/
                         Button{
-                            id: addNewCarddButton
+                            id: addNewCardButton
                             Layout.preferredWidth:150
                             Layout.preferredHeight:45
                             padding:0
@@ -159,12 +215,38 @@ Item{
 
                             background: Rectangle{
                                 radius:20
-                                color: addNewCarddButton.pressed ? "#5093E9" : (addNewCarddButton.hovered? "#3E82DB" : "#2F72CA" )
+                                color: addNewCardButton.pressed ? "#5093E9" : (addNewCardButton.hovered? "#3E82DB" : "#2F72CA" )
 
                                 Behavior on color{
                                     ColorAnimation { duration: 150}
                                 }
                             }
+                        }
+
+                        /*------------DEBUG Button-----------*/
+                        Button{
+                            id: addCardDebug
+                            Layout.preferredWidth:150
+                            Layout.preferredHeight:45
+                            padding:0
+                            text: "Debug Add"
+                            
+                            contentItem: Text {
+                                text: addCardDebug.text
+                                color: "white"
+                                font.pixelSize: 18
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+
+                            background: Rectangle{
+                                radius:20
+                                color: "#FF5500" // Orange for debug
+                            }
+                             onClicked: {
+                                    console.log("Debug Add Clicked for User: " + cardsPage.userId)
+                                    vaultBackend.addDebugCard(cardsPage.userId)
+                             }
                         }
 
 
@@ -198,13 +280,106 @@ Item{
                         }
                     }
 
-                    ScrollView{
-                        id: passwordItemsScrollView
-                        Layout.fillHeight:true
-                        Column{
+                    ListView {
+                        id: cardListView
+                        Layout.fillHeight: true
+                        Layout.fillWidth: true
+                        clip: true
+                        spacing: 10
+                        model: cardsPage.filteredCardsList
 
+                        delegate: Rectangle {
+                            id: delegateRect
+                            height: 70
+                            width: cardListView.width // Use ListView width
+                            radius: 10
+
+                            property bool selected: false
+                            property bool hovered: false
+
+                            color: (selectedCard && selectedCard.id === modelData.id) ? "#111B2C" : 
+                            (selected ? "#424D61" : 
+                                hovered ? "#2A3444" : "#1E2634")
+                            MouseArea {
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                onEntered: delegateRect.hovered = true
+                                onExited: delegateRect.hovered = false
+                                onPressed: delegateRect.selected = true
+                                onReleased: delegateRect.selected = false
+                                onClicked:{
+                                    cardsPage.selectedCard = modelData
+                                    console.log("Selected card: ", modelData.title)
+                                     // Request card number decryption
+                                    vaultBackend.decryptCard(cardsPage.userId, modelData.id)
+                                }
+                            }
+                            
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 30
+                                anchors.topMargin: 10
+                                anchors.bottomMargin: 10
+                                spacing: 45
+                                
+                                Button{
+                                    Layout.preferredHeight: 40
+                                    Layout.preferredWidth: 40
+                                    background: Rectangle{
+                                        color: "transparent"
+                                    }
+
+                                    contentItem: Image {
+                                        source: modelData.is_favorite ? "../imgs/favorite.png" : "../imgs/not_favoriteStar.png"
+                                        width: 20
+                                        height: 20
+                                    }
+                                    onClicked:{
+                                        modelData.is_favorite = !modelData.is_favorite
+
+                                        vaultBackend.setFavorite(
+                                            cardsPage.userId,
+                                            modelData.id,
+                                            modelData.is_favorite
+                                        )
+                                    }    
+                                }
+
+                                Image{
+                                    source: "../imgs/placeholders/card_default.png"
+                                    Layout.preferredWidth: 45
+                                    Layout.preferredHeight: 45
+                                }
+                                
+                                ColumnLayout{
+                                    Layout.fillHeight: true
+                                    Layout.fillWidth: true
+
+                                    // Title
+                                    Text {
+                                        text: modelData.title
+                                        color: "white"
+                                        font.pixelSize: 18
+                                        Layout.fillWidth: true
+                                    }
+                                    
+                                    // Updates
+                                    Text {
+                                        text: modelData.cardholder_name
+                                        color: "#B5B5B5"
+                                        font.pixelSize: 14
+                                    }
+                                }
+                            }
+                        }
+                        
+                        footer: Item {
+                            height: 50
                         }
                     }
+
+                    
+
 
                 }
 
@@ -231,7 +406,7 @@ Item{
                         Rectangle{
                             color: "#303946"
                             Layout.preferredWidth: 360
-                            Layout.preferredHeight: 440
+                            Layout.preferredHeight: 400
                             radius: 20
 
                             ColumnLayout{
@@ -254,7 +429,7 @@ Item{
                                         id: cardDetailImage
                                         Layout.preferredHeight: 60
                                         Layout.preferredWidth: 60
-                                        source: "../imgs/placeholders/paypal.png"
+                                        source: "../imgs/placeholders/card_default.png"
                                         fillMode: Image.PreserveAspectCrop
                                         smooth: true
                                         }
@@ -263,13 +438,13 @@ Item{
 
                                             Label{
                                                 id: detailCardNameLabel
-                                                text: "Paypal"
+                                                text: selectedCard ? selectedCard.title : " " 
                                                 font.pixelSize: 20
                                             }
 
                                             Label{
                                                 id: detailCardLastModLabel
-                                                text: "Last modified: 12/7/2025"
+                                                text: selectedCard ? selectedCard.last_modified : " "
                                                 color: "#B5B5B5"
                                                 font.pixelSize: 16
                                             }
@@ -280,7 +455,7 @@ Item{
                                ColumnLayout{
                                 spacing: 10
 
-                                 /*----------Username Row---------------*/
+                                 /*----------Cardholder Row---------------*/
                                 ColumnLayout{
                                     spacing: 10
 
@@ -288,7 +463,7 @@ Item{
                                         spacing: 5
 
                                         Label{
-                                            text: "Username"
+                                            text: "Cardholder"
                                             color: "white"
                                             font.pixelSize: 15
                                         }
@@ -299,7 +474,7 @@ Item{
 
                                         Label{
                                             id: cardDetailsUsernameLabel
-                                            text: "User"
+                                            text: selectedCard ? selectedCard.cardholder_name : " "
                                             color: "#B5B5B5"
                                             font.pixelSize: 15
                                         }
@@ -314,59 +489,7 @@ Item{
                                 
                                 }
 
-
-                                /*----------Card Password Row---------------*/
-                                ColumnLayout{
-                                    spacing: 5
-
-                                    RowLayout{
-                                        spacing: 0
-                                        Layout.fillWidth:true
-
-                                        Label{
-                                            text: "Password"
-                                            color: "white"
-                                            font.pixelSize: 15
-                                        }
-
-                                        Item{
-                                            Layout.fillWidth:true
-                                        }
-
-                                        Label{
-                                            id: passDetailsPasswordLabel
-                                            text: visibilityOn? "1234567890" : "**********"
-                                            color: "#B5B5B5"
-                                            font.pixelSize: 15
-                                        }
-
-                                        Button{
-                                            id: changePasswordVisibilityButton
-                                            background: Rectangle{
-                                                color: "transparent"
-                                            }
-
-                                            contentItem: Image{
-                                            height: 30
-                                            width: 30 
-                                            source: visibilityOn ? "../imgs/visibility_on.png" : "../imgs/visibility_off.png"
-                                        }
-                                        onClicked:{
-                                            visibilityOn = !visibilityOn
-                                        }
-                                        }
-                                    }
-
-                                    Rectangle{
-                                        color: "#7B7B7B"
-                                        Layout.fillWidth: true
-                                        Layout.preferredHeight: 2
-                                        opacity: 0.3
-                                    }
-                                
-                                }
-                                
-                                /*----------Website Row---------------*/
+                                 /*----------Card Type Row---------------*/
                                 ColumnLayout{
                                     spacing: 10
 
@@ -374,7 +497,7 @@ Item{
                                         spacing: 5
 
                                         Label{
-                                            text: "Website"
+                                            text: "Type"
                                             color: "white"
                                             font.pixelSize: 15
                                         }
@@ -383,11 +506,18 @@ Item{
                                             Layout.fillWidth:true
                                         }
 
+                                        Image{
+                                            id: cardTypeImage
+                                            Layout.preferredHeight: 20
+                                            Layout.preferredWidth: 30
+                                            source: "../imgs/placeholders/mastercard.svg"
+                                        }
+
                                         Label{
-                                            id: cardsDetailsWebsiteLabel
-                                            text: "www.paypal.com"
-                                            color: "#B5B5B5"
-                                            font.pixelSize: 15
+                                            id:cardTypeLabel
+                                            text: selectedCard ? selectedCard.card_type : " "
+                                            color: "white"
+                                            font.pixelSize:18
                                         }
                                     }
 
@@ -420,7 +550,9 @@ Item{
 
                                         Label{
                                             id: cardDetailsCreditNumberLabel
-                                            text: cardNumberVisibilityOn? "1234 5678 1234 5678" : "**** **** **** ****"
+                                            text: selectedCard ?
+                                            (cardNumberVisibilityOn ? decryptedCardNumber : "**** **** **** ****")
+                                            : "**** **** **** ****"
                                             color: "#B5B5B5"
                                             font.pixelSize: 15
                                         }
@@ -437,6 +569,7 @@ Item{
                                             source: cardNumberVisibilityOn ? "../imgs/visibility_on.png" : "../imgs/visibility_off.png"
                                         }
                                         onClicked:{
+                                            if(!selectedCard) return
                                             cardNumberVisibilityOn = !cardNumberVisibilityOn
                                         }
                                         }
@@ -451,15 +584,18 @@ Item{
                                 
                                 }
 
-                                /*----------Card Type Row---------------*/
+
+
+                                /*----------Card CVV Row---------------*/
                                 ColumnLayout{
-                                    spacing: 10
+                                    spacing: 5
 
                                     RowLayout{
-                                        spacing: 5
+                                        spacing: 0
+                                        Layout.fillWidth:true
 
                                         Label{
-                                            text: "Type"
+                                            text: "CVV"
                                             color: "white"
                                             font.pixelSize: 15
                                         }
@@ -468,18 +604,30 @@ Item{
                                             Layout.fillWidth:true
                                         }
 
-                                        Image{
-                                            id: cardTypeImage
-                                            Layout.preferredHeight: 20
-                                            Layout.preferredWidth: 30
-                                            source: "../imgs/placeholders/mastercard.svg"
+                                        Label{
+                                            id: passDetailsPasswordLabel
+                                            text: selectedCard ?
+                                            (cvvVisibilityOn ? decryptedCvv : "***" )
+                                            : "***"
+                                            color: "#B5B5B5"
+                                            font.pixelSize: 15
                                         }
 
-                                        Label{
-                                            id:cardTypeLabel
-                                            text: "Mastercard"
-                                            color: "white"
-                                            font.pixelSize:18
+                                        Button{
+                                            id: changeCvvVisibilityButton
+                                            background: Rectangle{
+                                                color: "transparent"
+                                            }
+
+                                            contentItem: Image{
+                                            height: 30
+                                            width: 30 
+                                            source: cvvVisibilityOn ? "../imgs/visibility_on.png" : "../imgs/visibility_off.png"
+                                        }
+                                        onClicked:{
+                                            if(!selectedCard) return
+                                            cvvVisibilityOn = !cvvVisibilityOn
+                                        }
                                         }
                                     }
 
@@ -492,8 +640,7 @@ Item{
                                 
                                 }
 
-
-                                /*----------Safety Row---------------*/
+                                /*----------Card Expiration Date Row---------------*/
                                 ColumnLayout{
                                     spacing: 10
 
@@ -501,7 +648,7 @@ Item{
                                         spacing: 5
 
                                         Label{
-                                            text: "Safety"
+                                            text: "Expiration Date:"
                                             color: "white"
                                             font.pixelSize: 15
                                         }
@@ -510,12 +657,14 @@ Item{
                                             Layout.fillWidth:true
                                         }
 
-                                        Image{
-                                            id: passSafetyImage
-                                            Layout.preferredHeight: 30
-                                            Layout.preferredWidth: 30
-                                            source: "../imgs/safe.png"
+                                        Label{
+                                            id: cardDetailsExpirationDate
+                                            text: selectedCard ? selectedCard.expiration_date : " "
+                                            color: "#B5B5B5"
+                                            font.pixelSize: 15
                                         }
+
+                                        
                                     }
 
                                     Rectangle{
@@ -531,6 +680,7 @@ Item{
                                 TextField{
                                     id: passAddANote
                                     placeholderText: "Add a Note..."
+                                    text: selectedCard ? selectedCard.note : ""
                                     color: "white"
 
                                     background: Rectangle{
@@ -556,11 +706,12 @@ Item{
                             color: "white"
                             font.pointSize:18
                         }
+
                         /*Item History Details*/
                         Rectangle{
                             color: "#303946"
                             Layout.preferredWidth: 360
-                            Layout.preferredHeight: 150
+                            Layout.preferredHeight: 90
                             radius: 20
 
                             ColumnLayout{
@@ -572,33 +723,12 @@ Item{
                                 spacing: 20
 
 
-                                /*--------------Last Edited Row------------*/
+                                /*--------------Created at Row------------*/
                                 RowLayout{
                                         spacing: 5
 
                                         Label{
-                                            text: "Last edited:"
-                                            color: "white"
-                                            font.pixelSize: 15
-                                        }
-
-                                        Item{
-                                            Layout.fillWidth: true
-                                        }
-
-                                        Label{
-                                            id: passDetailsLastEditedLabel
-                                            text: "12/20/2025"
-                                            color: "#B5B5B5"
-                                            font.pixelSize: 15
-                                        }
-                                    }
-                                /*--------------Created Row------------*/
-                                RowLayout{
-                                        spacing: 5
-
-                                        Label{
-                                            text: "Created:"
+                                            text: "Created at:"
                                             color: "white"
                                             font.pixelSize: 15
                                         }
@@ -609,18 +739,18 @@ Item{
 
                                         Label{
                                             id: passDetailsCreatedLabel
-                                            text: "12/20/2025"
+                                            text: selectedCard ? selectedCard.created_at : " "
                                             color: "#B5B5B5"
                                             font.pixelSize: 15
                                         }
-                                    }
+                                }
 
-                                /*--------------Password Updated------------*/
+                                /*--------------Last Modified Row------------*/
                                 RowLayout{
                                         spacing: 10
 
                                         Label{
-                                            text: "Password Updated:"
+                                            text: "Last Modified:"
                                             color: "white"
                                             font.pixelSize: 15
                                         }
@@ -631,7 +761,7 @@ Item{
 
                                         Label{
                                             id: passDetailsUpdatedPasswordLabel
-                                            text: "12/20/2025"
+                                            text: selectedCard ? selectedCard.last_modified : " "
                                             color: "#B5B5B5"
                                             font.pixelSize: 15
                                         }
