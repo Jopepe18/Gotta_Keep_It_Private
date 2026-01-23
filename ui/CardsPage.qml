@@ -304,6 +304,7 @@ Item{
                             Layout.preferredHeight:45
                             padding:0
                             text: "Debug Add"
+                            visible: false
                             
                             contentItem: Text {
                                 text: addCardDebug.text

@@ -441,7 +441,7 @@ Item{
 
                 /*--------------Details----------------*/
                 Rectangle{
-                    Layout.preferredWidth:450
+                    Layout.preferredWidth:400
                     Layout.fillHeight: true
                     color: "#161C26"
                     radius: 20
@@ -709,7 +709,7 @@ Item{
                         Rectangle{
                             color: "#303946"
                             Layout.preferredWidth: 360
-                            Layout.preferredHeight: 150
+                            Layout.preferredHeight: 90
                             radius: 20
 
                             ColumnLayout{
