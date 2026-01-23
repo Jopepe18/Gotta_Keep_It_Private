@@ -279,7 +279,7 @@ class VaultBackend(QObject):
         else:
             print("VaultBackend: Failed to add debug card")
 
-    @Slot(str, int, str, str, str, str, str, str, str)
+    @Slot(str, int, str, str, str, str, str, str, str, str)
     def updateCard(self, user_id, card_id, master_password, title, cardholder_name, card_number, cvv, card_type, expiration_date, note):
         """Update an existing card entry"""
         print(f"VaultBackend: Updating card {card_id} for user {user_id}")

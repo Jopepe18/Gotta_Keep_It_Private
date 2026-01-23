@@ -17,6 +17,21 @@ Item{
 
     property var passwordsList: []
     property var filteredPasswordsList: []
+
+    // Confirmation popup for deleting password
+    ConfirmationPopup {
+        id: deletePasswordConfirmation
+        titleText: "Delete Password"
+        messageText: "Are you sure you want to delete this password? This action cannot be undone."
+        confirmButtonText: "Delete"
+        onConfirmed: {
+            if (passwordsPage.selectedPassword) {
+                console.log("Deleting password ID: " + passwordsPage.selectedPassword.id)
+                vaultBackend.deletePassword(passwordsPage.selectedPassword.id, passwordsPage.userId)
+                passwordsPage.selectedPassword = null
+            }
+        }
+    }
     
     Connections {
         target: vaultBackend
@@ -53,16 +68,24 @@ Item{
 
     function filterPasswords()
     {
-        if(!passwordsSearchTextField.text || passwordsSearchTextField.text.trim() === ""){
-            filteredPasswordsList =  passwordsList
-            return
+        var result = passwordsList
+
+        // Filter by favorites if showFavorites is enabled
+        if (showFavorites) {
+            result = result.filter(function(item) {
+                return item.is_favorite === true
+            })
         }
 
-        var query = passwordsSearchTextField.text.toLowerCase()
+        // Filter by search text
+        if (passwordsSearchTextField.text && passwordsSearchTextField.text.trim() !== "") {
+            var query = passwordsSearchTextField.text.toLowerCase()
+            result = result.filter(function(item) {
+                return (item.title && item.title.toLowerCase().includes(query))
+            })
+        }
 
-        filteredPasswordsList = passwordsList.filter(function(item){
-            return (item.title && item.title.toLowerCase().includes(query))
-        })
+        filteredPasswordsList = result
     }
 
     RowLayout{
@@ -177,6 +200,7 @@ Item{
 
                             onClicked:{
                                 showFavorites = !showFavorites
+                                filterPasswords()
                             }
                         }
 
@@ -349,13 +373,28 @@ Item{
                                         height: 20
                                     }
                                     onClicked:{
-                                        modelData.is_favorite = !modelData.is_favorite
+                                        // Toggle and update the source array item
+                                        var newFavoriteStatus = !modelData.is_favorite
+                                        
+                                        // Find and update the item in the source list
+                                        for (var i = 0; i < passwordsList.length; i++) {
+                                            if (passwordsList[i].id === modelData.id) {
+                                                passwordsList[i].is_favorite = newFavoriteStatus
+                                                break
+                                            }
+                                        }
+                                        
+                                        // Also update modelData for immediate visual feedback
+                                        modelData.is_favorite = newFavoriteStatus
 
                                         vaultBackend.setFavorite(
                                             passwordsPage.userId,
                                             modelData.id,
-                                            modelData.is_favorite
+                                            newFavoriteStatus
                                         )
+
+                                        // Refresh filter in case we're in favorites mode
+                                        filterPasswords()
                                     }    
                                 }
 
@@ -803,9 +842,7 @@ Item{
 
                             onClicked: {
                                 if (passwordsPage.selectedPassword) {
-                                    console.log("Deleting password ID: " + passwordsPage.selectedPassword.id)
-                                    vaultBackend.deletePassword(passwordsPage.selectedPassword.id, passwordsPage.userId)
-                                    passwordsPage.selectedPassword = null // Clear selection
+                                    deletePasswordConfirmation.open()
                                 }
                             }
                             }

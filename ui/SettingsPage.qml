@@ -133,8 +133,17 @@ Item{
         
         onAccepted: {
             // selectedFile gives a URL like "file:///path/file.json"
-            // Convert to local path for Python by removing the "file://" prefix
-            let path = selectedFile.toString().replace(/^(file:\/{2,3})/, "");
+            // Use Qt.resolvedUrl to get proper path handling
+            var path = selectedFile.toString()
+            
+            // Remove file:// prefix but preserve the leading / on Unix systems
+            if (Qt.platform.os === "windows") {
+                // Windows: file:///C:/path -> C:/path
+                path = path.replace(/^file:\/\/\//, "")
+            } else {
+                // macOS/Linux: file:///path -> /path
+                path = path.replace(/^file:\/\//, "")
+            }
             
             // Call python function
             vaultBackend.export_vault(settingsPage.userId, settingsPage._tempPass, path)        
@@ -147,12 +156,17 @@ Item{
         fileMode: FileDialog.OpenFile
         nameFilters: ["JSON files (*.json)"]
         onAccepted: {
-            //let clean_path = selectedFile.toString().replace(/^file:\/\/\//, "").replace(/^file:\/\//, "");
-            let clean_path = selectedFile.toString().replace(/^(file:\/{2,3})/, "");
-            // This transforms "/C:/Users/..." into "C:/Users/..."
-            if (Qt.platform.os === "windows" && clean_path.startsWith("/")) {
-                clean_path = clean_path.substring(1);
+            var clean_path = selectedFile.toString()
+            
+            // Remove file:// prefix but preserve the leading / on Unix systems
+            if (Qt.platform.os === "windows") {
+                // Windows: file:///C:/path -> C:/path
+                clean_path = clean_path.replace(/^file:\/\/\//, "")
+            } else {
+                // macOS/Linux: file:///path -> /path
+                clean_path = clean_path.replace(/^file:\/\//, "")
             }
+            
             //send to Python
             vaultBackend.import_vault(userId, settingsPage._tempPass, clean_path)
         }

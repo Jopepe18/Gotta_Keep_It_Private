@@ -575,27 +575,57 @@ class VaultManager:
             clean_path = self.clean_filepath(file_path)
             vault, dek = self._prepare_vault_session(db, user_id, provided_password)
             
-            # 4. DECRYPT ENTRIES
+            # DECRYPT PASSWORD ENTRIES
             passwords = db.query(PasswordEntry).filter(PasswordEntry.vault_id == vault.vault_id).all()
-            decrypted_list = []
+            decrypted_passwords = []
             
             print(f"DEBUG: Found {len(passwords)} passwords to decrypt.")
 
             for p in passwords:
                 plain_pass_bytes = self.encrypt_service.decrypt_data(p.encrypted_password, dek)
-                decrypted_list.append({
+                decrypted_passwords.append({
+                    "type": "password",
                     "title": p.title,
                     "username": p.username,
                     "website": p.website,
                     "password": plain_pass_bytes.decode('utf-8'),
-                    "note": p.note
+                    "note": p.note,
+                    "is_favorite": p.is_favorite
                 })
 
-            # 5. Write to JSON file
-            with open(clean_path, 'w', encoding='utf-8') as f:
-                json.dump(decrypted_list, f, indent=4)
+            # DECRYPT CREDIT CARD ENTRIES
+            cards = db.query(CreditCardEntry).filter(CreditCardEntry.vault_id == vault.vault_id).all()
+            decrypted_cards = []
+            
+            print(f"DEBUG: Found {len(cards)} credit cards to decrypt.")
 
-            return {"success": True, "message": f"Exported {len(decrypted_list)} items to {clean_path}"}
+            for c in cards:
+                plain_number_bytes = self.encrypt_service.decrypt_data(c.encrypted_number, dek)
+                plain_cvv_bytes = self.encrypt_service.decrypt_data(c.encrypted_cvv, dek)
+                decrypted_cards.append({
+                    "type": "credit_card",
+                    "title": c.title,
+                    "cardholder_name": c.cardholder_name,
+                    "card_number": plain_number_bytes.decode('utf-8'),
+                    "cvv": plain_cvv_bytes.decode('utf-8'),
+                    "card_type": c.card_type,
+                    "expiration_date": c.expiration_date,
+                    "note": c.note,
+                    "is_favorite": c.is_favorite
+                })
+
+            # Create export data structure
+            export_data = {
+                "passwords": decrypted_passwords,
+                "credit_cards": decrypted_cards
+            }
+
+            # Write to JSON file
+            with open(clean_path, 'w', encoding='utf-8') as f:
+                json.dump(export_data, f, indent=4)
+
+            total_items = len(decrypted_passwords) + len(decrypted_cards)
+            return {"success": True, "message": f"Exported {total_items} items ({len(decrypted_passwords)} passwords, {len(decrypted_cards)} cards) to {clean_path}"}
         
         except Exception as e:
             print(f"DEBUG: Export Exception: {str(e)}")
@@ -614,14 +644,27 @@ class VaultManager:
             if not os.path.exists(clean_path):
                 return {"success": False, "message": f"File not found: {clean_path}"}
 
-            # 4. READ AND ENCRYPT
+            # READ JSON
             with open(clean_path, 'r', encoding='utf-8') as f:
                 imported_data = json.load(f)
 
-            print(f"DEBUG: Importing {len(imported_data)} items from JSON.")
+            passwords_imported = 0
+            cards_imported = 0
 
-            for item in imported_data:
-                # Re-encrypt for database
+            # Check if new structured format or old flat format
+            if isinstance(imported_data, dict) and "passwords" in imported_data:
+                # New structured format
+                passwords_list = imported_data.get("passwords", [])
+                cards_list = imported_data.get("credit_cards", [])
+            else:
+                # Old flat format (backwards compatibility)
+                passwords_list = imported_data if isinstance(imported_data, list) else []
+                cards_list = []
+
+            print(f"DEBUG: Importing {len(passwords_list)} passwords and {len(cards_list)} cards from JSON.")
+
+            # Import passwords
+            for item in passwords_list:
                 encrypted_pass = self.encrypt_service.encrypt_data(item["password"].encode('utf-8'), dek)
                 
                 new_entry = PasswordEntry(
@@ -630,13 +673,35 @@ class VaultManager:
                     username=item.get("username", ""),
                     website=item.get("website", ""),
                     encrypted_password=encrypted_pass,
-                    note=item.get("note", "")
+                    note=item.get("note", ""),
+                    is_favorite=item.get("is_favorite", False)
                 )
                 db.add(new_entry)
+                passwords_imported += 1
+
+            # Import credit cards
+            for item in cards_list:
+                encrypted_number = self.encrypt_service.encrypt_data(item["card_number"].encode('utf-8'), dek)
+                encrypted_cvv = self.encrypt_service.encrypt_data(item["cvv"].encode('utf-8'), dek)
+                
+                new_card = CreditCardEntry(
+                    vault_id=vault.vault_id,
+                    title=item.get("title", "Imported Card"),
+                    cardholder_name=item.get("cardholder_name", ""),
+                    encrypted_number=encrypted_number,
+                    encrypted_cvv=encrypted_cvv,
+                    card_type=item.get("card_type", "Other"),
+                    expiration_date=item.get("expiration_date", ""),
+                    note=item.get("note", ""),
+                    is_favorite=item.get("is_favorite", False)
+                )
+                db.add(new_card)
+                cards_imported += 1
 
             db.commit()
             print("DEBUG: Import committed successfully.")
-            return {"success": True, "message": f"Imported {len(imported_data)} items successfully."}
+            total = passwords_imported + cards_imported
+            return {"success": True, "message": f"Imported {total} items ({passwords_imported} passwords, {cards_imported} cards) successfully."}
 
         except Exception as e:
             db.rollback()

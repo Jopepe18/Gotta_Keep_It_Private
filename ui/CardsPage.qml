@@ -19,6 +19,65 @@ Item{
     property var cardsList: []
     property var filteredCardsList: []
 
+    // Popup for adding new card
+    AddCardPopup {
+        id: addCardPopup
+        onSaved: function(title, holder, number, cvv, expiry, pin, type, note) {
+            console.log("Adding card: " + title)
+            vaultBackend.addCard(
+                cardsPage.userId,
+                cardsPage.masterPassword,
+                title,
+                holder,
+                number,
+                cvv,
+                type,
+                expiry,
+                note
+            )
+        }
+    }
+
+    // Popup for editing card
+    EditCardPopup {
+        id: editCardPopup
+        onUpdated: function(cardId, title, holder, number, cvv, expiry, type, note) {
+            console.log("Updating card: " + cardId)
+            vaultBackend.updateCard(
+                cardsPage.userId,
+                cardId,
+                cardsPage.masterPassword,
+                title,
+                holder,
+                number,
+                cvv,
+                type,
+                expiry,
+                note
+            )
+        }
+        onDeleted: function(cardId) {
+            console.log("Deleting card from popup: " + cardId)
+            vaultBackend.deleteCard(cardId, cardsPage.userId)
+            cardsPage.selectedCard = null
+        }
+    }
+
+    // Confirmation popup for deleting card
+    ConfirmationPopup {
+        id: deleteCardConfirmation
+        titleText: "Delete Card"
+        messageText: "Are you sure you want to delete this card? This action cannot be undone."
+        confirmButtonText: "Delete"
+        onConfirmed: {
+            if (selectedCard) {
+                console.log("Deleting card ID: " + selectedCard.id)
+                vaultBackend.deleteCard(selectedCard.id, cardsPage.userId)
+                cardsPage.selectedCard = null
+            }
+        }
+    }
+
     Connections {
         target: vaultBackend
         function onCards_updated(updatedList) {
@@ -54,16 +113,24 @@ Item{
 
     function filterCards()
     {
-        if(!cardsSearchTextField.text || cardsSearchTextField.text.trim() === ""){
-            filteredCardsList = cardsList
-            return
+        var result = cardsList
+
+        // Filter by favorites if showFavorites is enabled
+        if (showFavorites) {
+            result = result.filter(function(item) {
+                return item.is_favorite === true
+            })
         }
 
-        var query = cardsSearchTextField.text.toLowerCase()
+        // Filter by search text
+        if (cardsSearchTextField.text && cardsSearchTextField.text.trim() !== "") {
+            var query = cardsSearchTextField.text.toLowerCase()
+            result = result.filter(function(item) {
+                return (item.title && item.title.toLowerCase().includes(query))
+            })
+        }
 
-        filteredCardsList = cardsList.filter(function(item){
-            return (item.title && item.title.toLowerCase().includes(query))
-        })
+        filteredCardsList = result
     }
 
 
@@ -133,6 +200,8 @@ Item{
                                     background: Rectangle{
                                         color: "transparent"
                                     }
+
+                                    onTextChanged: filterCards()
                                 }
                             }
                         }
@@ -178,6 +247,7 @@ Item{
 
                             onClicked:{
                                 showFavorites = !showFavorites
+                                filterCards()
                             }
                         }
 
@@ -220,6 +290,10 @@ Item{
                                 Behavior on color{
                                     ColorAnimation { duration: 150}
                                 }
+                            }
+
+                            onClicked: {
+                                addCardPopup.show()
                             }
                         }
 
@@ -335,13 +409,28 @@ Item{
                                         height: 20
                                     }
                                     onClicked:{
-                                        modelData.is_favorite = !modelData.is_favorite
+                                        // Toggle and update the source array item
+                                        var newFavoriteStatus = !modelData.is_favorite
+                                        
+                                        // Find and update the item in the source list
+                                        for (var i = 0; i < cardsList.length; i++) {
+                                            if (cardsList[i].id === modelData.id) {
+                                                cardsList[i].is_favorite = newFavoriteStatus
+                                                break
+                                            }
+                                        }
+                                        
+                                        // Also update modelData for immediate visual feedback
+                                        modelData.is_favorite = newFavoriteStatus
 
-                                        vaultBackend.setFavorite(
+                                        vaultBackend.setCardFavorite(
                                             cardsPage.userId,
                                             modelData.id,
-                                            modelData.is_favorite
+                                            newFavoriteStatus
                                         )
+
+                                        // Refresh filter in case we're in favorites mode
+                                        filterCards()
                                     }    
                                 }
 
@@ -789,12 +878,28 @@ Item{
 
                              background: Rectangle{
                                 radius:20
-                                color: passEditButton.pressed ? "#313A4B" : (passEditButton.hovered? "#222B3A" : "#161C26" )
-                                border.color: "white"
+                                color: passEditButton.pressed ? "#5093E9" : (passEditButton.hovered? "#3E82DB" : "#2F72CA" )
 
                                 Behavior on color{
                                     ColorAnimation { duration: 150}
                                 }
+                            }
+
+                            onClicked: {
+                                if (!selectedCard) return
+                                // Populate edit popup with selected card data
+                                editCardPopup.cardId = selectedCard.id
+                                editCardPopup.userId = cardsPage.userId
+                                editCardPopup.masterPassword = cardsPage.masterPassword
+                                editCardPopup.titleText = selectedCard.title || ""
+                                editCardPopup.holderText = selectedCard.cardholder_name || ""
+                                editCardPopup.numberText = decryptedCardNumber || "Loading..."
+                                editCardPopup.cvvText = decryptedCvv || "..."
+                                editCardPopup.expiryText = selectedCard.expiration_date || ""
+                                editCardPopup.cardTypeText = selectedCard.card_type || ""
+                                editCardPopup.noteText = selectedCard.note || ""
+                                editCardPopup.populateFields()
+                                editCardPopup.show()
                             }
                             }
 
@@ -816,6 +921,11 @@ Item{
                                 Behavior on color{
                                     ColorAnimation { duration: 150}
                                 }
+                            }
+
+                            onClicked: {
+                                if (!selectedCard) return
+                                deleteCardConfirmation.open()
                             }
                             }
                         }
