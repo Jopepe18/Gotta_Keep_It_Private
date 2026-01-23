@@ -45,7 +45,7 @@ Window {
         ColumnLayout { 
             spacing: 5
             Label { text: "Card number"; color: "#B5B5B5"; font.pixelSize: 14 }
-            TextField { id: numberInput; Layout.fillWidth: true; Layout.preferredHeight: 45; font.pixelSize: 16; color: "white"; placeholderText: "XXXX XXXX XXXX XXXX"; background: Rectangle { color: "#303946"; radius: 10; border.color: "white"; border.width: 1 } } 
+            TextField { id: numberInput; Layout.fillWidth: true; Layout.preferredHeight: 45; font.pixelSize: 16; color: "white"; placeholderText: "XXXX XXXX XXXX XXXX"; background: Rectangle { color: "#303946"; radius: 10; border.color: "white"; border.width: 1 }} 
         }
 
         // Row for CVV & expiry & PIN

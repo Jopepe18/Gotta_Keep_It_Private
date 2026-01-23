@@ -733,6 +733,27 @@ class VaultManager:
             finally:
                 db.close()
 
+    def set_favorite_card(self, user_id: str, card_id: int, is_favorite: bool):
+            db: Session = self.get_db()
+            try:
+                card_entry = db.query(CreditCardEntry).filter(CreditCardEntry.id == card_id).first()
+
+                if not card_entry:
+                    return {"success": False, "message": "Card entry not found"}
+                
+                card_entry.is_favorite = is_favorite
+                db.commit()
+
+                print(f"VaultManager: Card {card_id} favorite status set to {is_favorite}")
+                return {"success": True, "message": "Favorite status updated"}
+                
+            except Exception as e:
+                db.rollback()
+                print(f"VaultManager: Failed to update favorite: {e}")
+                return {"success": False, "message": str(e)}
+            finally:
+                db.close()
+
 
     def scan_vault(self, user_id: str, master_password: str) -> dict:
         print("VaultManager: Starting Watchtower scan...")

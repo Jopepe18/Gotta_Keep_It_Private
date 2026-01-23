@@ -198,6 +198,16 @@ class VaultBackend(QObject):
         else:
             print("Failed to update favorite:", result.get("message"))
 
+    @Slot(str, int, bool)
+    def setFavoriteCard(self, user_id, card_id, is_favorite):
+        result = self.manager.set_favorite_card(user_id, card_id, is_favorite)
+        
+        if result["success"]:
+           pass
+        else:
+            print("Failed to update favorite:", result.get("message"))
+
+
     @Slot(str)
     def getCards(self, user_id):
         print(f"VaultBackend: Fetching cards for user {user_id}")

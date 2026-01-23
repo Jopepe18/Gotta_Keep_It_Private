@@ -113,7 +113,12 @@ Item{
 
     function filterCards()
     {
-        var result = cardsList
+        var result = []
+
+            // Start with all passwords
+        for (var i = 0; i < cardsList.length; i++) {
+            result.push(cardsList[i])
+        }
 
         // Filter by favorites if showFavorites is enabled
         if (showFavorites) {
@@ -130,6 +135,7 @@ Item{
             })
         }
 
+        // Reassign to trigger binding update
         filteredCardsList = result
     }
 
@@ -249,6 +255,7 @@ Item{
                                 showFavorites = !showFavorites
                                 filterCards()
                             }
+
                         }
 
                         /*------------Add New Card Button-----------*/
@@ -410,29 +417,32 @@ Item{
                                         height: 20
                                     }
                                     onClicked:{
-                                        // Toggle and update the source array item
                                         var newFavoriteStatus = !modelData.is_favorite
-                                        
-                                        // Find and update the item in the source list
-                                        for (var i = 0; i < cardsList.length; i++) {
-                                            if (cardsList[i].id === modelData.id) {
-                                                cardsList[i].is_favorite = newFavoriteStatus
-                                                break
-                                            }
-                                        }
-                                        
-                                        // Also update modelData for immediate visual feedback
-                                        modelData.is_favorite = newFavoriteStatus
 
-                                        vaultBackend.setCardFavorite(
+                                        vaultBackend.setFavoriteCard(
                                             cardsPage.userId,
                                             modelData.id,
                                             newFavoriteStatus
                                         )
 
+                                        var updatedList = []
+                                        for (var i = 0; i < cardsList.length; i++) {
+                                            if (cardsList[i].id === modelData.id) {
+                                                // Create a new object with updated favorite status
+                                                var updatedItem = Object.assign({}, cardsList[i])
+                                                updatedItem.is_favorite = newFavoriteStatus
+                                                updatedList.push(updatedItem)
+                                            } else {
+                                                updatedList.push(cardsList[i])
+                                            }
+                                        }
+                                        
+                                        // Reassign the entire array to trigger property binding
+                                        cardsPage.cardsList = updatedList
+
                                         // Refresh filter in case we're in favorites mode
                                         filterCards()
-                                    }    
+                                    }       
                                 }
 
                                 Image{
@@ -600,7 +610,22 @@ Item{
                                             id: cardTypeImage
                                             Layout.preferredHeight: 20
                                             Layout.preferredWidth: 30
-                                            source: "../imgs/placeholders/mastercard.svg"
+                                            fillMode: Image.PreserveAspectFit
+                                            source: {
+                                                console.log(selectedCard.card_type)
+                                                if (!selectedCard) return "../imgs/placeholders/mastercard.svg"
+                                                
+                                                var cardType = selectedCard.card_type.trim()
+                                                
+                                                if (cardType === "Mastercard") {
+                                                    return "../imgs/placeholders/mastercard.svg"
+                                                } else if (cardType === "Visa") {
+                                                    return "../imgs/placeholders/visa.png"
+                                                } else {
+                                                    return "../imgs/cards.png"
+                                                }
+                                            }
+                                            visible: selectedCard !== null
                                         }
 
                                         Label{

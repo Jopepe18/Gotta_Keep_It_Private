@@ -68,7 +68,12 @@ Item{
 
     function filterPasswords()
     {
-        var result = passwordsList
+        var result = []
+
+            // Start with all passwords
+        for (var i = 0; i < passwordsList.length; i++) {
+            result.push(passwordsList[i])
+        }
 
         // Filter by favorites if showFavorites is enabled
         if (showFavorites) {
@@ -85,6 +90,7 @@ Item{
             })
         }
 
+        // Reassign to trigger binding update
         filteredPasswordsList = result
     }
 
@@ -373,25 +379,28 @@ Item{
                                         height: 20
                                     }
                                     onClicked:{
-                                        // Toggle and update the source array item
                                         var newFavoriteStatus = !modelData.is_favorite
-                                        
-                                        // Find and update the item in the source list
-                                        for (var i = 0; i < passwordsList.length; i++) {
-                                            if (passwordsList[i].id === modelData.id) {
-                                                passwordsList[i].is_favorite = newFavoriteStatus
-                                                break
-                                            }
-                                        }
-                                        
-                                        // Also update modelData for immediate visual feedback
-                                        modelData.is_favorite = newFavoriteStatus
 
                                         vaultBackend.setFavorite(
                                             passwordsPage.userId,
                                             modelData.id,
                                             newFavoriteStatus
                                         )
+
+                                        var updatedList = []
+                                        for (var i = 0; i < passwordsList.length; i++) {
+                                            if (passwordsList[i].id === modelData.id) {
+                                                // Create a new object with updated favorite status
+                                                var updatedItem = Object.assign({}, passwordsList[i])
+                                                updatedItem.is_favorite = newFavoriteStatus
+                                                updatedList.push(updatedItem)
+                                            } else {
+                                                updatedList.push(passwordsList[i])
+                                            }
+                                        }
+                                        
+                                        // Reassign the entire array to trigger property binding
+                                        passwordsPage.passwordsList = updatedList
 
                                         // Refresh filter in case we're in favorites mode
                                         filterPasswords()
