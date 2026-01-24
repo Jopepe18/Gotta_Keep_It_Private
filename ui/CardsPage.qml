@@ -795,13 +795,14 @@ Item{
                                 
                                 }
 
-                                /*----------------Add a Note Text Field---------------*/
+                                /*----------------Note Display (Read-Only)---------------*/
                                 TextField{
                                     id: passAddANote
-                                    placeholderText: "Add a Note..."
+                                    placeholderText: "No note"
                                     text: selectedCard ? selectedCard.note : ""
-                                    color: "white"
-
+                                    color: "#B5B5B5"
+                                    readOnly: true
+                                    
                                     background: Rectangle{
                                         color: "#303946"
                                     }

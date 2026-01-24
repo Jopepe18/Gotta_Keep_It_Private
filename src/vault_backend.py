@@ -91,6 +91,7 @@ class VaultBackend(QObject):
                 "username": p.username,
                 "website": p.website,
                 "is_favorite": p.is_favorite,
+                "has_totp": p.has_totp,
                 "password": "••••••••",  # Placeholder - actual password decrypted on demand
                 "note": p.note or "",
                 "created_at": p.created_at.strftime("%Y-%m-%d %H:%M:%S") if p.created_at else "",
@@ -101,8 +102,8 @@ class VaultBackend(QObject):
         print(f"VaultBackend: Emitting {len(passwords_list)} passwords")
         self.passwords_updated.emit(passwords_list)
 
-    # Signal to return decrypted password details
-    password_decrypted = Signal(bool, str, str)  # success, password, message
+    # Signal to return decrypted password details (with TOTP)
+    password_decrypted = Signal(bool, str, str, str, bool)  # success, password, message, totp_code, has_totp
     
     @Slot(str, int)
     def decryptPassword(self, user_id, password_id):
@@ -110,9 +111,15 @@ class VaultBackend(QObject):
         print(f"VaultBackend: Decrypting password {password_id} for user {user_id}")
         result = self.manager.get_decrypted_password(user_id, password_id)
         if result["success"]:
-            self.password_decrypted.emit(True, result["password"], "")
+            self.password_decrypted.emit(
+                True, 
+                result["password"], 
+                "", 
+                result.get("totp_code", ""),
+                result.get("has_totp", False)
+            )
         else:
-            self.password_decrypted.emit(False, "", result["message"])
+            self.password_decrypted.emit(False, "", result["message"], "", False)
 
     @Slot(int, str)
     def deletePassword(self, password_id, user_id):
@@ -146,8 +153,8 @@ class VaultBackend(QObject):
 
 
 
-    @Slot(str, str, str, str, str, str, str)
-    def addPassword(self, user_id, master_password, title, username, password, website, note):
+    @Slot(str, str, str, str, str, str, str, str)
+    def addPassword(self, user_id, master_password, title, username, password, website, note, totp_secret):
         """Add a new password entry"""
         print(f"VaultBackend: Adding password for user {user_id}")
         entry_data = {
@@ -155,7 +162,8 @@ class VaultBackend(QObject):
             "username": username,
             "password": password,
             "website": website,
-            "note": note
+            "note": note,
+            "totp_secret": totp_secret
         }
         result = self.manager.add_password(user_id, master_password, entry_data)
         
@@ -165,8 +173,8 @@ class VaultBackend(QObject):
         else:
             self.operation_finished.emit(False, result["message"])
 
-    @Slot(str, int, str, str, str, str, str, str)
-    def updatePassword(self, user_id, password_id, master_password, title, username, password, website, note):
+    @Slot(str, int, str, str, str, str, str, str, str)
+    def updatePassword(self, user_id, password_id, master_password, title, username, password, website, note, totp_secret):
         """Update an existing password entry"""
         print(f"VaultBackend: Updating password {password_id} for user {user_id}")
         entry_data = {
@@ -174,7 +182,8 @@ class VaultBackend(QObject):
             "username": username,
             "password": password,
             "website": website,
-            "note": note
+            "note": note,
+            "totp_secret": totp_secret
         }
         result = self.manager.update_password(user_id, password_id, master_password, entry_data)
         

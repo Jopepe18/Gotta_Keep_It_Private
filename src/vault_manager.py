@@ -9,6 +9,7 @@ from encryption_service import EncryptionService
 from PasswordEvaluator import PasswordAnalyser 
 import json
 from watchtower_page import Watchtower
+import pyotp
 
 #σαν να είναι το Handle Credential μας, to be changed 
 class VaultManager:
@@ -187,13 +188,26 @@ class VaultManager:
             # 4. Encrypt the new password
             encrypted_password = self.encrypt_service.encrypt_data(entry_data.get('password', ''), dek)
 
-            # 5. Create Entry
+            # 5. Encrypt TOTP secret if provided
+            encrypted_totp = None
+            totp_secret = entry_data.get('totp_secret', '')
+            if totp_secret:
+                try:
+                    # Validate the TOTP secret by generating a code
+                    pyotp.TOTP(totp_secret).now()
+                    encrypted_totp = self.encrypt_service.encrypt_data(totp_secret.encode('utf-8'), dek)
+                except Exception as e:
+                    print(f"VaultManager: Invalid TOTP secret: {e}")
+                    # Continue without TOTP if invalid
+
+            # 6. Create Entry
             new_entry = PasswordEntry(
                 vault_id=vault.vault_id,
                 title=entry_data.get('title', 'Untitled'),
                 username=entry_data.get('username', ''),
                 website=entry_data.get('website', ''),
                 encrypted_password=encrypted_password,
+                encrypted_totp=encrypted_totp,
                 note=entry_data.get('note', '')
             )
             
@@ -245,7 +259,22 @@ class VaultManager:
             # 4. Encrypt the password (it might have changed)
             encrypted_password = self.encrypt_service.encrypt_data(entry_data.get('password', ''), dek)
 
-            # 5. Update Entry
+            # 5. Encrypt TOTP secret if provided
+            totp_secret = entry_data.get('totp_secret', None)
+            if totp_secret is not None:  # Allow empty string to clear TOTP
+                if totp_secret:
+                    try:
+                        # Validate the TOTP secret
+                        pyotp.TOTP(totp_secret).now()
+                        password_entry.encrypted_totp = self.encrypt_service.encrypt_data(totp_secret.encode('utf-8'), dek)
+                    except Exception as e:
+                        print(f"VaultManager: Invalid TOTP secret: {e}")
+                        # Keep existing TOTP if new one is invalid
+                else:
+                    # Empty string means clear TOTP
+                    password_entry.encrypted_totp = None
+
+            # 6. Update Entry
             password_entry.title = entry_data.get('title', 'Untitled')
             password_entry.username = entry_data.get('username', '')
             password_entry.website = entry_data.get('website', '')
@@ -286,6 +315,7 @@ class VaultManager:
                     username=p.username,
                     website=p.website,
                     is_favorite=p.is_favorite,
+                    has_totp=p.encrypted_totp is not None,
                     encrypted_password=p.encrypted_password,
                     note=p.note,
                     created_at=p.created_at,
@@ -299,6 +329,7 @@ class VaultManager:
         """
         Decrypts a single password entry using the recovery key.
         Used when user wants to view the actual password.
+        Also returns TOTP code if available.
         """
         db: Session = self.get_db()
         try:
@@ -325,9 +356,23 @@ class VaultManager:
             # Decrypt the password
             decrypted_password = self.encrypt_service.decrypt_data(password_entry.encrypted_password, vault_dek)
             
+            # Decrypt and generate TOTP code if available
+            totp_code = ""
+            has_totp = False
+            if password_entry.encrypted_totp:
+                try:
+                    decrypted_secret = self.encrypt_service.decrypt_data(password_entry.encrypted_totp, vault_dek)
+                    totp = pyotp.TOTP(decrypted_secret.decode('utf-8'))
+                    totp_code = totp.now()
+                    has_totp = True
+                except Exception as e:
+                    print(f"VaultManager: Error generating TOTP: {e}")
+            
             return {
                 "success": True,
-                "password": decrypted_password.decode('utf-8')
+                "password": decrypted_password.decode('utf-8'),
+                "totp_code": totp_code,
+                "has_totp": has_totp
             }
         except Exception as e:
             print(f"VaultManager: Error decrypting password: {e}")
@@ -583,6 +628,17 @@ class VaultManager:
 
             for p in passwords:
                 plain_pass_bytes = self.encrypt_service.decrypt_data(p.encrypted_password, dek)
+                
+                # Decrypt TOTP secret if present
+                totp_secret = ""
+                if p.encrypted_totp:
+                    try:
+                        totp_secret_bytes = self.encrypt_service.decrypt_data(p.encrypted_totp, dek)
+                        totp_secret = totp_secret_bytes.decode('utf-8')
+                    except Exception as e:
+                        print(f"DEBUG: Failed to decrypt TOTP for entry {p.title}: {e}")
+                        totp_secret = ""
+                
                 decrypted_passwords.append({
                     "type": "password",
                     "title": p.title,
@@ -590,7 +646,8 @@ class VaultManager:
                     "website": p.website,
                     "password": plain_pass_bytes.decode('utf-8'),
                     "note": p.note,
-                    "is_favorite": p.is_favorite
+                    "is_favorite": p.is_favorite,
+                    "totp_secret": totp_secret  # Include TOTP secret in export
                 })
 
             # DECRYPT CREDIT CARD ENTRIES
@@ -667,12 +724,25 @@ class VaultManager:
             for item in passwords_list:
                 encrypted_pass = self.encrypt_service.encrypt_data(item["password"].encode('utf-8'), dek)
                 
+                # Encrypt TOTP secret if present
+                encrypted_totp = None
+                totp_secret = item.get("totp_secret", "")
+                if totp_secret:
+                    try:
+                        # Validate TOTP secret before encrypting
+                        pyotp.TOTP(totp_secret).now()
+                        encrypted_totp = self.encrypt_service.encrypt_data(totp_secret.encode('utf-8'), dek)
+                    except Exception as e:
+                        print(f"DEBUG: Invalid TOTP secret for {item.get('title', 'unknown')}, skipping: {e}")
+                        encrypted_totp = None
+                
                 new_entry = PasswordEntry(
                     vault_id=vault.vault_id,
                     title=item.get("title", "Imported Entry"),
                     username=item.get("username", ""),
                     website=item.get("website", ""),
                     encrypted_password=encrypted_pass,
+                    encrypted_totp=encrypted_totp,  # Include TOTP secret
                     note=item.get("note", ""),
                     is_favorite=item.get("is_favorite", False)
                 )

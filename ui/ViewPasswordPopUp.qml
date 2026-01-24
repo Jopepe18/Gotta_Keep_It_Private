@@ -25,6 +25,11 @@ Window {
     property string createdText: ""
     property bool isFavorite: false
     
+    // TOTP properties
+    property string totpCode: ""
+    property bool hasTotp: false
+    property string totpSecret: ""  // For editing/adding
+    
     // Mode
     property bool isAdding: false
     property bool isEditing: false
@@ -38,6 +43,109 @@ Window {
             console.log("Deleting password id: " + root.itemId)
             vaultBackend.deletePassword(root.itemId, root.userId)
             root.close()
+        }
+    }
+    
+    // TOTP Setup Popup
+    Popup {
+        id: totpSetupPopup
+        anchors.centerIn: parent
+        width: 400
+        height: 250
+        modal: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        
+        background: Rectangle {
+            color: "#2B3441"
+            radius: 15
+            border.color: "#5093E9"
+            border.width: 2
+        }
+        
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 20
+            spacing: 15
+            
+            Label {
+                text: "Setup Two-Factor Authentication"
+                color: "white"
+                font.pixelSize: 18
+                font.bold: true
+                Layout.alignment: Qt.AlignHCenter
+            }
+            
+            Label {
+                text: "Enter the secret key provided by your authenticator app or service:"
+                color: "#B5B5B5"
+                font.pixelSize: 13
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
+            }
+            
+            TextField {
+                id: totpSecretInput
+                placeholderText: "e.g., JBSWY3DPEHPK3PXP"
+                placeholderTextColor: "#888"
+                Layout.fillWidth: true
+                Layout.preferredHeight: 45
+                font.pixelSize: 14
+                color: "white"
+                background: Rectangle { 
+                    color: "#303946"
+                    radius: 10
+                    border.color: "#5093E9"
+                    border.width: 1 
+                }
+            }
+            
+            Label {
+                id: totpErrorLabel
+                text: ""
+                color: "#F76262"
+                font.pixelSize: 12
+                visible: text !== ""
+            }
+            
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                spacing: 20
+                
+                Button {
+                    text: "Cancel"
+                    Layout.preferredWidth: 100
+                    Layout.preferredHeight: 40
+                    background: Rectangle { color: "transparent"; border.color: "white"; border.width: 2; radius: 10 }
+                    contentItem: Text { text: parent.text; color: "white"; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                    onClicked: {
+                        totpSecretInput.text = ""
+                        totpErrorLabel.text = ""
+                        totpSetupPopup.close()
+                    }
+                }
+                
+                Button {
+                    text: "Save"
+                    Layout.preferredWidth: 100
+                    Layout.preferredHeight: 40
+                    background: Rectangle { color: "#5093E9"; radius: 10 }
+                    contentItem: Text { text: parent.text; color: "white"; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                    onClicked: {
+                        var secret = totpSecretInput.text.trim().toUpperCase().replace(/\s/g, "")
+                        if (secret.length < 16) {
+                            totpErrorLabel.text = "Secret key is too short (minimum 16 characters)"
+                            return
+                        }
+                        // Save the secret
+                        root.totpSecret = secret
+                        root.hasTotp = true
+                        totpSecretInput.text = ""
+                        totpErrorLabel.text = ""
+                        totpSetupPopup.close()
+                        console.log("TOTP secret saved: " + secret.substring(0, 4) + "...")
+                    }
+                }
+            }
         }
     }
     
@@ -59,6 +167,9 @@ Window {
         passwordField.text = ""
         websiteField.text = ""
         noteField.text = ""
+        root.totpSecret = ""
+        root.hasTotp = false
+        root.totpCode = ""
     }
 
     // Helper to populate fields from properties (restoring data)
@@ -68,6 +179,8 @@ Window {
         passwordField.text = root.passwordText
         websiteField.text = root.websiteText
         noteField.text = root.noteText
+        // totpSecret stays empty in edit mode (user doesn't see existing secret)
+        // hasTotp and totpCode are set from outside
     }
 
     // Ensure password field updates when the property changes (async decryption)
@@ -203,6 +316,111 @@ Window {
                     }
                 }
 
+                // 2FA / TOTP Section
+                ColumnLayout {
+                    spacing: 5
+                    Layout.fillWidth: true
+                    
+                    RowLayout {
+                        spacing: 10
+                        Label { text: "Two-Factor Authentication (2FA)"; color: "#B5B5B5"; font.pixelSize: 14 }
+                        Label { 
+                            text: root.hasTotp ? "✓ Enabled" : "○ Not Set"
+                            color: root.hasTotp ? "#27ae60" : "#888"
+                            font.pixelSize: 12
+                            visible: !root.isAdding && !root.isEditing
+                        }
+                    }
+                    
+                    // TOTP Code Display (View mode with TOTP)
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 60
+                        color: "#1E2634"
+                        radius: 10
+                        border.color: root.hasTotp ? "#5093E9" : "#555"
+                        border.width: 1
+                        visible: !root.isAdding && !root.isEditing && root.hasTotp
+                        
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.margins: 10
+                            
+                            ColumnLayout {
+                                spacing: 2
+                                Label { text: "Current Code"; color: "#B5B5B5"; font.pixelSize: 12 }
+                                Label { 
+                                    text: root.totpCode || "------"
+                                    color: "#5093E9"
+                                    font.pixelSize: 28
+                                    font.bold: true
+                                    font.family: "Menlo"
+                                }
+                            }
+                            
+                            Item { Layout.fillWidth: true }
+                            
+                            Button {
+                                text: "Copy"
+                                Layout.preferredWidth: 80
+                                Layout.preferredHeight: 35
+                                background: Rectangle { color: "#5093E9"; radius: 10 }
+                                contentItem: Text { text: parent.text; color: "white"; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                                onClicked: {
+                                    if (root.totpCode) {
+                                        // Use a hidden TextField to copy
+                                        totpCopyHelper.text = root.totpCode
+                                        totpCopyHelper.selectAll()
+                                        totpCopyHelper.copy()
+                                        console.log("TOTP code copied to clipboard")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Hidden helper for clipboard copy
+                    TextField {
+                        id: totpCopyHelper
+                        visible: false
+                    }
+                    
+                    // Setup/Edit 2FA Button (Add/Edit mode)
+                    Button {
+                        text: root.hasTotp ? "Change 2FA Secret" : "Setup 2FA"
+                        Layout.preferredHeight: 45
+                        Layout.fillWidth: true
+                        visible: root.isAdding || root.isEditing
+                        background: Rectangle { 
+                            color: "transparent"
+                            border.color: "#5093E9"
+                            border.width: 2
+                            radius: 10 
+                        }
+                        contentItem: Text { 
+                            text: parent.text
+                            color: "#5093E9"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            font.pixelSize: 14
+                        }
+                        onClicked: totpSetupPopup.open()
+                    }
+                    
+                    // TOTP Secret Input Field (shown after clicking Setup)
+                    TextField {
+                        id: totpSecretField
+                        placeholderText: "Enter 2FA Secret Key"
+                        placeholderTextColor: "#888"
+                        visible: false  // Hidden, managed by popup
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 45
+                        font.pixelSize: 14
+                        color: "white"
+                        background: Rectangle { color: "#303946"; radius: 10; border.color: "#5093E9"; border.width: 1 }
+                    }
+                }
+
                 // Dates
                 RowLayout {
                     spacing: 20
@@ -237,7 +455,8 @@ Window {
                             usernameField.text,
                             passwordField.text,
                             websiteField.text,
-                            noteField.text
+                            noteField.text,
+                            root.totpSecret  // TOTP secret
                         )
                     } else if (root.isEditing) {
                         console.log("Updating password id: " + root.itemId)
@@ -249,7 +468,8 @@ Window {
                             usernameField.text,
                             passwordField.text,
                             websiteField.text,
-                            noteField.text
+                            noteField.text,
+                            root.totpSecret  // TOTP secret (empty = no change, has value = update)
                         )
                     }
                 }
