@@ -326,7 +326,7 @@ Item{
 
                     ListView {
                         id: passwordListView
-                        Layout.fillHeight: true
+                        Layout.preferredHeight: 470
                         Layout.fillWidth: true
                         clip: true
                         spacing: 10
@@ -444,6 +444,10 @@ Item{
                         footer: Item {
                             height: 50
                         }
+                    }
+
+                    Item{
+                        Layout.fillHeight: true
                     }
 
                 }
