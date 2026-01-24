@@ -10,12 +10,12 @@ Item {
     // ΝΕΑ 
     property string userId: ""          
     property bool isChecking: false
-
+  
     // ΝΕΑ 
     property int weakCount: 0            
     property int reusedCount: 0          
     property int breachedCount: 0    
-
+    property string masterPassword: ""
     // ΝΕΑ 
     property bool hasBreaches: breachedCount > 0  
     property bool isVaultStrong: weakCount === 0 && reusedCount === 0 && breachedCount === 0 && !isChecking
@@ -37,11 +37,15 @@ Item {
 
     // NEO: Ξεκινάει το scan μόλις ανοίξει η σελίδα
     onUserIdChanged: {  
-        if (userId !== "") watchTowerBackend.startScan(userId)
+        if (userId !== "" && masterPassword !== "") {
+             watchTowerBackend.startScan(userId, masterPassword)
+        }
     }
     
-    Component.onCompleted: {  
-        if (userId !== "") watchTowerBackend.startScan(userId)
+   Component.onCompleted: {  
+        if (userId !== "" && masterPassword !== "") {
+             watchTowerBackend.startScan(userId, masterPassword)
+        }
     }
 
     Rectangle {

@@ -36,7 +36,7 @@ Item{
                 break;
             case "watchTower": // ΝΕΟ
                 page = "WatchTowerPage.qml"; 
-                props = {"userId": root.userIdString}; 
+                props = {"userId": root.userIdString,"masterPassword": root.masterPassword}; 
                 break;
             case "generator": page = "GeneratorPage.qml"; break;
             case "settings": 
