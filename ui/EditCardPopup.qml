@@ -165,10 +165,25 @@ Window {
                 
                 background: Rectangle { color: "#1E2634"; radius: 10 }
                 contentItem: Text { text: parent.displayText; color: "white"; font: parent.font; verticalAlignment: Text.AlignVCenter; leftPadding: 10 }
+                
+                delegate: ItemDelegate {
+                    width: typeInput.width
+                    contentItem: Text {
+                        text: modelData
+                        color: "white"
+                        font: typeInput.font
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    background: Rectangle {
+                        color: highlighted ? "#5093E9" : "#1E2634"
+                    }
+                    highlighted: typeInput.highlightedIndex === index
+                }
+                
                 popup: Popup {
                     y: parent.height - 1
                     width: parent.width
-                    height: contentItem.implicitHeight
+                    implicitHeight: contentItem.implicitHeight
                     padding: 1
                     contentItem: ListView {
                         clip: true
