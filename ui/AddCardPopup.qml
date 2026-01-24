@@ -64,6 +64,7 @@ Window {
                 TextField { id: expiryInput; Layout.preferredWidth: 120; Layout.preferredHeight: 45; font.pixelSize: 16; color: "white"; background: Rectangle { color: "#303946"; radius: 10; border.color: "white"; border.width: 1 } }
             }
             ColumnLayout { 
+                visible: false
                 spacing: 5
                 Label { text: "PIN"; color: "#B5B5B5"; font.pixelSize: 14 }
                 TextField { id: pinInput; Layout.preferredWidth: 90; Layout.preferredHeight: 45; font.pixelSize: 16; color: "white"; echoMode: TextInput.Password; background: Rectangle { color: "#303946"; radius: 10; border.color: "white"; border.width: 1 } }
