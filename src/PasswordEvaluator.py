@@ -6,12 +6,10 @@ class PasswordAnalyser:
     def __init__(self):    
         self.dictionary: Set[str] = set()
         self.dictionary_loaded: bool = False
-        # Βεβαιώσου ότι το όνομα του αρχείου είναι σωστό στον φάκελο!
         currentDir = os.path.dirname(os.path.abspath(__file__))
         filepath = os.path.join(currentDir, '100k-most-used-passwords-NCSC.txt')   
         self.load_dictionary(filepath)
 
-    # ΑΦΑΙΡΕΣΑ την κάτω παύλα (_) για να καλείται ελεύθερα
     def calculate_entropy(self, password):
         pool_size = 0
         if any(c.islower() for c in password): pool_size += 26
@@ -43,7 +41,7 @@ class PasswordAnalyser:
         if len(password) < 8:
             return "Weak"
             
-        # 2. Μετά έλεγχος Λεξικού (Σημαντικό!)
+        # 2. Μετά έλεγχος Λεξικού 
         if self.check_in_dictionary(password):
             return "Weak"
 

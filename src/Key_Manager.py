@@ -44,7 +44,7 @@ class KeyManager:
             length=32,          # Θέλουμε 32 bytes για AES-256
             iterations=2,       # Πόσα περάσματα (Time cost)
             lanes=4,            # Parallelism (Πόσα threads)
-            memory_cost=64 * 1024, # 64MB μνήμης (Memory cost) - Σημαντικό!
+            memory_cost=64 * 1024, # 64MB μνήμης (Memory cost)
             ad=None,
             secret=None
         )

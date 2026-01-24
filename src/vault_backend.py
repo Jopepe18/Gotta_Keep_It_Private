@@ -328,3 +328,6 @@ class VaultBackend(QObject):
         else:
             print("Failed to update card favorite:", result.get("message"))
         
+    @Slot(str, int, result="QVariantMap") 
+    def get_decrypted_password(self, user_id, password_id):
+        return self.manager.get_decrypted_password(user_id, password_id)

@@ -21,7 +21,6 @@ class BreachAPIService:
                 return 0
             
             # 3. Parsing της απάντησης
-            # Η απάντηση είναι πολλές γραμμές: HASH_SUFFIX:COUNT
             hashes = (line.split(':') for line in response.text.splitlines())
             
             for h, count in hashes:

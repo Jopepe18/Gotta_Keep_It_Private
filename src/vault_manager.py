@@ -271,7 +271,7 @@ class VaultManager:
                         print(f"VaultManager: Invalid TOTP secret: {e}")
                         # Keep existing TOTP if new one is invalid
                 else:
-                    # Empty string means clear TOTP
+                    #clear TOTP
                     password_entry.encrypted_totp = None
 
             # 6. Update Entry
@@ -282,7 +282,6 @@ class VaultManager:
             password_entry.note = entry_data.get('note', '')
             
             # Update last_modified implicitly via onupdate in model or explicitly here if needed.
-            # Usually SQLAlchemy handles onupdate=func.now(), but explicit is safer if not set.
             from datetime import datetime
             password_entry.last_modified = datetime.utcnow()
             
@@ -370,6 +369,11 @@ class VaultManager:
             
             return {
                 "success": True,
+                "id": password_entry.id,
+                "title": password_entry.title,       
+                "username": password_entry.username, 
+                "website": password_entry.website,   
+                "note": password_entry.note,         
                 "password": decrypted_password.decode('utf-8'),
                 "totp_code": totp_code,
                 "has_totp": has_totp
@@ -825,46 +829,46 @@ class VaultManager:
                 db.close()
 
 
-    def scan_vault(self, user_id: str, master_password: str) -> dict:
+    def scan_vault(self, user_id: str, master_password: str, progress_callback=None) -> dict:
         print("VaultManager: Starting Watchtower scan...")
         db = self.get_db()
-        
-        # Αρχικοποίηση (ή το έχεις στο __init__)
         analyzer = Watchtower() 
 
         try:
-            # 1. AUTH & DECRYPT (Μένει ίδιο)
+            # 1. AUTH & PREPARE
             try:
                 vault, dek = self._prepare_vault_session(db, user_id, master_password)
             except Exception as e:
                 return {"success": False, "message": str(e)}
 
-            # 2. FETCH (Μένει ίδιο)
+            # 2. FETCH
             passwords = db.query(PasswordEntry).filter(PasswordEntry.vault_id == vault.vault_id).all()
             decrypted_objects = []
+            total_items = len(passwords)
 
-            # 3. DECRYPT LOOP (Μένει ίδιο)
-            for entry in passwords:
+            # 3. DECRYPT LOOP (Φάση 1: Γρήγορη - 0 έως 10%)
+            for index, entry in enumerate(passwords):
+                # Υπολογισμός προόδου (0-10%)
+                if progress_callback and total_items > 0:
+                    percent = int((index / total_items) * 10) 
+                    progress_callback(percent)
+
                 try:
                     plain_pass_bytes = self.encrypt_service.decrypt_data(entry.encrypted_password, dek)
                     entry.password = plain_pass_bytes.decode('utf-8')
                     decrypted_objects.append(entry)
                 except Exception:
                     continue
-
-            # 4. ANALYZE (Μένει ίδιο)
-            # Ο Analyzer κάνει τη δουλειά και γεμίζει τα status
-            report = analyzer.analyze_vault(decrypted_objects)
-
-            # 5. COMMIT (Σώζουμε τα WEAK/REUSED στη βάση)
-            db.commit()
             
-            # --- Η ΜΕΓΑΛΗ ΑΛΛΑΓΗ ΕΔΩ ---
-            # 6. FORMATTING: Ζητάμε το έτοιμο JSON από τον Analyzer!
-            # Δεν έχουμε πια serialize methods εδώ μέσα.
+            # 4. ANALYZE (Φάση 2: Αργή - 10 έως 100%)
+            # Περνάμε το callback ΜΕΣΑ στον analyzer!
+            report = analyzer.analyze_vault(decrypted_objects, progress_callback)
+
+            # 5. COMMIT & RETURN
+            db.commit()
             response_data = analyzer.format_json_response(report, len(decrypted_objects))
             
-            # 7. CLEANUP (Μένει ίδιο)
+            # Καθαρισμός μνήμης
             for entry in decrypted_objects:
                 if hasattr(entry, 'password'): del entry.password
 
@@ -873,10 +877,11 @@ class VaultManager:
 
         except Exception as e:
             print(f"Watchtower Error: {e}")
+            import traceback
+            traceback.print_exc()
             return {"success": False, "message": str(e)}
         finally:
             db.close()
-
 
     def add_debug_card(self, user_id: str) -> bool:
         """

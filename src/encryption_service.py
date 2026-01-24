@@ -13,9 +13,6 @@ class EncryptionService:
         """
         Hashes a plain text password using SHA-256 (for simplicity/portability).
         """
-        
-        
-        # A simple secure implementation using PBKDF2
         salt = secrets.token_hex(16)
         return self._hash_with_salt(plain_password, salt)
 
@@ -37,14 +34,6 @@ class EncryptionService:
             return False
 
     def encrypt_data(self, data: str | bytes, key: bytes) -> bytes:
-        """
-        KeyManager was previously handling encryption. Now EncryptionService does.
-        Encrypts data (String or Bytes) using AES-GCM.
-        
-        Args:
-            data: The text or bytes to encrypt.
-            key: The encryption key (must be 32 bytes).
-        """
         # 1. Convert to bytes if string
         if isinstance(data, str):
             data_bytes = data.encode('utf-8')

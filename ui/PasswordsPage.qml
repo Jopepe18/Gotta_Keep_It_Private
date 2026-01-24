@@ -464,7 +464,8 @@ Item{
                                     source: "https://www.google.com/s2/favicons?domain="+ modelData.website + "&sz=40"
                                     Layout.preferredWidth: 45
                                     Layout.preferredHeight: 45
-
+                                    asynchronous: true  
+                                    cache: true
                                     onStatusChanged: {
                                         if(status === Image.Error){
                                             source = "../imgs/placeholders/default_image.png"
