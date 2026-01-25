@@ -182,36 +182,94 @@ Item {
                         onClicked: { currentPage = "settings"; updatePage(); }
                     }
 
-                    Item { Layout.fillHeight: true }
+                    Item {
+                        Layout.preferredHeight: 170
+                    }
 
-                    // Logout
+                    /*--------White Line---------*/
+                    Rectangle {
+                        color: "white"
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 2
+                        opacity: 0.3
+                    }
+
+                    //Logout Button
                     Button {
                         id: logoutMenuButton
-                        Layout.fillWidth: true; Layout.preferredHeight: 55; padding: 0
-                        contentItem: Rectangle { color: "transparent"; Row { anchors.centerIn: parent; spacing: 5; Image { height: 25; width: 25; source: "../imgs/logout.png" } Text { text: "Log Out"; color: "white"; font.pixelSize: 20 } } }
-                        background: Rectangle { color: logoutMenuButton.hovered ? "#252D36" : "#303946"; radius: 8 }
-                        onClicked: { root.logoutClicked() }
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 55
+                        padding: 0
+
+                        contentItem: Rectangle {
+                            anchors.fill: parent
+                            color: "transparent"
+
+                            Row {
+                                anchors.centerIn: parent
+                                spacing: 5
+
+                                Image {
+                                    height: 25
+                                    width: 25
+                                    source: "../imgs/logout.png"
+                                    fillMode: Image.PreserveAspectFit
+                                }
+
+                                Text {
+                                    text: "Log Out"
+                                    color: "white"
+                                    font.pixelSize: 20
+                                }
+                            }
+                        }
+
+                        background: Rectangle {
+                            color: logoutMenuButton.pressed ? "#353F4A" : (logoutMenuButton.hovered ? "#252D36" : "#303946")
+                            radius: 8
+
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: 150
+                                }
+                            }
+                        }
+                        onClicked: {
+                            root.logoutClicked()
+                        }
                     }
-                    Item { Layout.preferredHeight: 20 }
+
+                    Item {
+                        Layout.fillHeight: true
+                    }
                 }
             }
 
-            // Main Content Area
-            Component {
-                id: firstPasswordPage
-                PasswordsPage {
-                    userId: root.userIdString
-                    masterPassword: root.masterPassword
-                }
-            }
-
+            /* ----------Show Pages ----------*/
             StackView {
                 id: stack
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                initialItem: firstPasswordPage
-                replaceEnter: Transition { OpacityAnimator { from: 0; to: 1; duration: 100 } }
-                replaceExit: Transition { OpacityAnimator { from: 1; to: 0; duration: 100 } }
+                initialItem: PasswordsPage {
+                    userId: root.userIdString
+                    masterPassword: root.masterPassword
+                }
+
+                // Using Fade for the transition instead of slide
+                replaceEnter: Transition {
+                    OpacityAnimator {
+                        from: 0
+                        to: 1
+                        duration: 100
+                    }
+                }
+                replaceExit: Transition {
+                    OpacityAnimator {
+                        from: 1
+                        to: 0
+                        duration: 100
+                    }
+                }
             }
         }
     }
