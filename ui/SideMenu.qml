@@ -35,38 +35,49 @@ Item {
         }
     }
 
-    // 3. ΤΟ POPUP (ΤΟ ΠΑΡΑΘΥΡΟ)
-    EditPasswordPopup {
-        id: editPasswordPopup // Μικρό 'e' στο ID
+    // 3. ΤΟ POPUP (ΤΟ ΠΑΡΑΘΥΡΟ) - Χρησιμοποιoύμε το ίδιο με το PasswordsPage
+    ViewPasswordPopUp {
+        id: viewPasswordPopUp
         
-        onUpdateRequested: (id, title, username, password, website, note) => {
-            console.log("Saving changes for ID:", id)
-            var result = vaultBackend.update_password(root.userIdString, id, root.masterPassword, {
-                "title": title, "username": username, "password": password, "website": website, "note": note
-            })
-            
-            if (result.success) {
-                root.updatePage() // Ανανέωση της σελίδας
-            } else {
-                console.error("Update error:", result.message)
+        // Signal handler for when operation finishes (add/update)
+        Connections {
+            target: vaultBackend
+            function onOperation_finished(success, message) {
+                if (success && viewPasswordPopUp.visible) {
+                    console.log("WatchTower Edit: Save successful, refreshing page...")
+                    viewPasswordPopUp.close()
+                    root.updatePage() // Refresh WatchTower page
+                }
             }
         }
     }
 
     // 4. ΣΥΝΑΡΤΗΣΗ ΠΟΥ ΦΕΡΝΕΙ ΤΑ ΔΕΔΟΜΕΝΑ
     function openEditPopup(passId) {
-        console.log("Fetching details from Python...")
+        console.log("Fetching details from Python for passId:", passId)
         var details = vaultBackend.get_decrypted_password(root.userIdString, passId)
         
         if (details.success) {
-            editPasswordPopup.itemId = details.id
-            editPasswordPopup.titleText = details.title || ""
-            editPasswordPopup.usernameText = details.username || ""
-            editPasswordPopup.passwordText = details.password || ""
-            editPasswordPopup.websiteText = details.website || ""
-            editPasswordPopup.noteText = details.note || ""
+            // Set edit mode
+            viewPasswordPopUp.isAdding = false
+            viewPasswordPopUp.isEditing = true
             
-            editPasswordPopup.show()
+            // Set data
+            viewPasswordPopUp.itemId = passId
+            viewPasswordPopUp.userId = root.userIdString
+            viewPasswordPopUp.masterPassword = root.masterPassword
+            viewPasswordPopUp.titleText = details.title || ""
+            viewPasswordPopUp.usernameText = details.username || ""
+            viewPasswordPopUp.passwordText = details.password || ""
+            viewPasswordPopUp.websiteText = details.website || ""
+            viewPasswordPopUp.noteText = details.note || ""
+            viewPasswordPopUp.createdText = details.created_at || ""
+            viewPasswordPopUp.lastModifiedText = details.last_modified || ""
+            viewPasswordPopUp.hasTotp = details.has_totp || false
+            viewPasswordPopUp.totpCode = details.totp_code || ""
+            
+            viewPasswordPopUp.populateFields()
+            viewPasswordPopUp.show()
         } else {
             console.error("Error fetching data:", details.message)
         }

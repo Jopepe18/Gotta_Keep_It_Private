@@ -376,7 +376,9 @@ class VaultManager:
                 "note": password_entry.note,         
                 "password": decrypted_password.decode('utf-8'),
                 "totp_code": totp_code,
-                "has_totp": has_totp
+                "has_totp": has_totp,
+                "created_at": str(password_entry.created_at) if password_entry.created_at else "",
+                "last_modified": str(password_entry.last_modified) if password_entry.last_modified else ""
             }
         except Exception as e:
             print(f"VaultManager: Error decrypting password: {e}")

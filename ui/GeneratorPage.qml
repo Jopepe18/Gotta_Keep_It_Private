@@ -226,27 +226,55 @@ Item{
                             text: "A-Z"
                             checked: true
                             font.pixelSize: 16
+                            contentItem: Text {
+                                text: upperCaseCheck.text
+                                font: upperCaseCheck.font
+                                color: "white"
+                                verticalAlignment: Text.AlignVCenter
+                                leftPadding: upperCaseCheck.indicator.width + upperCaseCheck.spacing
+                            }
                         }
 
                         CheckBox{
                             id: lowerCaseCheck
                             text: "a-z"
                             checked: true
-                            font.pixelSize: 16                            
+                            font.pixelSize: 16
+                            contentItem: Text {
+                                text: lowerCaseCheck.text
+                                font: lowerCaseCheck.font
+                                color: "white"
+                                verticalAlignment: Text.AlignVCenter
+                                leftPadding: lowerCaseCheck.indicator.width + lowerCaseCheck.spacing
+                            }
                         }
 
                         CheckBox{
                             id: digitsCheck
                             text: "0-9"
                             checked: true
-                            font.pixelSize: 16 
+                            font.pixelSize: 16
+                            contentItem: Text {
+                                text: digitsCheck.text
+                                font: digitsCheck.font
+                                color: "white"
+                                verticalAlignment: Text.AlignVCenter
+                                leftPadding: digitsCheck.indicator.width + digitsCheck.spacing
+                            }
                         }
 
                         CheckBox{
                             id: specialCheck
                             text: "!@#$%^&*"
                             checked: true
-                            font.pixelSize: 16 
+                            font.pixelSize: 16
+                            contentItem: Text {
+                                text: specialCheck.text
+                                font: specialCheck.font
+                                color: "white"
+                                verticalAlignment: Text.AlignVCenter
+                                leftPadding: specialCheck.indicator.width + specialCheck.spacing
+                            }
                         }
 
 
@@ -341,6 +369,13 @@ Item{
                             text: "Avoid ambiguous characters"
                             checked: false
                             font.pixelSize: 16
+                            contentItem: Text {
+                                text: avoidAmbiguousCheck.text
+                                font: avoidAmbiguousCheck.font
+                                color: "white"
+                                verticalAlignment: Text.AlignVCenter
+                                leftPadding: avoidAmbiguousCheck.indicator.width + avoidAmbiguousCheck.spacing
+                            }
                         }
                 }
 
