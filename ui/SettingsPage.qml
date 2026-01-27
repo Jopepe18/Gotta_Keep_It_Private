@@ -284,40 +284,76 @@ Item{
                         font.pixelSize: 20
                     }
 
-                    Rectangle
-                    {
-                        Layout.preferredWidth: 180
-                        Layout.preferredHeight: 70
-                        border.color: "#E22323"
-                        border.width: 2
-                        radius: 20
-                        color: "#1E2634"
+                    RowLayout {
+                        spacing: 15
 
-                        RowLayout{
-                            anchors.fill: parent
-                            anchors.margins: 10
+                        Rectangle
+                        {
+                            Layout.preferredWidth: 140
+                            Layout.preferredHeight: 70
+                            border.color: "#E22323"
+                            border.width: 2
+                            radius: 20
+                            color: "#1E2634"
 
-                            Item{
-                                Layout.preferredWidth: 20
-                            }
+                            RowLayout{
+                                anchors.fill: parent
+                                anchors.margins: 10
 
-                            Button{
-                                text:"Delete"
-                                id: deleteVaultButton
-                                Layout.preferredHeight: 45
-                                Layout.preferredWidth: 100
-                                font.pixelSize: 17
-
-                                background: Rectangle{
-                                    radius: 20
-                                    color: deleteVaultButton.pressed ? "#F76262" : (deleteVaultButton.hovered? "#F54040" : "#E22323" )
-
-                                    Behavior on color{
-                                    ColorAnimation { duration: 150}
-                                    }
+                                Item{
+                                    Layout.fillWidth: true
                                 }
-                                onClicked: deleteVaultPopup.open()
+
+                                Button{
+                                    text:"Delete"
+                                    id: deleteVaultButton
+                                    Layout.preferredHeight: 45
+                                    Layout.preferredWidth: 100
+                                    font.pixelSize: 17
+
+                                    background: Rectangle{
+                                        radius: 20
+                                        color: deleteVaultButton.pressed ? "#F76262" : (deleteVaultButton.hovered? "#F54040" : "#E22323" )
+
+                                        Behavior on color{
+                                        ColorAnimation { duration: 150}
+                                        }
+                                    }
+                                    onClicked: deleteVaultPopup.open()
+                                }
+
+                                Item{
+                                    Layout.fillWidth: true
+                                }
                             }
+                        }
+
+                        // About Button (discrete, outside danger zone)
+                        Button {
+                            id: aboutButton
+                            Layout.preferredHeight: 40
+                            Layout.preferredWidth: 40
+                            
+                            background: Rectangle {
+                                color: aboutButton.hovered ? "#3a4555" : "transparent"
+                                radius: 20
+                                border.color: "#555"
+                                border.width: 1
+                            }
+                            
+                            contentItem: Text {
+                                text: "ℹ️"
+                                font.pixelSize: 16
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                                opacity: aboutButton.hovered ? 1.0 : 0.5
+                            }
+                            
+                            ToolTip.visible: hovered
+                            ToolTip.delay: 300
+                            ToolTip.text: "About"
+                            
+                            onClicked: aboutPopup.open()
                         }
                     }
 
@@ -758,6 +794,91 @@ Item{
                 Layout.fillHeight: true
             }
 
+        }
+    }
+
+    // About Popup
+    Popup {
+        id: aboutPopup
+        parent: Overlay.overlay
+        anchors.centerIn: parent
+        width: 400
+        height: 280
+        modal: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        
+        background: Rectangle {
+            color: "#1E2634"
+            radius: 20
+            border.color: "#3d7fd6"
+            border.width: 2
+        }
+        
+        contentItem: ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 25
+            spacing: 20
+            
+            // Logo/Icon
+            Text {
+                text: "🔐"
+                font.pixelSize: 48
+                Layout.alignment: Qt.AlignHCenter
+            }
+            
+            // App Name
+            Label {
+                text: "Gotta Keep It Private"
+                color: "#eaeaea"
+                font.pixelSize: 22
+                font.weight: Font.Bold
+                Layout.alignment: Qt.AlignHCenter
+            }
+            
+            // Version
+            Label {
+                text: "v1.0"
+                color: "#888888"
+                font.pixelSize: 14
+                Layout.alignment: Qt.AlignHCenter
+            }
+            
+            // Creators Message !
+            Label {
+                text: "Σχεδιασμένο με αγάπη από ανθρώπους ❤️"
+                color: "#a0a0a0"
+                font.pixelSize: 15
+                font.italic: true
+                Layout.alignment: Qt.AlignHCenter
+            }
+            
+            Item {
+                Layout.fillHeight: true
+            }
+            
+            // Close Button
+            Button {
+                id: closeAboutButton
+                text: "OK"
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: 100
+                Layout.preferredHeight: 35
+                
+                background: Rectangle {
+                    color: closeAboutButton.hovered ? "#4a8fe7" : "#3d7fd6"
+                    radius: 10
+                }
+                
+                contentItem: Text {
+                    text: parent.text
+                    color: "white"
+                    font.pixelSize: 14
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+                
+                onClicked: aboutPopup.close()
+            }
         }
     }
 }

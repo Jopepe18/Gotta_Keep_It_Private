@@ -24,7 +24,14 @@ Window {
                     window.currentTempPassword = newPassword
                     console.log("Main: Password recovered. User ID set to " + userId + ", HasVault=" + hasVault)
                     
-                    stackView.push(vaultRouterComponent)
+                    // Conditional Navigation: if vault exists, go directly to Main
+                    if (hasVault) {
+                        console.log("Main: User has vault, navigating directly to Main screen")
+                        stackView.push(loadMainScreenComponent)
+                    } else {
+                        console.log("Main: User has no vault, showing VaultRouter")
+                        stackView.push(vaultRouterComponent)
+                    }
                 }
                 onBackRequested: {
                     stackView.pop()
@@ -59,8 +66,14 @@ Window {
                 window.currentTempPassword = password
                 console.log("Main: User ID set to " + userId + ", HasVault=" + hasVault)
                 
-                // Navigate
-                stackView.push(vaultRouterComponent)
+                // Conditional Navigation: if vault exists, go directly to Main
+                if (hasVault) {
+                    console.log("Main: User has vault, navigating directly to Main screen")
+                    stackView.push(loadMainScreenComponent)
+                } else {
+                    console.log("Main: User has no vault, showing VaultRouter")
+                    stackView.push(vaultRouterComponent)
+                }
             }
             onForgotPasswordRequested: {
                 stackView.push(forgotPasswordComponent)
