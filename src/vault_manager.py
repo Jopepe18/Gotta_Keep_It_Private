@@ -113,24 +113,8 @@ class VaultManager:
         db: Session = self.get_db()
         try:
             # Get Vault and User
-            vault = db.query(VaultModel).filter(VaultModel.user_id == user_id).first()
-            if not vault:
-                print("VaultManager: No vault found for user")
-                return False
-            
-            user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
-            if not user or not user.secret_key:
-                print("VaultManager: No user or secret key found")
-                return False
-            
-            # Decrypt the DEK using the recovery key
-            if not vault.recovery_salt or not vault.recovery_encrypted_key:
-                print("VaultManager: No recovery data - cannot encrypt debug password")
-                return False
-            
-            recovery_kek = self.key_manager.derive_key(user.secret_key, vault.recovery_salt)
-            vault_dek = self.encrypt_service.decrypt_data(vault.recovery_encrypted_key, recovery_kek)
-            
+            vault, vault_dek = self._prepare_recovery_session(db, user_id)
+
             # Encrypt the debug password properly
             debug_plain_password = "DebugPassword123!"
             encrypted_password = self.encrypt_service.encrypt_data(debug_plain_password, vault_dek)
@@ -160,32 +144,15 @@ class VaultManager:
         """
         Adds a new password entry to the vault.
         """
+        #if not all(vars(entry_data).values()):  #check if there are any empty fields 
+           # return {"success": False, "message": "One or more fields are empty"}
+
         db: Session = self.get_db()
         try:
-            # 1. Fetch User and Vault
-            user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
-            if not user:
-                return {"success": False, "message": "User not found"}
-            
-            vault = db.query(VaultModel).filter(VaultModel.user_id == user_id).first()
-            if not vault:
-                return {"success": False, "message": "Vault not found"}
-
-            # 2. Verify Master Password (and derive KEK same time)
-            if not self.encrypt_service.verify_password(master_password, user.password_hash):
-                return {"success": False, "message": "Invalid Master Password"}
-
-            # 3. Derive KEK and Decrypt DEK
-            if not vault.kdf_salt or not vault.encrypted_vault_key:
-                return {"success": False, "message": "Vault encryption data missing"}
-            
-            kek = self.key_manager.derive_key(master_password, vault.kdf_salt)
-            dek = self.encrypt_service.decrypt_data(vault.encrypted_vault_key, kek)
-            
-            if not dek:
-                return {"success": False, "message": "Failed to decrypt vault key"}
-
-            # 4. Encrypt the new password
+            #  Fetch User and Vault
+            vault, dek = self._prepare_vault_session(db, user_id, master_password)
+         
+            # Encrypt the new password
             encrypted_password = self.encrypt_service.encrypt_data(entry_data.get('password', ''), dek)
 
             # 5. Encrypt TOTP secret if provided
@@ -229,37 +196,18 @@ class VaultManager:
         """
         db: Session = self.get_db()
         try:
-            # 1. Fetch User, Vault, and Password Entry
-            user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
-            if not user:
-                return {"success": False, "message": "User not found"}
-            
-            vault = db.query(VaultModel).filter(VaultModel.user_id == user_id).first()
-            if not vault:
-                return {"success": False, "message": "Vault not found"}
-            
+            # Fetch User, Vault, and Password Entry
+            vault, dek = self._prepare_vault_session(db, user_id, master_password)
+
             password_entry = db.query(PasswordEntry).filter(PasswordEntry.id == password_id).first()
             if not password_entry:
                 return {"success": False, "message": "Password entry not found"}
 
-            # 2. Verify Master Password (and derive KEK same time)
-            if not self.encrypt_service.verify_password(master_password, user.password_hash):
-                return {"success": False, "message": "Invalid Master Password"}
-
-            # 3. Derive KEK and Decrypt DEK
-            if not vault.kdf_salt or not vault.encrypted_vault_key:
-                return {"success": False, "message": "Vault encryption data missing"}
-            
-            kek = self.key_manager.derive_key(master_password, vault.kdf_salt)
-            dek = self.encrypt_service.decrypt_data(vault.encrypted_vault_key, kek)
-            
-            if not dek:
-                return {"success": False, "message": "Failed to decrypt vault key"}
-
-            # 4. Encrypt the password (it might have changed)
+        
+            # Encrypt the password (it might have changed)
             encrypted_password = self.encrypt_service.encrypt_data(entry_data.get('password', ''), dek)
 
-            # 5. Encrypt TOTP secret if provided
+            # Encrypt TOTP secret if provided
             totp_secret = entry_data.get('totp_secret', None)
             if totp_secret is not None:  # Allow empty string to clear TOTP
                 if totp_secret:
@@ -274,7 +222,7 @@ class VaultManager:
                     #clear TOTP
                     password_entry.encrypted_totp = None
 
-            # 6. Update Entry
+            # Update Entry
             password_entry.title = entry_data.get('title', 'Untitled')
             password_entry.username = entry_data.get('username', '')
             password_entry.website = entry_data.get('website', '')
@@ -333,24 +281,11 @@ class VaultManager:
         db: Session = self.get_db()
         try:
             # Get user, vault, and password entry
-            user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
-            if not user or not user.secret_key:
-                return {"success": False, "message": "User not found or missing secret key"}
-            
-            vault = db.query(VaultModel).filter(VaultModel.user_id == user_id).first()
-            if not vault:
-                return {"success": False, "message": "Vault not found"}
+            vault, vault_dek = self._prepare_recovery_session(db, user_id)  
             
             password_entry = db.query(PasswordEntry).filter(PasswordEntry.id == password_id).first()
             if not password_entry:
                 return {"success": False, "message": "Password entry not found"}
-            
-            # Decrypt DEK using recovery key
-            if not vault.recovery_salt or not vault.recovery_encrypted_key:
-                return {"success": False, "message": "Vault recovery data missing"}
-            
-            recovery_kek = self.key_manager.derive_key(user.secret_key, vault.recovery_salt)
-            vault_dek = self.encrypt_service.decrypt_data(vault.recovery_encrypted_key, recovery_kek)
             
             # Decrypt the password
             decrypted_password = self.encrypt_service.decrypt_data(password_entry.encrypted_password, vault_dek)
@@ -502,8 +437,7 @@ class VaultManager:
         Deletes the user account, vault, and all data.
         Verifies password first.
         """
-
-        
+              
         db: Session = self.get_db()
         try:
             from models import UserModel
@@ -562,13 +496,30 @@ class VaultManager:
         finally:
             db.close()
             
+    #prepares vault comparing security key that from, db
+    def _prepare_recovery_session(self, db, user_id):
+        user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
+        if not user or not user.secret_key:
+            raise Exception("User or Secret Key not found")
+        
+        vault = db.query(VaultModel).filter(VaultModel.user_id == user_id).first()  
+        if not vault:
+            raise Exception("VaultManager: No vault found for user")
 
-    #helper method for neeter code 
-    def _prepare_vault_session(self, db, user_id, password):
-        """Internal helper with full debugging for user, and encryption."""
+        if not vault.recovery_salt or not vault.recovery_encrypted_key:
+                print("VaultManager: No recovery data - cannot encrypt debug password")
+
+        # Derive DEK using the Secret Key
+        recovery_kek = self.key_manager.derive_key(user.secret_key, vault.recovery_salt)
+        dek = self.encrypt_service.decrypt_data(vault.recovery_encrypted_key, recovery_kek)
+        
+        return vault, dek
     
-        print(f"DEBUG: Starting operation for user {user_id}")
-        print(f"DEBUG: Password received (length): {len(password)}")
+
+    #prepares user and vault & returns vault n dek AND compares passwords 2nd check
+    def _prepare_vault_session(self, db, user_id, password):
+        #print(f"DEBUG: Starting operation for user {user_id}")
+        #print(f"DEBUG: Password received (length): {len(password)}")
 
         # 2. Fetch User & Vault
         user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
@@ -581,16 +532,16 @@ class VaultManager:
             print("DEBUG: Vault not found!")
             raise Exception("Vault not found")
 
-        print(f"DEBUG: User found, vault_id={vault.vault_id}")
-        print(f"DEBUG: kdf_salt type={type(vault.kdf_salt)}, length={len(vault.kdf_salt) if vault.kdf_salt else 'None'}")
-        print(f"DEBUG: encrypted_vault_key type={type(vault.encrypted_vault_key)}, length={len(vault.encrypted_vault_key) if vault.encrypted_vault_key else 'None'}")
+        #print(f"DEBUG: User found, vault_id={vault.vault_id}")
+        #print(f"DEBUG: kdf_salt type={type(vault.kdf_salt)}, length={len(vault.kdf_salt) if vault.kdf_salt else 'None'}")
+        #print(f"DEBUG: encrypted_vault_key type={type(vault.encrypted_vault_key)}, length={len(vault.encrypted_vault_key) if vault.encrypted_vault_key else 'None'}")
 
         # 3. VERIFY: Password Check
         if not self.encrypt_service.verify_password(password, user.password_hash):
             print("DEBUG: Password verification FAILED")
             raise Exception("Invalid Master Password")
 
-        print("DEBUG: Password verification PASSED")
+        #print("DEBUG: Password verification PASSED")
 
         # 4. VALIDATE: Encryption data check
         if not vault.kdf_salt or not vault.encrypted_vault_key:
@@ -598,12 +549,12 @@ class VaultManager:
             raise Exception("Vault encryption data is missing or corrupted.")
 
         # 5. UNWRAP: Derive KEK and decrypt DEK
-        print(f"DEBUG: Deriving KEK from password and salt")
+        #print(f"DEBUG: Deriving KEK from password and salt")
         kek = self.key_manager.derive_key(password, vault.kdf_salt)
         
-        print(f"DEBUG: Attempting to decrypt vault key...")
+        #print(f"DEBUG: Attempting to decrypt vault key...")
         dek = self.encrypt_service.decrypt_data(vault.encrypted_vault_key, kek)
-        print(f"DEBUG: DEK decrypted successfully, length={len(dek)}")
+        #print(f"DEBUG: DEK decrypted successfully, length={len(dek)}")
         
         return vault, dek
 
@@ -894,24 +845,8 @@ class VaultManager:
         db: Session = self.get_db()
         try:
             # Get Vault and User
-            vault = db.query(VaultModel).filter(VaultModel.user_id == user_id).first()
-            if not vault:
-                print("VaultManager: No vault found for user")
-                return False
-            
-            user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
-            if not user or not user.secret_key:
-                print("VaultManager: No user or secret key found")
-                return False
-            
-            # Decrypt the DEK using the recovery key
-            if not vault.recovery_salt or not vault.recovery_encrypted_key:
-                print("VaultManager: No recovery data - cannot encrypt debug password")
-                return False
-            
-            recovery_kek = self.key_manager.derive_key(user.secret_key, vault.recovery_salt)
-            vault_dek = self.encrypt_service.decrypt_data(vault.recovery_encrypted_key, recovery_kek)
-            
+            vault, vault_dek = self._prepare_recovery_session(db, user_id)
+
             # Encrypt the debug card Number and cvv properly
             debug_plain_cardNumber = "1234 5678 1234 5678"
             encrypted_cardNumber = self.encrypt_service.encrypt_data(debug_plain_cardNumber, vault_dek)
@@ -958,25 +893,13 @@ class VaultManager:
         db: Session = self.get_db()
         try:
             # Get user, vault, and card entry
-            user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
-            if not user or not user.secret_key:
-                return {"success": False, "message": "User not found or missing secret key"}
-            
-            vault = db.query(VaultModel).filter(VaultModel.user_id == user_id).first()
-            if not vault:
-                return {"success": False, "message": "Vault not found"}
-            
+            vault, vault_dek = self._prepare_recovery_session(db, user_id)
+
             card_entry = db.query(CreditCardEntry).filter(CreditCardEntry.id == card_id).first()
             if not card_entry:
                 return {"success": False, "message": "Card entry not found"}
             
-            # Decrypt DEK using recovery key
-            if not vault.recovery_salt or not vault.recovery_encrypted_key:
-                return {"success": False, "message": "Vault recovery data missing"}
-            
-            recovery_kek = self.key_manager.derive_key(user.secret_key, vault.recovery_salt)
-            vault_dek = self.encrypt_service.decrypt_data(vault.recovery_encrypted_key, recovery_kek)
-            
+           
             # Decrypt the card details
             decrypted_number = self.encrypt_service.decrypt_data(card_entry.encrypted_number, vault_dek)
             decrypted_cvv = self.encrypt_service.decrypt_data(card_entry.encrypted_cvv, vault_dek)
@@ -1018,34 +941,16 @@ class VaultManager:
         """
         db: Session = self.get_db()
         try:
-            # 1. Fetch User and Vault
-            user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
-            if not user:
-                return {"success": False, "message": "User not found"}
+            #if not all(vars(card_data).values()):  #check if there are any empty fields 
+                #return {"success": False, "message": "One or more fields are empty"}
             
-            vault = db.query(VaultModel).filter(VaultModel.user_id == user_id).first()
-            if not vault:
-                return {"success": False, "message": "Vault not found"}
+            vault, dek = self._prepare_vault_session(db, user_id, master_password)
 
-            # 2. Verify Master Password
-            if not self.encrypt_service.verify_password(master_password, user.password_hash):
-                return {"success": False, "message": "Invalid Master Password"}
-
-            # 3. Derive KEK and Decrypt DEK
-            if not vault.kdf_salt or not vault.encrypted_vault_key:
-                return {"success": False, "message": "Vault encryption data missing"}
-            
-            kek = self.key_manager.derive_key(master_password, vault.kdf_salt)
-            dek = self.encrypt_service.decrypt_data(vault.encrypted_vault_key, kek)
-            
-            if not dek:
-                return {"success": False, "message": "Failed to decrypt vault key"}
-
-            # 4. Encrypt the card details
+            #  Encrypt the card details
             encrypted_number = self.encrypt_service.encrypt_data(card_data.get('card_number', ''), dek)
             encrypted_cvv = self.encrypt_service.encrypt_data(card_data.get('cvv', ''), dek)
 
-            # 5. Create Entry
+            # Create Entry
             new_entry = CreditCardEntry(
                 vault_id=vault.vault_id,
                 title=card_data.get('title', 'Untitled Card'),
@@ -1076,37 +981,17 @@ class VaultManager:
         db: Session = self.get_db()
         try:
             # 1. Fetch User, Vault, and Card Entry
-            user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
-            if not user:
-                return {"success": False, "message": "User not found"}
-            
-            vault = db.query(VaultModel).filter(VaultModel.user_id == user_id).first()
-            if not vault:
-                return {"success": False, "message": "Vault not found"}
-            
+            vault, dek = self._prepare_vault_session(db, user_id, master_password)
+
             card_entry = db.query(CreditCardEntry).filter(CreditCardEntry.id == card_id).first()
             if not card_entry:
                 return {"success": False, "message": "Card entry not found"}
 
-            # 2. Verify Master Password
-            if not self.encrypt_service.verify_password(master_password, user.password_hash):
-                return {"success": False, "message": "Invalid Master Password"}
-
-            # 3. Derive KEK and Decrypt DEK
-            if not vault.kdf_salt or not vault.encrypted_vault_key:
-                return {"success": False, "message": "Vault encryption data missing"}
-            
-            kek = self.key_manager.derive_key(master_password, vault.kdf_salt)
-            dek = self.encrypt_service.decrypt_data(vault.encrypted_vault_key, kek)
-            
-            if not dek:
-                return {"success": False, "message": "Failed to decrypt vault key"}
-
-            # 4. Encrypt the card details
+            # Encrypt the card details
             encrypted_number = self.encrypt_service.encrypt_data(card_data.get('card_number', ''), dek)
             encrypted_cvv = self.encrypt_service.encrypt_data(card_data.get('cvv', ''), dek)
 
-            # 5. Update Entry
+            # Update Entry
             card_entry.title = card_data.get('title', 'Untitled Card')
             card_entry.cardholder_name = card_data.get('cardholder_name', '')
             card_entry.card_type = card_data.get('card_type', '')

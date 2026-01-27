@@ -38,6 +38,8 @@ class AuthenticationManager:
     def register_user(self, request: RegistrationRequest) -> RegistrationResult:
         db: Session = self.get_db()
         try:
+            if not all(vars(request).values()):  #check if there are any empty fields 
+                return RegistrationResult(success=False, msg="One or more fields are empty")
             # 1. Check if email or username exists
             existing_email = db.query(UserModel).filter(UserModel.email == request.email).first()
             if existing_email:
