@@ -155,7 +155,11 @@ Window {
         function onOperation_finished(success, message) {
             if(success && (root.isAdding || root.isEditing)) {
                 console.log("Save success, closing popup")
+                validationErrorLabel.text = ""
                 root.close()
+            }
+            else {
+                validationErrorLabel.text = message
             }
         }
     }
@@ -166,6 +170,7 @@ Window {
         usernameField.text = ""
         passwordField.text = ""
         websiteField.text = ""
+        validationErrorLabel.text = ""
         noteField.text = ""
         root.totpSecret = ""
         root.hasTotp = false
@@ -316,6 +321,17 @@ Window {
                     }
                 }
 
+                //Error Label 
+                Label {
+                    id: validationErrorLabel
+                    text: ""
+                    visible: text !== ""
+                    color: '#e15b5b'
+                    font.pixelSize: 15
+                    font.italic: true
+                    Layout.alignment: Qt.AlignHCenter     
+                }
+
                 // 2FA / TOTP Section
                 ColumnLayout {
                     spacing: 5
@@ -446,6 +462,7 @@ Window {
                 background: Rectangle { color: "#27ae60"; radius: 20 }
                 contentItem: Text { text: parent.text; color: "white"; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
                 onClicked: {
+                    validationErrorLabel.text = ""
                     if (root.isAdding) {
                         console.log("Saving new password for user: " + root.userId)
                         vaultBackend.addPassword(
@@ -493,7 +510,9 @@ Window {
                 Layout.preferredHeight: 45
                 background: Rectangle { color: "transparent"; border.color: "white"; border.width: 2; radius: 20 }
                 contentItem: Text { text: parent.text; color: "white"; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
-                onClicked: root.close()
+                onClicked: {
+                    validationErrorLabel.text = ""
+                    root.close()}
             }
         }
 

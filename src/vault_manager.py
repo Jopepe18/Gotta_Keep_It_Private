@@ -102,7 +102,34 @@ class VaultManager:
         finally:
             db.close()
 
-    
+    def validate_entry_logic(self, data: dict) -> tuple:
+        """
+        Validates that the input data is logically sound for a vault entry/edit.
+        """
+        #essential fields that cannot be whitespace or empty
+        title = data.get('title', '').strip()
+        password = data.get('password', '').strip()
+        website = data.get('website', '').strip()
+        note = data.get('note', '').strip()
+
+        if not title:
+            return False, "Title is required."
+        
+        if not password:
+            return False, "Password is required."
+
+        # length constraint
+        if len(title) > 100:
+            return False, "Title is too long (max 100 chars)."
+        if len(note) > 300:
+            return False, "Note is too long (max 300 chars)."
+            
+        # 3. Website Logic: Basic check if it looks like a URL (optional)
+        
+        if website and "." not in website:
+            return False, "Please enter a valid website URL or leave it empty."
+
+        return True, "Success"
             
     def add_debug_password(self, user_id: str) -> bool:
         """
@@ -144,8 +171,10 @@ class VaultManager:
         """
         Adds a new password entry to the vault.
         """
-        #if not all(vars(entry_data).values()):  #check if there are any empty fields 
-           # return {"success": False, "message": "One or more fields are empty"}
+        #Check field validation 
+        is_valid, error_msg = self.validate_entry_logic(entry_data)
+        if not is_valid:
+            return {"success": False, "message": error_msg}
 
         db: Session = self.get_db()
         try:
@@ -155,7 +184,7 @@ class VaultManager:
             # Encrypt the new password
             encrypted_password = self.encrypt_service.encrypt_data(entry_data.get('password', ''), dek)
 
-            # 5. Encrypt TOTP secret if provided
+            # Encrypt TOTP secret if provided
             encrypted_totp = None
             totp_secret = entry_data.get('totp_secret', '')
             if totp_secret:
@@ -167,7 +196,7 @@ class VaultManager:
                     print(f"VaultManager: Invalid TOTP secret: {e}")
                     # Continue without TOTP if invalid
 
-            # 6. Create Entry
+            #  Create Entry
             new_entry = PasswordEntry(
                 vault_id=vault.vault_id,
                 title=entry_data.get('title', 'Untitled'),
@@ -194,6 +223,11 @@ class VaultManager:
         """
         Updates an existing password entry.
         """
+        #Check field validation 
+        is_valid, error_msg = self.validate_entry_logic(entry_data)
+        if not is_valid:
+            return {"success": False, "message": error_msg}
+        
         db: Session = self.get_db()
         try:
             # Fetch User, Vault, and Password Entry
@@ -437,7 +471,7 @@ class VaultManager:
         Deletes the user account, vault, and all data.
         Verifies password first.
         """
-              
+
         db: Session = self.get_db()
         try:
             from models import UserModel
