@@ -82,7 +82,7 @@ Item{
             }
         }
 
-        //if i want import/export final success message
+        //import/export final success message
         function onVaultHandled(success, message) {
             resultPopup.titleText = success ? "Success" : "Error"
             resultPopup.messageText = message
@@ -107,6 +107,10 @@ Item{
     ConfirmationPopup {
         id: confirmationPopup
         onConfirmed: {
+            if (confirmationPopup.titleText === "Error") {
+                return; 
+            }
+
             if (settingsPage.pendingAction === "email") {
                 vaultBackend.changeEmail(settingsPage.userId, newEmailTextField.text, newEmailPasswordVerifTextField.text)
             } else if (settingsPage.pendingAction === "password") {
@@ -944,8 +948,10 @@ Item{
                                         }
                                     }
                                     onClicked: {
+                                        settingsPage.pendingAction = ""
+
                                         if(currentPasswordTextField.text === "" || newPasswordfTextField.text === "" || confirmNewPasswordfTextField.text === "") return;
-                                        
+                                                            
                                         // Validate password strength (minimum 4 characters)
                                         if (newPasswordfTextField.text.length < 4) {
                                             confirmationPopup.titleText = "Error"
@@ -954,6 +960,16 @@ Item{
                                             confirmationPopup.open()
                                             return;
                                         }
+                                        //no changes 
+                                        if (currentPasswordTextField.text === newPasswordfTextField.text && confirmNewPasswordfTextField.text === newPasswordfTextField.text) {
+                                            confirmationPopup.titleText = "Error"
+                                            confirmationPopup.messageText = "Password must be different from old one"
+                                            confirmationPopup.confirmButtonText = "OK"
+                                            confirmationPopup.open()  
+                                            return;
+                                        }
+
+
                                         
                                         if (newPasswordfTextField.text !== confirmNewPasswordfTextField.text) {
                                             confirmationPopup.titleText = "Error"
