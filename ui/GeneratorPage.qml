@@ -162,11 +162,11 @@ Item{
 
 
                     Rectangle{
-                        Layout.preferredHeight: 50
-                        Layout.preferredWidth: 640
-                        radius: 20
-                        color: "#1E2634"
-                        border.color: "white"
+                        Layout.preferredHeight: 45
+                        Layout.preferredWidth: 120
+                        radius: 15
+                        color: "#303946"
+                        border.color: "#4a5568"
 
                         RowLayout{
                             anchors.fill: parent
@@ -179,12 +179,16 @@ Item{
                             TextField{
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
-                                text: "10"
+                                text: "16"
                                 font.pixelSize: 16
                                 id: lengthTextField
+                                color: "#eaeaea"
+                                placeholderTextColor: "#8a9aaa"
+                                horizontalAlignment: Text.AlignHCenter
 
                                 background: Rectangle{
-                                    color: "transparent"
+                                    color: "#303946"
+                                    radius: 10
                                 }
                             }
                         }
@@ -293,11 +297,11 @@ Item{
                         }
 
                         Rectangle{
-                        Layout.preferredHeight: 50
-                        Layout.preferredWidth: 300
-                        radius: 20
-                        color: "#1E2634"
-                        border.color: "white"
+                        Layout.preferredHeight: 45
+                        Layout.preferredWidth: 100
+                        radius: 15
+                        color: "#303946"
+                        border.color: "#4a5568"
 
                         RowLayout{
                             anchors.fill: parent
@@ -310,12 +314,16 @@ Item{
                             TextField{
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
-                                text: "10"
+                                text: "0"
                                 font.pixelSize: 16
                                 id: minNumbersTextField
+                                color: "#eaeaea"
+                                placeholderTextColor: "#8a9aaa"
+                                horizontalAlignment: Text.AlignHCenter
 
                                 background: Rectangle{
-                                    color: "transparent"
+                                    color: "#303946"
+                                    radius: 10
                                 }
                             }
                         }
@@ -332,11 +340,11 @@ Item{
                         }
 
                         Rectangle{
-                        Layout.preferredHeight: 50
-                        Layout.preferredWidth: 300
-                        radius: 20
-                        color: "#1E2634"
-                        border.color: "white"
+                        Layout.preferredHeight: 45
+                        Layout.preferredWidth: 100
+                        radius: 15
+                        color: "#303946"
+                        border.color: "#4a5568"
 
                         RowLayout{
                             anchors.fill: parent
@@ -349,12 +357,16 @@ Item{
                             TextField{
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
-                                text: "10"
+                                text: "20"
                                 font.pixelSize: 16
                                 id: maxNumbersTextField
+                                color: "#eaeaea"
+                                placeholderTextColor: "#8a9aaa"
+                                horizontalAlignment: Text.AlignHCenter
 
                                 background: Rectangle{
-                                    color: "transparent"
+                                    color: "#303946"
+                                    radius: 10
                                     }
                                 }
                             }

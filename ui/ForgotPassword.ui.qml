@@ -10,6 +10,37 @@ Page {
     signal loginRequested()
     signal recoveryVerified(string username, string key)
     
+    // Lockout properties
+    property int failedAttempts: 0
+    property int maxAttempts: 4
+    property bool isLockedOut: false
+    property int lockoutSeconds: 300  // 5 minutes
+    property int remainingLockoutSeconds: 0
+
+    // Lockout Timer
+    Timer {
+        id: lockoutTimer
+        interval: 1000
+        repeat: true
+        running: root.isLockedOut
+        onTriggered: {
+            root.remainingLockoutSeconds--
+            if (root.remainingLockoutSeconds <= 0) {
+                root.isLockedOut = false
+                root.failedAttempts = 0
+                root.remainingLockoutSeconds = 0
+                message_text.text = ""
+                lockoutTimer.stop()
+            } else {
+                var minutes = Math.floor(root.remainingLockoutSeconds / 60)
+                var seconds = root.remainingLockoutSeconds % 60
+                var timeStr = minutes + ":" + (seconds < 10 ? "0" : "") + seconds
+                message_text.text = "Too many failed attempts. Try again in " + timeStr
+                message_text.color = "#F44336"
+            }
+        }
+    }
+    
     // Background
     Rectangle {
         id: rectangle_main
@@ -92,17 +123,25 @@ Page {
                     color: "red"
                     font.pixelSize: 16
                     Layout.alignment: Qt.AlignHCenter
+                    wrapMode: Text.WordWrap
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
                 }
 
                 // Verify Button
                 Button {
-                    text: qsTr("Verify Identity")
+                    id: verifyButton
+                    text: root.isLockedOut ? qsTr("Locked") : qsTr("Verify Identity")
                     Layout.fillWidth: true
                     Layout.preferredHeight: 50
                     Layout.topMargin: 10
+                    enabled: !root.isLockedOut
                     
                     background: Rectangle {
-                        color: parent.down ? "#2980b9" : "#3498db"
+                        color: {
+                            if (!verifyButton.enabled) return "#666666"
+                            return parent.down ? "#2980b9" : "#3498db"
+                        }
                         radius: 5
                     }
                     contentItem: Text {
@@ -114,6 +153,9 @@ Page {
                     }
                     
                     onClicked: {
+                        if (root.isLockedOut) {
+                            return
+                        }
                         forgotPasswordBackend.attempt_verify(textfield_username.text, textfield_email.text, textfield_key.text)
                     }
                 }
@@ -139,13 +181,26 @@ Page {
         
         function onVerify_status(success, message) {
             if (success) {
+                // Reset failed attempts on success
+                root.failedAttempts = 0
                 message_text.color = "green"
-                message_text.text = message // "Match"
-                // Pass the matched username and key to the next screen
+                message_text.text = message
                 root.recoveryVerified(textfield_username.text, textfield_key.text)
             } else {
-                message_text.color = "red"
-                message_text.text = message // "No Match"
+                root.failedAttempts++
+                
+                var attemptsRemaining = root.maxAttempts - root.failedAttempts
+                
+                if (attemptsRemaining <= 0) {
+                    root.isLockedOut = true
+                    root.remainingLockoutSeconds = root.lockoutSeconds
+                    lockoutTimer.start()
+                    message_text.color = "#F44336"
+                    message_text.text = "Too many failed attempts. Try again in 5:00"
+                } else {
+                    message_text.color = "#F44336"
+                    message_text.text = message + " (" + attemptsRemaining + " attempts left)"
+                }
             }
         }
     }

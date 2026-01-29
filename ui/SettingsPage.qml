@@ -13,6 +13,7 @@ Item{
     property string currentUsername: "Loading..."
     property string currentEmail: "Loading..."
     property string _tempPass: ""  //save password while the user picks a file location
+    property bool visibleSettingsPassword: false  // Toggle password visibility in Change Password section
     
 
     Component.onCompleted: {
@@ -398,8 +399,8 @@ Item{
                                 Layout.preferredHeight: 50
                                 Layout.preferredWidth: 350
                                 radius: 20
-                                color: "#1E2634"
-                                border.color: "white"
+                                color: "#303946"
+                                border.color: "#4a5568"
 
                                 RowLayout{
                                     anchors.fill: parent
@@ -417,9 +418,11 @@ Item{
                                         id: newEmailTextField
                                         color: "#eaeaea"
                                         placeholderText: "Enter new email"
+                                        placeholderTextColor: "#8a9aaa"
 
                                         background: Rectangle{
-                                            color: "transparent"
+                                            color: "#303946"
+                                            radius: 15
                                         }
                                     }
                                 }
@@ -439,8 +442,8 @@ Item{
                                 Layout.preferredHeight: 50
                                 Layout.preferredWidth: 350
                                 radius: 20
-                                color: "#1E2634"
-                                border.color: "white"
+                                color: "#303946"
+                                border.color: "#4a5568"
 
                                 RowLayout{
                                     anchors.fill: parent
@@ -459,9 +462,11 @@ Item{
                                         color: "#eaeaea"
                                         echoMode: TextInput.Password
                                         placeholderText: "Confirm password"
+                                        placeholderTextColor: "#8a9aaa"
 
                                         background: Rectangle{
-                                            color: "transparent"
+                                            color: "#303946"
+                                            radius: 15
                                         }
                                     }
                                 }
@@ -601,16 +606,17 @@ Item{
                     }
 
                     Rectangle{
-                        Layout.preferredHeight: 470
+                        Layout.preferredHeight: 550
                         Layout.preferredWidth: 400
                         radius: 20
                         color: "#1E2634"
                         border.color: "white"
+                        clip: true
 
                         ColumnLayout{
                             anchors.fill: parent
                             anchors.margins: 20
-                            spacing: 10
+                            spacing: 6
 
                             Label{
                                 text:"Current Password"
@@ -622,8 +628,8 @@ Item{
                                 Layout.preferredHeight: 50
                                 Layout.preferredWidth: 350
                                 radius: 20
-                                color: "#1E2634"
-                                border.color: "white"
+                                color: "#303946"
+                                border.color: "#4a5568"
 
                                 RowLayout{
                                     anchors.fill: parent
@@ -640,10 +646,39 @@ Item{
                                         font.pixelSize: 16
                                         id: currentPasswordTextField
                                         color: "#eaeaea"
-                                        echoMode: TextInput.Password
+                                        echoMode: visibleSettingsPassword ? TextInput.Normal : TextInput.Password
 
                                         background: Rectangle{
+                                            color: "#303946"
+                                            radius: 15
+                                        }
+                                    }
+
+                                    Button{
+                                        id: eyeButtonCurrent
+                                        Layout.preferredHeight: 35
+                                        Layout.preferredWidth: 35
+
+                                        background: Rectangle{
+                                            color: eyeButtonCurrent.pressed? "#3A4354" : (eyeButtonCurrent.hovered? "#2D3749": "transparent")
+                                            radius: 20
+                                        }
+
+                                        contentItem: Rectangle{
+                                            anchors.fill: parent
                                             color: "transparent"
+
+                                            Image{
+                                                height: 25
+                                                width: 25
+                                                anchors.centerIn: parent
+                                                source: visibleSettingsPassword ? "../imgs/visibility_on.png" : "../imgs/visibility_off.png"
+                                                fillMode: Image.PreserveAspectFit
+                                            }
+                                        }
+
+                                        onClicked:{
+                                            visibleSettingsPassword = !visibleSettingsPassword;
                                         }
                                     }
                                 }
@@ -663,8 +698,8 @@ Item{
                                 Layout.preferredHeight: 50
                                 Layout.preferredWidth: 350
                                 radius: 20
-                                color: "#1E2634"
-                                border.color: "white"
+                                color: "#303946"
+                                border.color: "#4a5568"
 
                                 RowLayout{
                                     anchors.fill: parent
@@ -681,17 +716,139 @@ Item{
                                         font.pixelSize: 16
                                         id: newPasswordfTextField
                                         color: "#eaeaea"
-                                        echoMode: TextInput.Password
+                                        echoMode: visibleSettingsPassword ? TextInput.Normal : TextInput.Password
 
                                         background: Rectangle{
+                                            color: "#303946"
+                                            radius: 15
+                                        }
+                                    }
+
+                                    Button{
+                                        id: eyeButtonNew
+                                        Layout.preferredHeight: 35
+                                        Layout.preferredWidth: 35
+
+                                        background: Rectangle{
+                                            color: eyeButtonNew.pressed? "#3A4354" : (eyeButtonNew.hovered? "#2D3749": "transparent")
+                                            radius: 20
+                                        }
+
+                                        contentItem: Rectangle{
+                                            anchors.fill: parent
                                             color: "transparent"
+
+                                            Image{
+                                                height: 25
+                                                width: 25
+                                                anchors.centerIn: parent
+                                                source: visibleSettingsPassword ? "../imgs/visibility_on.png" : "../imgs/visibility_off.png"
+                                                fillMode: Image.PreserveAspectFit
+                                            }
+                                        }
+
+                                        onClicked:{
+                                            visibleSettingsPassword = !visibleSettingsPassword;
                                         }
                                     }
                                 }
                             }
 
+                            // Password Strength Indicator
+                            ColumnLayout {
+                                id: settingsStrengthIndicator
+                                Layout.preferredWidth: 350
+                                spacing: 4
+                                visible: newPasswordfTextField.text.length > 0
+
+                                property int passLength: newPasswordfTextField.text.length
+                                property bool hasLowercase: /[a-z]/.test(newPasswordfTextField.text)
+                                property bool hasUppercase: /[A-Z]/.test(newPasswordfTextField.text)
+                                property bool hasSpecialChar: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPasswordfTextField.text)
+                                property bool has8Chars: passLength >= 8
+                                property bool isStrong: has8Chars && hasLowercase && hasUppercase && hasSpecialChar
+                                property bool isMedium: passLength >= 4 && !isStrong
+                                property bool isWeak: passLength > 0 && passLength < 4
+
+                                property color strengthColor: {
+                                    if (isStrong) return "#4CAF50"
+                                    if (isMedium) return "#FFC107"
+                                    return "#F44336"
+                                }
+
+                                property string strengthText: {
+                                    if (isStrong) return "Strong password ✓"
+                                    if (isMedium) return "Medium strength"
+                                    return "Too weak (min 4 characters)"
+                                }
+
+                                property real strengthPercent: {
+                                    if (isStrong) return 1.0
+                                    if (passLength >= 8) return 0.75
+                                    if (passLength >= 6) return 0.55
+                                    if (passLength >= 4) return 0.4
+                                    if (passLength >= 2) return 0.2
+                                    return 0.1
+                                }
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 6
+                                    radius: 3
+                                    color: "#1E2634"
+
+                                    Rectangle {
+                                        width: parent.width * settingsStrengthIndicator.strengthPercent
+                                        height: parent.height
+                                        radius: 3
+                                        color: settingsStrengthIndicator.strengthColor
+
+                                        Behavior on width {
+                                            NumberAnimation { duration: 200 }
+                                        }
+                                        Behavior on color {
+                                            ColorAnimation { duration: 200 }
+                                        }
+                                    }
+                                }
+
+                                Text {
+                                    text: settingsStrengthIndicator.strengthText
+                                    color: settingsStrengthIndicator.strengthColor
+                                    font.pixelSize: 12
+                                    Layout.alignment: Qt.AlignLeft
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 8
+                                    visible: !settingsStrengthIndicator.isStrong && settingsStrengthIndicator.passLength >= 4
+
+                                    Text {
+                                        text: settingsStrengthIndicator.has8Chars ? "✓ 8+" : "○ 8+"
+                                        color: settingsStrengthIndicator.has8Chars ? "#4CAF50" : "#888888"
+                                        font.pixelSize: 10
+                                    }
+                                    Text {
+                                        text: settingsStrengthIndicator.hasLowercase ? "✓ abc" : "○ abc"
+                                        color: settingsStrengthIndicator.hasLowercase ? "#4CAF50" : "#888888"
+                                        font.pixelSize: 10
+                                    }
+                                    Text {
+                                        text: settingsStrengthIndicator.hasUppercase ? "✓ ABC" : "○ ABC"
+                                        color: settingsStrengthIndicator.hasUppercase ? "#4CAF50" : "#888888"
+                                        font.pixelSize: 10
+                                    }
+                                    Text {
+                                        text: settingsStrengthIndicator.hasSpecialChar ? "✓ @#$" : "○ @#$"
+                                        color: settingsStrengthIndicator.hasSpecialChar ? "#4CAF50" : "#888888"
+                                        font.pixelSize: 10
+                                    }
+                                }
+                            }
+
                             Item{
-                                Layout.preferredHeight: 20
+                                Layout.preferredHeight: 10
                             }
 
                             Label{
@@ -704,8 +861,8 @@ Item{
                                 Layout.preferredHeight: 50
                                 Layout.preferredWidth: 350
                                 radius: 20
-                                color: "#1E2634"
-                                border.color: "white"
+                                color: "#303946"
+                                border.color: "#4a5568"
 
                                 RowLayout{
                                     anchors.fill: parent
@@ -722,10 +879,39 @@ Item{
                                         font.pixelSize: 16
                                         id: confirmNewPasswordfTextField
                                         color: "#eaeaea"
-                                        echoMode: TextInput.Password
+                                        echoMode: visibleSettingsPassword ? TextInput.Normal : TextInput.Password
 
                                         background: Rectangle{
+                                            color: "#303946"
+                                            radius: 15
+                                        }
+                                    }
+
+                                    Button{
+                                        id: eyeButtonConfirmNew
+                                        Layout.preferredHeight: 35
+                                        Layout.preferredWidth: 35
+
+                                        background: Rectangle{
+                                            color: eyeButtonConfirmNew.pressed? "#3A4354" : (eyeButtonConfirmNew.hovered? "#2D3749": "transparent")
+                                            radius: 20
+                                        }
+
+                                        contentItem: Rectangle{
+                                            anchors.fill: parent
                                             color: "transparent"
+
+                                            Image{
+                                                height: 25
+                                                width: 25
+                                                anchors.centerIn: parent
+                                                source: visibleSettingsPassword ? "../imgs/visibility_on.png" : "../imgs/visibility_off.png"
+                                                fillMode: Image.PreserveAspectFit
+                                            }
+                                        }
+
+                                        onClicked:{
+                                            visibleSettingsPassword = !visibleSettingsPassword;
                                         }
                                     }
                                 }
@@ -759,6 +945,16 @@ Item{
                                     }
                                     onClicked: {
                                         if(currentPasswordTextField.text === "" || newPasswordfTextField.text === "" || confirmNewPasswordfTextField.text === "") return;
+                                        
+                                        // Validate password strength (minimum 4 characters)
+                                        if (newPasswordfTextField.text.length < 4) {
+                                            confirmationPopup.titleText = "Error"
+                                            confirmationPopup.messageText = "Password must be at least 4 characters"
+                                            confirmationPopup.confirmButtonText = "OK"
+                                            confirmationPopup.open()
+                                            return;
+                                        }
+                                        
                                         if (newPasswordfTextField.text !== confirmNewPasswordfTextField.text) {
                                             confirmationPopup.titleText = "Error"
                                             confirmationPopup.messageText = "Passwords do not match."

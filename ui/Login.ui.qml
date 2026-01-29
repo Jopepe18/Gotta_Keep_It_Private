@@ -17,18 +17,65 @@ Item {
     property string secret_key_val: ""
     property bool visiblePassword: false
 
+    // Lockout properties
+    property int failedAttempts: 0
+    property int maxAttempts: 4
+    property bool isLockedOut: false
+    property int lockoutSeconds: 300  // 5 minutes = 300 seconds
+    property int remainingLockoutSeconds: 0
+
+    // Lockout Timer
+    Timer {
+        id: lockoutTimer
+        interval: 1000  // 1 second
+        repeat: true
+        running: root.isLockedOut
+        onTriggered: {
+            root.remainingLockoutSeconds--
+            if (root.remainingLockoutSeconds <= 0) {
+                root.isLockedOut = false
+                root.failedAttempts = 0
+                root.remainingLockoutSeconds = 0
+                message_text.text = ""
+                lockoutTimer.stop()
+            } else {
+                // Update lockout message
+                var minutes = Math.floor(root.remainingLockoutSeconds / 60)
+                var seconds = root.remainingLockoutSeconds % 60
+                var timeStr = minutes + ":" + (seconds < 10 ? "0" : "") + seconds
+                message_text.text = "Too many failed attempts. Try again in " + timeStr
+                message_text.color = "#F44336"
+            }
+        }
+    }
+
     Connections {
         target: loginBackend
         function onLogin_status(success, message, secret_key, user_id, has_vault) {
             if (success) {
                 console.log("Login success: " + message)
+                // Reset failed attempts on success
+                root.failedAttempts = 0
                 message_text.color = "green"
                 message_text.text = message
                 root.loginSuccess(secret_key, user_id, has_vault, textfield_password.text)
             } else {
                 console.log("Login failed: " + message)
-                message_text.color = "#c50000"
-                message_text.text = message
+                root.failedAttempts++
+                
+                var attemptsRemaining = root.maxAttempts - root.failedAttempts
+                
+                if (attemptsRemaining <= 0) {
+                    // Trigger lockout
+                    root.isLockedOut = true
+                    root.remainingLockoutSeconds = root.lockoutSeconds
+                    lockoutTimer.start()
+                    message_text.color = "#F44336"
+                    message_text.text = "Too many failed attempts. Try again in 5:00"
+                } else {
+                    message_text.color = "#F44336"
+                    message_text.text = message + " (" + attemptsRemaining + " attempts left)"
+                }
             }
         }
     }
@@ -248,15 +295,22 @@ Item {
                             id: login_button
                             Layout.preferredWidth: 140
                             Layout.preferredHeight: 55
-                            text: qsTr("Login")
+                            text: root.isLockedOut ? qsTr("Locked") : qsTr("Login")
                             font.pointSize: 18
+                            enabled: !root.isLockedOut
 
                             background: Rectangle{
-                                color: login_button.pressed ? "#619DEC" : (login_button.hovered ? "#4F91E8" : "#4080D4")
+                                color: {
+                                    if (!login_button.enabled) return "#666666"
+                                    return login_button.pressed ? "#619DEC" : (login_button.hovered ? "#4F91E8" : "#4080D4")
+                                }
                                 radius: 30
                             }
 
                             onClicked: {
+                                if (root.isLockedOut) {
+                                    return
+                                }
                                 loginBackend.attempt_login(textfield_username.text, textfield_password.text)
                             }
                         }

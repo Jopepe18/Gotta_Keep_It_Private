@@ -1,9 +1,3 @@
-/*
-This is a UI file (.ui.qml) that is intended to be edited in Qt Design Studio only.
-It is supposed to be strictly declarative and only uses a subset of QML. If you edit
-this file manually, you might introduce QML code that is not supported by Qt Design Studio.
-Check out https://doc.qt.io/qtcreator/creator-quick-ui-forms.html for details on .ui.qml files.
-*/
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -12,7 +6,7 @@ Page {
     id: root
 
     property string userIdString: ""
-    property string vaultPassword: "" // Password for vault creation
+    property string vaultPassword: ""
     property bool hasExistingVault: false
 
     signal logoutClicked()
@@ -34,162 +28,147 @@ Page {
     }
 
     Rectangle {
-        id: background
         anchors.fill: parent
-        color: "#1E1E1E"
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: "#16222A" }
+            GradientStop { position: 1.0; color: "#3A6073" }
+        }
 
-        Rectangle {
-            id: mainCard
-            width: 600
-            height: 450
+        ColumnLayout {
             anchors.centerIn: parent
-            color: "#1E2634"
-            radius: 20
+            spacing: 20
+            width: 400
 
-            ColumnLayout {
-                id: mainColumn
-                anchors.fill: parent
-                spacing: 0
-
-                // Vault Icon
-                Image {
-                    Layout.preferredWidth: 150
-                    Layout.preferredHeight: 150
-                    source: "../imgs/safe.png"
-                    Layout.topMargin: 40
-                    Layout.alignment: Qt.AlignHCenter
-                    fillMode: Image.PreserveAspectFit
+            // Vault Icon
+            Rectangle {
+                Layout.preferredWidth: 100
+                Layout.preferredHeight: 100
+                Layout.alignment: Qt.AlignHCenter
+                radius: 50
+                color: "#2ecc71"
+                
+                Text {
+                    anchors.centerIn: parent
+                    text: "🔐"
+                    font.pixelSize: 45
                 }
+            }
 
-                // Title
-                Label {
-                    text: qsTr("Your Vault")
-                    color: "#eaeaea"
-                    Layout.alignment: Qt.AlignHCenter
-                    font.pointSize: 28
-                    font.weight: Font.Medium
-                    Layout.topMargin: 15
-                }
+            // Title
+            Text {
+                text: qsTr("Your Vault")
+                color: "white"
+                font.pixelSize: 28
+                font.bold: true
+                Layout.alignment: Qt.AlignHCenter
+            }
 
-                // Subtitle
-                Label {
-                    text: root.hasExistingVault 
-                        ? qsTr("Access your secure vault")
-                        : qsTr("Create a new vault to get started")
-                    color: "#a0a0a0"
-                    Layout.alignment: Qt.AlignHCenter
-                    font.pointSize: 14
-                    Layout.topMargin: 5
-                    Layout.bottomMargin: 25
-                }
+            // Subtitle
+            Text {
+                text: root.hasExistingVault 
+                    ? qsTr("Access your secure vault")
+                    : qsTr("Create a new vault to get started")
+                color: "#bdc3c7"
+                font.pixelSize: 14
+                Layout.alignment: Qt.AlignHCenter
+            }
 
-                // Buttons Container
-                Rectangle {
-                    id: buttonsContainer
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 200
-                    Layout.leftMargin: 50
-                    Layout.rightMargin: 50
-                    Layout.bottomMargin: 40
-                    color: "#303946"
-                    radius: 15
+            // Message Text (for errors)
+            Text {
+                id: messageText
+                text: ""
+                color: "#e74c3c"
+                visible: false
+                font.pixelSize: 14
+                Layout.alignment: Qt.AlignHCenter
+            }
 
-                    ColumnLayout {
-                        anchors.fill: parent
-                        anchors.margins: 25
-                        spacing: 15
-
-                        // Message Text (for errors)
-                        Label {
-                            id: messageText
-                            text: ""
-                            color: "#c50000"
-                            visible: false
-                            Layout.alignment: Qt.AlignHCenter
-                            font.pointSize: 12
-                        }
-
-                        // New Vault Button
-                        Button {
-                            id: buttonNewVault
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 50
-                            visible: !root.hasExistingVault
-                            
-                            background: Rectangle {
-                                color: buttonNewVault.hovered ? "#4a8fe7" : "#3d7fd6"
-                                radius: 10
-                            }
-                            
-                            contentItem: Text {
-                                text: qsTr("🔐  Create New Vault")
-                                color: "white"
-                                font.pointSize: 15
-                                font.weight: Font.Medium
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                            }
-                            
-                            onClicked: {
-                                console.log("Creating vault for user: " + root.userIdString)
-                                vaultBackend.create_vault(root.userIdString, "My New Vault", root.vaultPassword, root.vaultPassword)
-                            }
-                        }
-
-                        // Continue to Main Button (only if has vault)
-                        Button {
-                            id: buttonMain
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 50
-                            visible: root.hasExistingVault
-                            
-                            background: Rectangle {
-                                color: buttonMain.hovered ? "#4a8fe7" : "#3d7fd6"
-                                radius: 10
-                            }
-                            
-                            contentItem: Text {
-                                text: qsTr("🔓  Open Vault")
-                                color: "white"
-                                font.pointSize: 15
-                                font.weight: Font.Medium
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                            }
-                            
-                            onClicked: root.loadMain()
-                        }
-
-                        // Spacer
-                        Item {
-                            Layout.fillHeight: true
-                        }
-
-                        // Logout Button
-                        Button {
-                            id: buttonLogout
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 40
-                            
-                            background: Rectangle {
-                                color: buttonLogout.hovered ? "#4a4a4a" : "transparent"
-                                radius: 8
-                                border.color: "#666666"
-                                border.width: 1
-                            }
-                            
-                            contentItem: Text {
-                                text: qsTr("← Logout")
-                                color: "#aaaaaa"
-                                font.pointSize: 13
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                            }
-                            
-                            onClicked: root.logoutClicked()
-                        }
+            // New Vault Button
+            Button {
+                id: buttonNewVault
+                Layout.fillWidth: true
+                Layout.preferredHeight: 55
+                visible: !root.hasExistingVault
+                
+                background: Rectangle {
+                    color: buttonNewVault.pressed ? "#2980b9" : (buttonNewVault.hovered ? "#3498db" : "#2980b9")
+                    radius: 10
+                    
+                    Behavior on color {
+                        ColorAnimation { duration: 150 }
                     }
                 }
+                
+                contentItem: Text {
+                    text: qsTr("🔐  Create New Vault")
+                    color: "white"
+                    font.pixelSize: 16
+                    font.bold: true
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+                
+                onClicked: {
+                    console.log("Creating vault for user: " + root.userIdString)
+                    vaultBackend.create_vault(root.userIdString, "My New Vault", root.vaultPassword, root.vaultPassword)
+                }
+            }
+
+            // Open Vault Button (only if has vault)
+            Button {
+                id: buttonMain
+                Layout.fillWidth: true
+                Layout.preferredHeight: 55
+                visible: root.hasExistingVault
+                
+                background: Rectangle {
+                    color: buttonMain.pressed ? "#27ae60" : (buttonMain.hovered ? "#2ecc71" : "#27ae60")
+                    radius: 10
+                    
+                    Behavior on color {
+                        ColorAnimation { duration: 150 }
+                    }
+                }
+                
+                contentItem: Text {
+                    text: qsTr("🔓  Open Vault")
+                    color: "white"
+                    font.pixelSize: 16
+                    font.bold: true
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+                
+                onClicked: root.loadMain()
+            }
+
+            // Logout Button
+            Button {
+                id: buttonLogout
+                Layout.fillWidth: true
+                Layout.preferredHeight: 45
+                Layout.topMargin: 10
+                
+                background: Rectangle {
+                    color: buttonLogout.hovered ? "#34495e" : "transparent"
+                    radius: 8
+                    border.color: "#7f8c8d"
+                    border.width: 1
+                    
+                    Behavior on color {
+                        ColorAnimation { duration: 150 }
+                    }
+                }
+                
+                contentItem: Text {
+                    text: qsTr("← Logout")
+                    color: "#bdc3c7"
+                    font.pixelSize: 14
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+                
+                onClicked: root.logoutClicked()
             }
         }
     }

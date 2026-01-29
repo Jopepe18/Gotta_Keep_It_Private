@@ -76,12 +76,13 @@ Item {
 
                 Rectangle{
                     id: rectangle_register_sub
-                    Layout.preferredHeight: 470
+                    Layout.preferredHeight: 580
                     Layout.fillWidth: true
                     color: "#303946"
                     Layout.rightMargin: 50
                     Layout.leftMargin: 50
                     radius: 20
+                    clip: true
 
                     ColumnLayout{
                         id: credentials_column
@@ -89,8 +90,8 @@ Item {
                         anchors.topMargin: 10
                         anchors.rightMargin: 50
                         anchors.leftMargin: 50
-                        spacing: 8
-                        clip: false
+                        spacing: 6
+                        clip: true
 
                         Text {
                         id: label_username
@@ -224,6 +225,103 @@ Item {
 
                         }
 
+                        // Password Strength Indicator
+                        ColumnLayout {
+                            id: strengthIndicator
+                            Layout.fillWidth: true
+                            spacing: 4
+                            visible: textfield_password.text.length > 0
+
+                            // Helper properties for password strength
+                            property int passLength: textfield_password.text.length
+                            property bool hasLowercase: /[a-z]/.test(textfield_password.text)
+                            property bool hasUppercase: /[A-Z]/.test(textfield_password.text)
+                            property bool hasSpecialChar: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(textfield_password.text)
+                            property bool has8Chars: passLength >= 8
+                            property bool isStrong: has8Chars && hasLowercase && hasUppercase && hasSpecialChar
+                            property bool isMedium: passLength >= 4 && !isStrong
+                            property bool isWeak: passLength > 0 && passLength < 4
+
+                            property color strengthColor: {
+                                if (isStrong) return "#4CAF50"  // Green
+                                if (isMedium) return "#FFC107"  // Yellow
+                                return "#F44336"  // Red
+                            }
+
+                            property string strengthText: {
+                                if (isStrong) return "Strong password ✓"
+                                if (isMedium) return "Medium strength"
+                                return "Too weak (min 4 characters)"
+                            }
+
+                            property real strengthPercent: {
+                                if (isStrong) return 1.0
+                                if (passLength >= 8) return 0.75
+                                if (passLength >= 6) return 0.55
+                                if (passLength >= 4) return 0.4
+                                if (passLength >= 2) return 0.2
+                                return 0.1
+                            }
+
+                            // Strength Bar
+                            Rectangle {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 6
+                                radius: 3
+                                color: "#1E2634"
+
+                                Rectangle {
+                                    width: parent.width * strengthIndicator.strengthPercent
+                                    height: parent.height
+                                    radius: 3
+                                    color: strengthIndicator.strengthColor
+
+                                    Behavior on width {
+                                        NumberAnimation { duration: 200 }
+                                    }
+                                    Behavior on color {
+                                        ColorAnimation { duration: 200 }
+                                    }
+                                }
+                            }
+
+                            // Strength Text
+                            Text {
+                                text: strengthIndicator.strengthText
+                                color: strengthIndicator.strengthColor
+                                font.pixelSize: 12
+                                Layout.alignment: Qt.AlignLeft
+                            }
+
+                            // Missing Criteria Hints (only show when not strong)
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 10
+                                visible: !strengthIndicator.isStrong && strengthIndicator.passLength >= 4
+
+                                Text {
+                                    text: strengthIndicator.has8Chars ? "✓ 8+" : "○ 8+"
+                                    color: strengthIndicator.has8Chars ? "#4CAF50" : "#888888"
+                                    font.pixelSize: 11
+                                }
+                                Text {
+                                    text: strengthIndicator.hasLowercase ? "✓ abc" : "○ abc"
+                                    color: strengthIndicator.hasLowercase ? "#4CAF50" : "#888888"
+                                    font.pixelSize: 11
+                                }
+                                Text {
+                                    text: strengthIndicator.hasUppercase ? "✓ ABC" : "○ ABC"
+                                    color: strengthIndicator.hasUppercase ? "#4CAF50" : "#888888"
+                                    font.pixelSize: 11
+                                }
+                                Text {
+                                    text: strengthIndicator.hasSpecialChar ? "✓ @#$" : "○ @#$"
+                                    color: strengthIndicator.hasSpecialChar ? "#4CAF50" : "#888888"
+                                    font.pixelSize: 11
+                                }
+                            }
+                        }
+
                         Text {
                             id: text_confirmpass
                             color: "#eaeaea"
@@ -242,16 +340,45 @@ Item {
 
                             RowLayout {
                                  anchors.fill: parent
-                                 anchors.margins: 5 
+                                 spacing: 10
                                  
                                  TextField {
                                      id: textfield_confirmpass
                                      font.pointSize: 17
                                      Layout.fillWidth: true
                                      placeholderText: qsTr("")
-                                     echoMode: TextInput.Password
+                                     echoMode: visiblePassword ? TextInput.Normal : TextInput.Password
                                      color: "#eaeaea"
                                      background: Rectangle { color: "transparent" }
+                                 }
+
+                                 Button{
+                                     id: eyeButtonConfirm
+                                     Layout.preferredHeight: 35
+                                     Layout.preferredWidth: 35
+                                     Layout.rightMargin: 10
+                                     Layout.topMargin: 5
+
+                                     background: Rectangle{
+                                         color: eyeButtonConfirm.pressed? "#3A4354" : (eyeButtonConfirm.hovered? "#2D3749": "transparent")
+                                         radius: 20
+                                     }
+
+                                     contentItem: Rectangle{
+                                         anchors.fill: parent
+                                         color: "transparent"
+
+                                         Image{
+                                             height: 30
+                                             width: 30
+                                             source: visiblePassword ? "../imgs/visibility_on.png" : "../imgs/visibility_off.png"
+                                             fillMode: Image.PreserveAspectFit
+                                         }
+                                     }
+
+                                     onClicked:{
+                                         visiblePassword = !visiblePassword;
+                                     }
                                  }
                             }
                         }
@@ -282,7 +409,31 @@ Item {
                             }
 
                             onClicked: {
+                                // Validate password strength (minimum 4 characters)
+                                if (textfield_password.text.length < 4) {
+                                    message_text.color = "#F44336"
+                                    message_text.text = "Password must be at least 4 characters"
+                                    return
+                                }
                                 registerBackend.attempt_register(textfield_username.text, textfield_email.text, textfield_password.text, textfield_confirmpass.text)
+                            }
+                        }
+
+                        Item {
+                            Layout.preferredHeight: 10
+                        }
+
+                        Text {
+                            text: qsTr("Already registered? Sign In")
+                            color: "#bdc3c7"
+                            font.pixelSize: 15
+                            font.underline: true
+                            Layout.alignment: Qt.AlignHCenter
+                            
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.loginRequested()
                             }
                         }
                     
@@ -294,30 +445,7 @@ Item {
 
                 }
 
-                RowLayout{
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignHCenter
-                     Label {
-                            text: qsTr("Already have an account?")
-                            color: "#eaeaea"
-                            font.pointSize: 17
-                        }
 
-                        Button {
-                            display: AbstractButton.TextOnly
-                            flat: true
-                            onClicked: root.loginRequested()
-
-                            contentItem: Text{
-                                text: "Sign In"
-                                color: "#73AAF3"
-                                font.pointSize: 17
-                                font.underline: true
-                            }
-                        }
-
-
-                }
 
                 Item{
                     Layout.fillHeight: true
