@@ -5,7 +5,7 @@ import QtQuick.Layouts
 Item {
     id: root
     width: 1500
-    height: 800
+    height: 1080
 
     signal logoutClicked()
     property string currentPage: "passwords"

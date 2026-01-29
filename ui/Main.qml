@@ -4,7 +4,7 @@ import QtQuick.Controls
 Window {
     id: window
     width: 1500
-    height: 800
+    height: 1080
     visible: true
     title: qsTr("Gotta Keep It Private")
     property string currentUserId: ""
