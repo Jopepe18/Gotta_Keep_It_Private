@@ -1059,9 +1059,9 @@ class VaultManager:
         """
         Updates an existing credit card entry.
         """
-        #is_valid, error_msg = self.validate_card_logic(card_data)
-        #if not is_valid:
-        #    return {"success": False, "message": error_msg}
+        is_valid, error_msg = self.validate_card_logic(card_data)
+        if not is_valid:
+           return {"success": False, "message": error_msg}
         
         db: Session = self.get_db()
         try:
