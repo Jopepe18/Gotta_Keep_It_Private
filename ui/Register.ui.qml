@@ -12,7 +12,7 @@ import QtQuick.Layouts
 Item {
     id: root
     width: 1500
-    height: 1080
+    height: 800
 
     signal loginRequested()
     signal registerSuccess(string key, string userId, string password)

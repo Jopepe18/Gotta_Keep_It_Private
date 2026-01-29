@@ -5,7 +5,7 @@ import QtQuick.Layouts
 Item{
     id: cardsPage
     width: 1300
-    height: 1080
+    height: 800
 
     property bool showFavorites: false
     property bool cvvVisibilityOn: false

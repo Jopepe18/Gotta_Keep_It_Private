@@ -6,7 +6,7 @@ import QtQuick.Dialogs // for FileDialog
 Item{
     id: settingsPage
     width: 1500
-    height: 1080
+    height: 800
 
     property string userId: ""
     property string pendingAction: "" // "email" or "password"

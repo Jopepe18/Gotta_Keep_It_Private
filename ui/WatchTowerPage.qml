@@ -5,7 +5,7 @@ import QtQuick.Layouts
 Item {
     id: watchTowerPage
     width: 1500
-    height: 1080
+    height: 800
 
     // --- PROPERTIES ---
     property string userId: ""

@@ -4,8 +4,6 @@ import QtQuick.Layouts
 
 Item{
     id: passwordsPage
-    // width: 1300  <-- Removed to allow responsive resizing
-    // height: 1080 <-- Removed to allow responsive resizing
     anchors.fill: parent
 
     property bool showFavorites: false

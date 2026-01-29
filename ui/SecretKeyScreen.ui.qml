@@ -6,7 +6,7 @@ import QtQuick.Layouts
 Item {
     id: root
     width: 1500
-    height: 1080
+    height: 800
     
     property string secretKey: ""
     signal continueClicked()

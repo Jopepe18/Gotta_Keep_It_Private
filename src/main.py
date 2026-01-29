@@ -39,7 +39,6 @@ if __name__ == "__main__":
     engine.rootContext().setContextProperty("forgotPasswordBackend", forgot_password_backend)
     engine.rootContext().setContextProperty("menuBackend", menu_backend)
     engine.rootContext().setContextProperty("vaultBackend", vault_backend)
-
     engine.rootContext().setContextProperty("watchTowerBackend", watchtower_backend)
     engine.rootContext().setContextProperty("generatorBackend", generator_backend)
     
