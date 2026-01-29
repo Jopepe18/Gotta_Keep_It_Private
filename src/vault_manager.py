@@ -124,7 +124,7 @@ class VaultManager:
         if len(note) > 300:
             return False, "Note is too long (max 300 chars)."
             
-        # 3. Website Logic: Basic check if it looks like a URL (optional)
+        #  check if it looks like a URL 
         
         if website and "." not in website:
             return False, "Please enter a valid website URL or leave it empty."
@@ -870,6 +870,51 @@ class VaultManager:
         finally:
             db.close()
 
+
+    def validate_card_logic(self, data: dict) -> tuple:
+        """
+        Validates card entry/edit.
+        """
+        title = data.get('title', '').strip()
+        name = data.get('cardholder_name', '').strip()
+        number = data.get('card_number', '').strip().replace(" ", "")
+        cvv = data.get('cvv', '').strip()
+        exp = data.get('expiration_date', '').strip()
+        note = data.get('note', '').strip()
+
+        #essential fields that cannot be whitespace or empty
+        if not title:
+            return False, "Title is required."  
+        if not number:
+            return False, "Card Number is required."
+
+        # length constraint
+        if len(title) > 100:
+            return False, "Title is too long (max 100 chars)."
+        if len(name) > 70:
+            return False, "Name is too long (max 100 chars)."
+        if len(note) > 300:
+            return False, "Note is too long (max 300 chars)."
+        
+        if not number.isdigit() or not (13 <= len(number) <= 19):
+            return False, "Invalid card number."  
+        
+        #  check number fields
+        if not cvv.isdigit() or not (3 <= len(cvv) <= 4):
+            return False, "CVV must be 3 or 4 digits."
+        if len(exp) != 5 or "/" not in exp:
+            return False, "Expiry must be in MM/YY format."
+        try:
+            month, year = exp.split("/")
+            if not (1 <= int(month) <= 12):
+                return False, "Invalid month in expiry date."
+        except ValueError:
+            return False, "Expiry date contains invalid characters."
+    
+
+        return True, "Success"
+    
+
     def add_debug_card(self, user_id: str) -> bool:
         """
         Adds a debug card entry. 
@@ -973,11 +1018,13 @@ class VaultManager:
         """
         Adds a new credit card entry to the vault.
         """
+        #Check card field validation 
+        is_valid, error_msg = self.validate_card_logic(card_data)
+        if not is_valid:
+            return {"success": False, "message": error_msg}
+        
         db: Session = self.get_db()
-        try:
-            #if not all(vars(card_data).values()):  #check if there are any empty fields 
-                #return {"success": False, "message": "One or more fields are empty"}
-            
+        try:       
             vault, dek = self._prepare_vault_session(db, user_id, master_password)
 
             #  Encrypt the card details
@@ -1012,6 +1059,10 @@ class VaultManager:
         """
         Updates an existing credit card entry.
         """
+        #is_valid, error_msg = self.validate_card_logic(card_data)
+        #if not is_valid:
+        #    return {"success": False, "message": error_msg}
+        
         db: Session = self.get_db()
         try:
             # 1. Fetch User, Vault, and Card Entry
