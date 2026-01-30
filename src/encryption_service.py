@@ -1,14 +1,10 @@
 import hashlib
 import secrets
-import base64
 import os
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 class EncryptionService:
-    """
-     this is a helper class for cryptographic operations.
-    """
-
+    
     def hash_password(self, plain_password: str) -> str:
         """
         Hashes a plain text password using SHA-256 (for simplicity/portability).

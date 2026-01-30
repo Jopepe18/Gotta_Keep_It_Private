@@ -4,7 +4,6 @@ Generator Backend - Bridge between QML and PasswordGenerator
 from PySide6.QtCore import QObject, Signal, Slot
 import secrets
 import string
-#pretty much pass_generator.py, but for QML front end
 
 class GeneratorBackend(QObject):
     """
@@ -15,13 +14,14 @@ class GeneratorBackend(QObject):
     # Signal to send generated password to QML
     password_generated = Signal(str, str)  # password, strength
     
-    def __init__(self, parent=None):
+    def __init__(self, password_analyser, parent=None):
         super().__init__(parent)
+        self.analyser = password_analyser
         self.lowercase = string.ascii_lowercase
         self.uppercase = string.ascii_uppercase
         self.digits = string.digits
         self.special_chars = "!@#$%^&*()_+-=[]{}|;:,.<>?"
-        self.ambiguous_chars = "0O1lI|"#ισως να το αλλάξουμε?
+        self.ambiguous_chars = "0O1lI|"
     
     @Slot(int, bool, bool, bool, bool, bool)
     def generatePassword(self, length: int, use_upper: bool, use_lower: bool, 
@@ -74,7 +74,7 @@ class GeneratorBackend(QObject):
             char_pool += self.special_chars
             required_chars.append(secrets.choice(self.special_chars))
         
-        # If no options selected, use all!#ίσως να το αλλάξουμε?
+        # If no options selected, use all
         if not char_pool:
             char_pool = self.lowercase + self.uppercase + self.digits + self.special_chars
             if avoid_ambiguous:
@@ -91,7 +91,7 @@ class GeneratorBackend(QObject):
         secrets.SystemRandom().shuffle(password_chars)
         
         password = ''.join(password_chars)
-        strength = self._assess_strength(password)
+        strength = self.analyser.evaluate_strength(password)
         
         print(f"GeneratorBackend: Generated password of length {len(password)}, strength: {strength}")
         self.password_generated.emit(password, strength)
@@ -101,35 +101,3 @@ class GeneratorBackend(QObject):
         """Generate a strong password with default settings (all options enabled)."""
         self.generatePassword(16, True, True, True, True, False)
     
-    def _assess_strength(self, password: str) -> str:
-        """Assess password strength."""
-        score = 0
-        length = len(password)
-        
-        # Length scoring
-        if length >= 16:
-            score += 3
-        elif length >= 12:
-            score += 2
-        elif length >= 8:
-            score += 1
-        
-        # Character variety scoring
-        if any(c.islower() for c in password):
-            score += 1
-        if any(c.isupper() for c in password):
-            score += 1
-        if any(c.isdigit() for c in password):
-            score += 1
-        if any(c in string.punctuation for c in password):
-            score += 1
-        
-        # Evaluate
-        if score >= 6:
-            return "Very Strong"
-        elif score >= 4:
-            return "Strong"
-        elif score >= 3:
-            return "Moderate"
-        else:
-            return "Weak"

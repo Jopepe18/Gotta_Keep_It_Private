@@ -1,5 +1,4 @@
 from PySide6.QtCore import QObject, Slot, Signal, QThread
-from vault_manager import VaultManager
 
 class ScanWorker(QThread):
     progress = Signal(int)     
@@ -49,7 +48,7 @@ class WatchTowerBackend(QObject):
 
     @Slot(str, str)
     def startScan(self, user_id, master_password):
-        self._current_user_id = user_id  # Store for later refresh signal
+        self._current_user_id = user_id  
         self.isScanningChanged.emit(True)
         self.scanProgressUpdated.emit(0.0)
 
@@ -71,7 +70,7 @@ class WatchTowerBackend(QObject):
             stats = full_report["stats"]
             chart_data = full_report.get("chartData", {}) # Τα δεδομένα για την πίτα
 
-            # 1. Στέλνουμε τα REAL stats και TOTAL στο UI (Για τις λίστες)
+            # 1. Στέλνουμε δεδομένα για τις λίστες
             self.scanFinished.emit(
                 stats["weakCount"], 
                 stats["reusedCount"], 
@@ -82,7 +81,7 @@ class WatchTowerBackend(QObject):
             )
             
             # 2. Στέλνουμε τα CHART stats (Για το Analytics Window)
-            # Αν κάτι λείπει, στέλνουμε 0 για να μην κρασάρει
+            # Αν κάτι λείπει, στέλνουμε 0 
             self.chartStatsReady.emit(
                 chart_data.get("weak", 0),
                 chart_data.get("reused", 0),
@@ -90,7 +89,7 @@ class WatchTowerBackend(QObject):
                 chart_data.get("safe", 0)
             )
             
-            # 3. Στέλνουμε τις λίστες (Περιέχουν ΟΛΟΥΣ τους κωδικούς)
+            # 3. Στέλνουμε τις λίστες
             self.scanDataReady.emit(
                 full_report["weakItems"], 
                 full_report["reusedItems"], 

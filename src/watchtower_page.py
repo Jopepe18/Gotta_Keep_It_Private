@@ -17,7 +17,7 @@ class Watchtower:
         total_entropy = 0.0
         total_items = len(decrypted_credentials)
 
-        # --- ΦΑΣΗ 1: ΑΝΑΛΥΣΗ ΚΑΙ MAPS (Προετοιμασία) ---
+        # ΦΑΣΗ 1: ΑΝΑΛΥΣΗ ΚΑΙ MAPS (Προετοιμασία)
         for index, item in enumerate(decrypted_credentials):
             if progress_callback and total_items > 0:
                 current_percent = int((index / total_items) * 90)
@@ -27,13 +27,12 @@ class Watchtower:
             
             # Έλεγχοι API & Strength
             b_count = self.breach_checker.get_breach_count(pwd)
-
             #Check if it failed (-1) or succeeded
             if b_count == -1:
              # Network Error Logic
                 item.breach_count_val = 0 
                 item.is_breached = False
-                report.has_network_error = True # Set the flag!
+                report.has_network_error = True # Set the flag
             else:
                 # Success Logic
                 item.breach_count_val = b_count
@@ -45,7 +44,7 @@ class Watchtower:
             # Ορίζουμε τα flags (Ανεξάρτητα μεταξύ τους)
             item.is_breached = (b_count > 0)
             item.is_weak = (strength_label == "Weak")
-            item.is_reused = False # Θα το δούμε παρακάτω
+            item.is_reused = False
 
             # Χτίζουμε το map για έλεγχο reused
             if pwd not in password_map:
@@ -54,7 +53,7 @@ class Watchtower:
 
         if progress_callback: progress_callback(100)
 
-        # --- ΦΑΣΗ 2: ΕΛΕΓΧΟΣ REUSED ---
+        # ΦΑΣΗ 2: ΕΛΕΓΧΟΣ REUSED
         for pwd, items_list in password_map.items():
             if len(items_list) > 1:
                 for entry in items_list:
@@ -65,10 +64,8 @@ class Watchtower:
                          other_titles = [e.title for e in items_list if e is not entry]
                     entry.reused_on_list = ", ".join(other_titles)
 
-        # --- ΦΑΣΗ 3: ΚΑΤΑΜΕΤΡΗΣΗ (ΤΟ ΔΙΠΛΟ ΣΥΣΤΗΜΑ) ---
-        
-        # A. Μετρητές Γραφήματος (Priority Logic - Waterfall)
-        # Χρησιμοποιείται ΜΟΝΟ για να σχεδιαστεί σωστά η πίτα (100%)
+        # ΦΑΣΗ 3: ΚΑΤΑΜΕΤΡΗΣΗ (ΤΟ ΔΙΠΛΟ ΣΥΣΤΗΜΑ) 
+        # Χρησιμοποιείται για να σχεδιαστεί σωστά η πίτα (σύνολο 100%)
         chart_breached = 0
         chart_reused = 0
         chart_weak = 0
@@ -82,8 +79,8 @@ class Watchtower:
 
         for item in decrypted_credentials:
             
-            # --- 1. ΥΠΟΛΟΓΙΣΜΟΣ ΓΙΑ ΛΙΣΤΕΣ (ΟΛΗ Η ΑΛΗΘΕΙΑ) ---
-            # Αν ένας κωδικός έχει και τα 3 προβλήματα, μπαίνει και στις 3 λίστες
+            #1. ΥΠΟΛΟΓΙΣΜΟΣ ΓΙΑ ΛΙΣΤΕΣ
+            #Αν ένας κωδικός έχει και τα 3 προβλήματα, μπαίνει και στις 3 λίστες
             if item.is_breached:
                 real_breached += 1
                 report.breached_credentials.append(item)
@@ -96,8 +93,7 @@ class Watchtower:
                 real_reused += 1
                 report.reused_credentials.append(item)
             
-            # ΥΠΟΛΟΓΙΣΜΟΣ ΓΙΑ ΓΡΑΦΗΜΑ (ΠΡΟΤΕΡΑΙΟΤΗΤΑ) ---
-            # Εδώ χρησιμοποιούμε if/elif για να μετρήσει ΜΙΑ φορά
+            # ΥΠΟΛΟΓΙΣΜΟΣ ΓΙΑ ΓΡΑΦΗΜΑ
             if item.is_breached:
                 chart_breached += 1
                 item.security_status = "BREACHED"

@@ -6,21 +6,19 @@ from models import VaultModel, PasswordEntry, UserModel, CreditCardEntry
 from dtos import VaultCreationRequest, VaultCreationResult, PasswordDTO, ChangeEmailRequest, ChangeMasterPasswordRequest
 from Key_Manager import KeyManager
 from encryption_service import EncryptionService
-from PasswordEvaluator import PasswordAnalyser 
 import json
 from watchtower_page import Watchtower
 import pyotp
 
-#σαν να είναι το Handle Credential μας, to be changed 
 class VaultManager:
     """
     Manages logic for Vault creation and management.
     Interacts with Database.
     """
-    def __init__(self):
+    def __init__(self, password_analyser):
         self.key_manager = KeyManager()
         self.encrypt_service = EncryptionService()
-        self.PasswordHandler = PasswordAnalyser()
+        self.PasswordHandler = password_analyser
 
     def get_db(self):
         return SessionLocal()
@@ -34,18 +32,17 @@ class VaultManager:
 
         db: Session = self.get_db()
         try:
-            # 1. Generate Salt (Τώρα ο KeyManager επιστρέφει bytes, οπότε είμαστε σωστοί)
+            # 1. Generate Salt (επιστρέφει bytes)
             kdf_salt = self.key_manager.generate_Salt()
             
             # 2. Generate DEK (Data Encryption Key) - Το κλειδί που κρυπτογραφεί τα δεδομένα
             vault_dek = self.key_manager.generate_DEK()
             
-            # 3. Derive KEK (Key Encryption Key) από το Password + Salt
-            # Το derive_key του KeyManager περιμένει (str, bytes), που είναι ακριβώς αυτά που έχουμε τώρα.
+            # 3. Derive KEK (Key Encryption Key) από το Password + Salt , περιμένει (str,bytes)
             kek = self.key_manager.derive_key(request.password, kdf_salt)
             
             # 4. Encrypt the DEK (Key Wrapping)
-            # Το encrypt_data επιστρέφει bytes, άρα το αποθηκεύουμε απευθείας.
+            # Το encrypt_data επιστρέφει bytes
             encrypted_vault_key = self.encrypt_service.encrypt_data(vault_dek, kek)
 
             # --- RECOVERY KEY INTEGRATION (UC-SK) ---
@@ -93,10 +90,10 @@ class VaultManager:
             )
 
         except Exception as e:
-            db.rollback() # Πολύ σημαντικό να κάνουμε rollback σε error
+            db.rollback() # rollback σε error
             print(f"VaultManager ERROR: {e}")
             import traceback
-            traceback.print_exc() # Αυτό θα σου δείξει όλο το error στο τερματικό
+            traceback.print_exc() # εμφάνιση error στο τερματικό
             return VaultCreationResult(success=False, message=f"System Error: {str(e)}")
             
         finally:
@@ -131,42 +128,7 @@ class VaultManager:
 
         return True, "Success"
             
-    def add_debug_password(self, user_id: str) -> bool:
-        """
-        Adds a debug password entry. 
-        NOTE: This creates an entry with a properly encrypted password.
-        We use the recovery key to decrypt the DEK since we don't have the user's password here.
-        """
-        db: Session = self.get_db()
-        try:
-            # Get Vault and User
-            vault, vault_dek = self._prepare_recovery_session(db, user_id)
-
-            # Encrypt the debug password properly
-            debug_plain_password = "DebugPassword123!"
-            encrypted_password = self.encrypt_service.encrypt_data(debug_plain_password, vault_dek)
-
-            # Create Password Entry with PROPERLY ENCRYPTED password
-            new_pass = PasswordEntry(
-                vault_id=vault.vault_id,
-                title="Debug Password Service",
-                username="debug_user@example.com",
-                website="www.debug-service.com",
-                encrypted_password=encrypted_password,  # Now properly encrypted!
-                note="This is a debug entry, remove before release"
-            )
-            db.add(new_pass)
-            db.commit()
-            print("VaultManager: Debug password added (encrypted)")
-            return True
-        except Exception as e:
-            print(f"VaultManager: Error adding debug password: {e}")
-            import traceback
-            traceback.print_exc()
-            return False
-        finally:
-            db.close()
-
+   
     def add_password(self, user_id: str, master_password: str, entry_data: dict) -> dict:
         """
         Adds a new password entry to the vault.
@@ -388,13 +350,7 @@ class VaultManager:
             db.close()
 
     def change_master_password(self, request: 'ChangeMasterPasswordRequest') -> dict:
-        """
-        TODO
-        προσοχή, εδώ αλλάζει το login password, όχι τον τρόπο αποκρυπτογράφησης των εγγραφών. 
-        !!!να αλλαχθεί !! θα πρέπει να επανακρυπτογραφεί τις εγγραφές
-        """
         
-
         db: Session = self.get_db()
         try:
             from models import UserModel
@@ -554,10 +510,8 @@ class VaultManager:
 
     #prepares user and vault & returns vault n dek AND compares passwords 2nd check
     def _prepare_vault_session(self, db, user_id, password):
-        #print(f"DEBUG: Starting operation for user {user_id}")
-        #print(f"DEBUG: Password received (length): {len(password)}")
-
-        # 2. Fetch User & Vault
+        
+        # Fetch User & Vault
         user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
         if not user:
             print("DEBUG: User not found!")
@@ -568,16 +522,10 @@ class VaultManager:
             print("DEBUG: Vault not found!")
             raise Exception("Vault not found")
 
-        #print(f"DEBUG: User found, vault_id={vault.vault_id}")
-        #print(f"DEBUG: kdf_salt type={type(vault.kdf_salt)}, length={len(vault.kdf_salt) if vault.kdf_salt else 'None'}")
-        #print(f"DEBUG: encrypted_vault_key type={type(vault.encrypted_vault_key)}, length={len(vault.encrypted_vault_key) if vault.encrypted_vault_key else 'None'}")
-
         # 3. VERIFY: Password Check
         if not self.encrypt_service.verify_password(password, user.password_hash):
             print("DEBUG: Password verification FAILED")
             raise Exception("Invalid Master Password")
-
-        #print("DEBUG: Password verification PASSED")
 
         # 4. VALIDATE: Encryption data check
         if not vault.kdf_salt or not vault.encrypted_vault_key:
@@ -585,13 +533,8 @@ class VaultManager:
             raise Exception("Vault encryption data is missing or corrupted.")
 
         # 5. UNWRAP: Derive KEK and decrypt DEK
-        #print(f"DEBUG: Deriving KEK from password and salt")
         kek = self.key_manager.derive_key(password, vault.kdf_salt)
-        
-        #print(f"DEBUG: Attempting to decrypt vault key...")
         dek = self.encrypt_service.decrypt_data(vault.encrypted_vault_key, kek)
-        #print(f"DEBUG: DEK decrypted successfully, length={len(dek)}")
-        
         return vault, dek
 
     def clean_filepath(self, file_path: str):
@@ -640,7 +583,7 @@ class VaultManager:
                     "password": plain_pass_bytes.decode('utf-8'),
                     "note": p.note,
                     "is_favorite": p.is_favorite,
-                    "totp_secret": totp_secret  # Include TOTP secret in export
+                    "totp_secret": totp_secret  # Include TOTP secret
                 })
 
             # DECRYPT CREDIT CARD ENTRIES
@@ -834,7 +777,7 @@ class VaultManager:
             decrypted_objects = []
             total_items = len(passwords)
 
-            # 3. DECRYPT LOOP (Φάση 1: Γρήγορη - 0 έως 10%)
+            # 3. DECRYPT LOOP (Φάση 1: Γρήγορη - 0 έως 10% στο progress bar του watchtower )
             for index, entry in enumerate(passwords):
                 # Υπολογισμός προόδου (0-10%)
                 if progress_callback and total_items > 0:
@@ -849,7 +792,7 @@ class VaultManager:
                     continue
             
             
-            # Περνάμε το callback ΜΕΣΑ στον analyzer!
+            # Περνάμε το callback στον analyzer
             report = analyzer.analyze_vault(decrypted_objects, progress_callback)
 
             # 5. COMMIT & RETURN
@@ -871,6 +814,18 @@ class VaultManager:
         finally:
             db.close()
 
+    def _luhn_check(self, card_number: str) -> bool:
+        """
+        Validates a card number using the Luhn algorithm.
+        Returns True if valid, False otherwise.
+        """
+        digits = [int(d) for d in card_number]
+        # Double every second digit from the right
+        for i in range(len(digits) - 2, -1, -2):
+            digits[i] *= 2
+            if digits[i] > 9:
+                digits[i] -= 9
+        return sum(digits) % 10 == 0
 
     def validate_card_logic(self, data: dict) -> tuple:
         """
@@ -900,6 +855,10 @@ class VaultManager:
         if not number.isdigit() or not (13 <= len(number) <= 19):
             return False, "Invalid card number."  
         
+        # Luhn Algorithm validation
+        if not self._luhn_check(number):
+            return False, "Invalid card number (failed checksum)."
+        
         #  check number fields
         if not cvv.isdigit() or not (3 <= len(cvv) <= 4):
             return False, "CVV must be 3 or 4 digits."
@@ -914,47 +873,6 @@ class VaultManager:
     
 
         return True, "Success"
-    
-
-    def add_debug_card(self, user_id: str) -> bool:
-        """
-        Adds a debug card entry. 
-        NOTE: This creates an entry with a properly encrypted card.
-        We use the recovery key to decrypt the DEK since we don't have the user's card here.
-        """
-        db: Session = self.get_db()
-        try:
-            # Get Vault and User
-            vault, vault_dek = self._prepare_recovery_session(db, user_id)
-
-            # Encrypt the debug card Number and cvv properly
-            debug_plain_cardNumber = "1234 5678 1234 5678"
-            encrypted_cardNumber = self.encrypt_service.encrypt_data(debug_plain_cardNumber, vault_dek)
-            debug_plain_cardCvv = "830"
-            encrypted_cvv = self.encrypt_service.encrypt_data(debug_plain_cardCvv, vault_dek)
-
-            # Create Password Entry with PROPERLY ENCRYPTED password
-            new_card = CreditCardEntry(
-                vault_id = vault.vault_id,
-                title = "Debug Card",
-                cardholder_name = "Name",
-                card_type = "Mastercard",
-                expiration_date = "8/2028",
-                encrypted_number = encrypted_cardNumber,  # Now properly encrypted!
-                encrypted_cvv = encrypted_cvv,
-                note="This is a debug entry, remove before release",
-            )
-            db.add(new_card)
-            db.commit()
-            print("VaultManager: Debug card added (encrypted)")
-            return True
-        except Exception as e:
-            print(f"VaultManager: Error adding debug card: {e}")
-            import traceback
-            traceback.print_exc()
-            return False
-        finally:
-            db.close()
 
     def get_cards(self, user_id: str) -> list:
         db: Session = self.get_db()
@@ -979,7 +897,6 @@ class VaultManager:
             if not card_entry:
                 return {"success": False, "message": "Card entry not found"}
             
-           
             # Decrypt the card details
             decrypted_number = self.encrypt_service.decrypt_data(card_entry.encrypted_number, vault_dek)
             decrypted_cvv = self.encrypt_service.decrypt_data(card_entry.encrypted_cvv, vault_dek)
@@ -1043,7 +960,6 @@ class VaultManager:
                 encrypted_cvv=encrypted_cvv,
                 note=card_data.get('note', '')
             )
-            
             db.add(new_entry)
             db.commit()
             return {"success": True, "message": "Card added successfully"}

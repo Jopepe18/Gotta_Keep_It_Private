@@ -9,7 +9,7 @@ class LoginBackend(QObject):
         super().__init__()
         self.auth_manager = auth_manager
 
-    @Slot(str, str) # χάρη σε αυτό εδώ    @Slot(str, str)
+    @Slot(str, str) 
     def attempt_login(self, username, password):
         print(f"Python: Login attempt for Username={username}")
         
@@ -18,7 +18,6 @@ class LoginBackend(QObject):
 
         if result.success:
             print(f"Python: Επιτυχία. UserID={result.user_id}, HasVault={result.has_vault}")
-            # We could store result.token here if needed
             self.login_status.emit(True, result.message, result.secret_key, result.user_id, result.has_vault)
             self.login_successful.emit(username)
         else:

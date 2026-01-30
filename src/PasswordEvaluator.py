@@ -51,7 +51,7 @@ class PasswordAnalyser:
              return "Weak"
         elif entropy < 60:
              return "Medium"
-        elif entropy< 80:
+        elif entropy < 80:
              return "Strong"
         else:
              return "Excellent"

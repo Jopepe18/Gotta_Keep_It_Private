@@ -600,7 +600,7 @@ Item{
                                ColumnLayout{
                                 spacing: 10
 
-                                 /*----------Cardholder Row---------------*/
+                                /*----------Cardholder Row---------------*/
                                 ColumnLayout{
                                     spacing: 10
 
@@ -634,7 +634,7 @@ Item{
                                 
                                 }
 
-                                 /*----------Card Type Row---------------*/
+                                /*----------Card Type Row---------------*/
                                 ColumnLayout{
                                     spacing: 10
 
@@ -841,7 +841,7 @@ Item{
                                             Layout.fillWidth: true
                                         }
 
-                                        // Εικόνα δίπλα στο Expired/Expires soon text
+                                        //Expires soon
                                         Image {
                                             id: expiryStatusImage
                                             Layout.preferredWidth: 24

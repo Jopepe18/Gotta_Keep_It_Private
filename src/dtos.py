@@ -65,7 +65,7 @@ class VaultCreationRequest:
     """Used for creating a new vault."""
     user_id: str
     vault_name: str
-    password: str # kept for diagram compliance
+    password: str 
     confirm_password: str
 
 @dataclass

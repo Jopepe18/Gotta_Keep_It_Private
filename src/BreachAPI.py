@@ -5,7 +5,7 @@ class BreachAPIService:
     def get_breach_count(self, password: str) -> int:
         """
         Ελέγχει τον κωδικό και επιστρέφει τον ΑΡΙΘΜΟ των διαρροών (Count).
-        Επιστρέφει 0 αν ο κωδικός είναι ασφαλής ή αν υπάρξει σφάλμα δικτύου.
+        Επιστρέφει 0 αν ο κωδικός είναι ασφαλής ή -1 αν υπάρξει σφάλμα δικτύου.
         """        
         # 1. SHA-1 Hash (όπως ακριβώς το είχες)
         sha1_password = hashlib.sha1(password.encode('utf-8')).hexdigest().upper()
@@ -14,7 +14,7 @@ class BreachAPIService:
         try:
             # 2. Κλήση στο API (k-anonymity)
             url = f"https://api.pwnedpasswords.com/range/{prefix}"
-            response = requests.get(url, timeout=2) # Timeout για να μην κολλάει το UI
+            response = requests.get(url, timeout=2) # Timeout error
             
             if response.status_code != 200:
                 print(f"BreachAPI Error: {response.status_code}")

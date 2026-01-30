@@ -12,9 +12,7 @@ from dtos import (
     RecoveryVerificationRequest, RecoveryVerificationResult,
     RecoveryChangeRequest
 )
-# 
-#  "users_db: list[User]". not used (yet)
-# 
+
 
 from Key_Manager import KeyManager
 from encryption_service import EncryptionService
@@ -134,7 +132,7 @@ class AuthenticationManager:
             if request.new_password != request.confirm_password:
                 return False
 
-            # --- RECOVERY LOGIC (UC-CP) ---
+            # RECOVERY LOGIC (UC-CP)
             from models import VaultModel
             vault = db.query(VaultModel).filter(VaultModel.user_id == user.user_id).first()
             

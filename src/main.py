@@ -13,24 +13,26 @@ from vault_backend import VaultBackend
 from vault_manager import VaultManager
 from watchtower_backend import WatchTowerBackend
 from generator_backend import GeneratorBackend
+from PasswordEvaluator import PasswordAnalyser
 
 if __name__ == "__main__":
     app = QGuiApplication(sys.argv)
     QQuickStyle.setStyle("Basic")
     engine = QQmlApplicationEngine()
 
-    # 1. Initialize Authentication Manager
+    # 1. Initialize Shared Services
     auth_manager = AuthenticationManager()
+    password_analyser = PasswordAnalyser() 
     
-    # 2. Create Backends, injecting the manager
+    # 2. Create Backends, injecting dependencies
     login_backend = LoginBackend(auth_manager)
     register_backend = RegisterBackend(auth_manager)
     forgot_password_backend = ForgotPasswordBackend(auth_manager)
     menu_backend = MenuBackend(auth_manager)
-    vault_manager = VaultManager()
+    vault_manager = VaultManager(password_analyser)
     vault_backend = VaultBackend(vault_manager)
     watchtower_backend = WatchTowerBackend(vault_manager)
-    generator_backend = GeneratorBackend()
+    generator_backend = GeneratorBackend(password_analyser)
     
     # 3. Expose to QML
     engine.rootContext().setContextProperty("loginBackend", login_backend)
