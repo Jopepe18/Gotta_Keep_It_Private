@@ -158,7 +158,17 @@ Window {
                     Layout.preferredHeight: 45
                     font.pixelSize: 16
                     color: "white"
+                    placeholderText: "MM/YY"
+                    maximumLength: 5
+                    validator: RegularExpressionValidator { regularExpression: /^[0-9]{0,2}\/?[0-9]{0,2}$/ }
                     background: Rectangle { color: "#1E2634"; radius: 10 }
+                    
+                    onTextChanged: {
+                        // Auto-insert slash after 2 digits
+                        if (text.length === 2 && !text.includes("/")) {
+                            text = text + "/"
+                        }
+                    }
                 }
             }
             Item { Layout.fillWidth: true }

@@ -74,7 +74,23 @@ Window {
                 spacing: 5
                 Label { text: "Exp (MM/YY)"; color: "#B5B5B5"; font.pixelSize: 14 }
                 TextField { 
-                    id: expiryInput; inputMask: "99/99"; Layout.preferredWidth: 120; Layout.preferredHeight: 45; font.pixelSize: 16; color: "white"; background: Rectangle { color: "#303946"; radius: 10; border.color: "white"; border.width: 1 } }
+                    id: expiryInput
+                    Layout.preferredWidth: 120
+                    Layout.preferredHeight: 45
+                    font.pixelSize: 16
+                    color: "white"
+                    placeholderText: "MM/YY"
+                    maximumLength: 5
+                    validator: RegularExpressionValidator { regularExpression: /^[0-9]{0,2}\/?[0-9]{0,2}$/ }
+                    background: Rectangle { color: "#303946"; radius: 10; border.color: "white"; border.width: 1 }
+                    
+                    onTextChanged: {
+                        // Auto-insert slash after 2 digits
+                        if (text.length === 2 && !text.includes("/")) {
+                            text = text + "/"
+                        }
+                    }
+                }
             }
             ColumnLayout { 
                 visible: false

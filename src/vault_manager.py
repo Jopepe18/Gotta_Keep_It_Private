@@ -862,12 +862,16 @@ class VaultManager:
         #  check number fields
         if not cvv.isdigit() or not (3 <= len(cvv) <= 4):
             return False, "CVV must be 3 or 4 digits."
-        if len(exp) != 5 or "/" not in exp:
+        if "/" not in exp or not (4 <= len(exp) <= 5):
             return False, "Expiry must be in MM/YY format."
         try:
             month, year = exp.split("/")
+            if not month.isdigit() or not year.isdigit():
+                return False, "Expiry date contains invalid characters."
             if not (1 <= int(month) <= 12):
                 return False, "Invalid month in expiry date."
+            if len(year) != 2:
+                return False, "Year must be 2 digits (YY)."
         except ValueError:
             return False, "Expiry date contains invalid characters."
     
