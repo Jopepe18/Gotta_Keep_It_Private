@@ -110,7 +110,48 @@ Item{
             vaultBackend.getCards(cardsPage.userId)
         }
     }
+    function getExpiryStatus(expiryStr) {
+        if (!expiryStr || expiryStr.length < 5) return { status: "OK" } 
 
+        var parts = expiryStr.split("/")
+        if (parts.length !== 2) return { status: "OK" }
+
+        var expMonth = parseInt(parts[0])
+        var expYear = parseInt(parts[1])
+        
+        // Handle 2-digit years (e.g., 28 -> 2028)
+        if (expYear < 100) {
+            expYear += 2000
+        }
+        
+        var now = new Date()
+        var currentMonth = now.getMonth() + 1 // 1-12
+        var currentYear = now.getFullYear()
+
+        // Έλεγχος Λήξης (EXPIRED)
+        // Αν ο χρόνος είναι μικρότερος ή (ο χρόνος είναι ίδιος ΚΑΙ ο μήνας μικρότερος)
+        if (expYear < currentYear || (expYear === currentYear && expMonth < currentMonth)) {
+            return { 
+                status: "EXPIRED", 
+                text: "Expired", 
+                color: "#F65151", 
+                icon: "../imgs/warning.png" 
+            }
+        }
+
+        
+        var monthsDiff = (expYear - currentYear) * 12 + (expMonth - currentMonth)
+        if (monthsDiff >= 0 && monthsDiff <= 2) {
+            return { 
+                status: "SOON", 
+                text: "Expires soon", 
+                color: "#F29A7A", // Πορτοκαλί
+                icon: "../imgs/expired_soon.png" 
+            }
+        }
+
+        return { status: "OK" }
+    }
     function filterCards()
     {
         var result = []
@@ -510,7 +551,7 @@ Item{
                         Rectangle{
                             color: "#303946"
                             Layout.preferredWidth: 360
-                            Layout.preferredHeight: 400
+                            Layout.preferredHeight: 430
                             radius: 20
 
                             ColumnLayout{
@@ -782,8 +823,41 @@ Item{
                                             color: "#B5B5B5"
                                             font.pixelSize: 15
                                         }
+                                    }
 
-                                        
+                                    /*---------- Expiration Alert Row (Below Expiration Date) ---------------*/
+                                    RowLayout {
+                                        id: expiryAlertRow
+                                        spacing: 8
+                                        Layout.fillWidth: true
+                                        visible: {
+                                            if (!selectedCard) return false
+                                            var statusObj = getExpiryStatus(selectedCard.expiration_date)
+                                            return statusObj.status !== "OK"
+                                        }
+                                        property var alertData: selectedCard ? getExpiryStatus(selectedCard.expiration_date) : {color: "transparent", text: "", icon: ""}
+
+                                        Item {
+                                            Layout.fillWidth: true
+                                        }
+
+                                        // Εικόνα δίπλα στο Expired/Expires soon text
+                                        Image {
+                                            id: expiryStatusImage
+                                            Layout.preferredWidth: 24
+                                            Layout.preferredHeight: 24
+                                            source: expiryAlertRow.alertData.icon || "" 
+                                            fillMode: Image.PreserveAspectFit
+                                            visible: source !== ""
+                                            opacity: 0.7
+                                        }
+
+                                        Label {
+                                            text: expiryAlertRow.alertData.text
+                                            color: expiryAlertRow.alertData.color
+                                            font.bold: true
+                                            font.pixelSize: 14
+                                        }
                                     }
 
                                     Rectangle{
@@ -792,6 +866,7 @@ Item{
                                         Layout.preferredHeight: 2
                                         opacity: 0.3
                                     }
+                                    
                                 
                                 }
 

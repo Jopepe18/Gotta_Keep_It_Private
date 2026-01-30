@@ -242,18 +242,6 @@ Window {
             spacing: 30
             
             Button { 
-                text: "Cancel"
-                font.pixelSize: 16
-                Layout.preferredWidth: 140
-                Layout.preferredHeight: 45
-                background: Rectangle { color: "transparent"; border.color: "white"; border.width: 2; radius: 20 }
-                contentItem: Text { text: parent.text; color: "white"; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
-                onClicked: {
-                    validationErrorLabel.text = ""
-                    root.close()}
-            }
-            
-            Button { 
                 text: "Save"
                 font.pixelSize: 16
                 Layout.preferredWidth: 120
@@ -284,6 +272,17 @@ Window {
                 background: Rectangle { color: "transparent"; border.color: "#F76262"; border.width: 2; radius: 20 }
                 contentItem: Text { text: parent.text; color: "#F76262"; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
                 onClicked: deleteCardConfirmation.open()
+            }
+            Button { 
+                text: "Cancel"
+                font.pixelSize: 16
+                Layout.preferredWidth: 140
+                Layout.preferredHeight: 45
+                background: Rectangle { color: "transparent"; border.color: "white"; border.width: 2; radius: 20 }
+                contentItem: Text { text: parent.text; color: "white"; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                onClicked: {
+                    validationErrorLabel.text = ""
+                    root.close()}
             }
         }
     }
