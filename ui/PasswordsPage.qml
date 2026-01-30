@@ -128,6 +128,30 @@ Item{
         }
     }
 
+    // Helper function to extract clean domain from website URL for favicon
+    function extractDomain(website) {
+        if (!website || website.trim() === "") {
+            return ""
+        }
+        var domain = website.trim()
+        // Remove protocol prefixes
+        domain = domain.replace(/^https?:\/\//i, "")
+        // Remove www. prefix
+        domain = domain.replace(/^www\./i, "")
+        // Remove trailing slashes and paths
+        domain = domain.split("/")[0]
+        return domain
+    }
+
+    // Helper function to get favicon URL for a website
+    function getFaviconUrl(website) {
+        var domain = extractDomain(website)
+        if (domain === "") {
+            return "../imgs/placeholders/default_image.png"
+        }
+        return "https://www.google.com/s2/favicons?domain=" + domain + "&sz=64"
+    }
+
     function filterPasswords()
     {
         var result = []
@@ -470,14 +494,16 @@ Item{
                                 }
 
                                 Image{
-                                    source: "https://www.google.com/s2/favicons?domain="+ modelData.website + "&sz=40"
+                                    id: listFaviconImage
+                                    property bool hasError: false
+                                    source: hasError ? "../imgs/placeholders/default_image.png" : getFaviconUrl(modelData.website)
                                     Layout.preferredWidth: 45
                                     Layout.preferredHeight: 45
                                     asynchronous: true  
                                     cache: true
                                     onStatusChanged: {
                                         if(status === Image.Error){
-                                            source = "../imgs/placeholders/default_image.png"
+                                            hasError = true
                                         }
                                     }
                                 }
@@ -556,18 +582,24 @@ Item{
 
                                         Image{
                                         id: detailImage
+                                        property bool hasError: false
+                                        property var currentPasswordId: selectedPassword ? selectedPassword.id : null
                                         Layout.preferredHeight: 60
                                         Layout.preferredWidth: 60
-                                        source:  selectedPassword ? ("https://www.google.com/s2/favicons?domain="+ selectedPassword.website + "&sz=40") : "../imgs/placeholders/default_image.png"
+                                        source: hasError ? "../imgs/placeholders/default_image.png" : 
+                                                (selectedPassword ? getFaviconUrl(selectedPassword.website) : "../imgs/placeholders/default_image.png")
                                         fillMode: Image.PreserveAspectFit
                                         smooth: true
 
-                                         onStatusChanged: {
-                                                if(status === Image.Error){
-                                                    source = "../imgs/placeholders/default_image.png"
-                                                }
+                                        onStatusChanged: {
+                                            if(status === Image.Error){
+                                                hasError = true
                                             }
-                                            
+                                        }
+                                        
+                                        onCurrentPasswordIdChanged: {
+                                            hasError = false
+                                        }
                                         }
 
                                         ColumnLayout{
