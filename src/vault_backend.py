@@ -95,7 +95,8 @@ class VaultBackend(QObject):
                 "password": "••••••••",  # Placeholder - actual password decrypted on demand
                 "note": p.note or "",
                 "created_at": p.created_at.strftime("%Y-%m-%d %H:%M:%S") if p.created_at else "",
-                "last_modified": p.last_modified.strftime("%Y-%m-%d %H:%M:%S") if p.last_modified else ""
+                "last_modified": p.last_modified.strftime("%Y-%m-%d %H:%M:%S") if p.last_modified else "",
+                "security_status": p.security_status or "SAFE"
             }
             for p in passwords
         ]

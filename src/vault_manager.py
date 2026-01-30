@@ -300,7 +300,8 @@ class VaultManager:
                     encrypted_password=p.encrypted_password,
                     note=p.note,
                     created_at=p.created_at,
-                    last_modified=p.last_modified
+                    last_modified=p.last_modified,
+                    security_status=p.security_status if p.security_status else "SAFE"
                 ) for p in passwords
             ]
         finally:
@@ -347,7 +348,8 @@ class VaultManager:
                 "totp_code": totp_code,
                 "has_totp": has_totp,
                 "created_at": str(password_entry.created_at) if password_entry.created_at else "",
-                "last_modified": str(password_entry.last_modified) if password_entry.last_modified else ""
+                "last_modified": str(password_entry.last_modified) if password_entry.last_modified else "",
+                "security_status": password_entry.security_status if password_entry.security_status else "SAFE"
             }
         except Exception as e:
             print(f"VaultManager: Error decrypting password: {e}")
@@ -819,8 +821,7 @@ class VaultManager:
     def scan_vault(self, user_id: str, master_password: str, progress_callback=None) -> dict:
         print("VaultManager: Starting Watchtower scan...")
         db = self.get_db()
-        analyzer = Watchtower() 
-
+        analyzer = Watchtower(self.PasswordHandler) 
         try:
             # 1. AUTH & PREPARE
             try:
@@ -847,7 +848,7 @@ class VaultManager:
                 except Exception:
                     continue
             
-            # 4. ANALYZE (Φάση 2: Αργή - 10 έως 100%)
+            
             # Περνάμε το callback ΜΕΣΑ στον analyzer!
             report = analyzer.analyze_vault(decrypted_objects, progress_callback)
 

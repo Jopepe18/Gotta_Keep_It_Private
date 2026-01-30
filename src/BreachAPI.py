@@ -33,7 +33,7 @@ class BreachAPIService:
 
         except requests.exceptions.Timeout:
             print("BreachAPI: Timeout reached.")
-            return 0
+            return -1
         except Exception as e:
             print(f"BreachAPI Error: {e}")
-            return 0
+            return -1

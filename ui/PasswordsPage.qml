@@ -66,6 +66,17 @@ Item{
         }
     }
     
+    // Connection to refresh passwords after Watchtower scan completes (security_status updated)
+    Connections {
+        target: watchTowerBackend
+        function onPasswordsRefreshNeeded(userId) {
+            if (userId === passwordsPage.userId) {
+                console.log("PasswordsPage: Refreshing passwords after Watchtower scan")
+                vaultBackend.getPasswords(passwordsPage.userId)
+            }
+        }
+    }
+    
     // Timer for TOTP countdown (every 1 second)
     Timer {
         id: totpRefreshTimer
@@ -895,11 +906,32 @@ Item{
                                             Layout.fillWidth:true
                                         }
 
-                                        Image{
-                                            id: passSafetyImage
-                                            Layout.preferredHeight: 30
-                                            Layout.preferredWidth: 30
-                                            source: "../imgs/safe.png"
+                                        Image {
+                                           id: passSafetyImage
+                                           // BREACHED icon has more padding, so we make it larger
+                                           property bool isBreached: selectedPassword && selectedPassword.security_status === "BREACHED"
+                                           Layout.preferredHeight: isBreached ? 45 : 30
+                                           Layout.preferredWidth: isBreached ? 45 : 30
+                                           sourceSize.width: isBreached ? 45 : 30
+                                           sourceSize.height: isBreached ? 45 : 30
+                                           fillMode: Image.PreserveAspectFit
+                                        
+                                           source: {
+                                            if (!selectedPassword) return "../imgs/verified.png" 
+                                            console.log("Current Status for " + selectedPassword.title + ": " + selectedPassword.security_status)
+                                            switch (selectedPassword.security_status) {
+                                                case "BREACHED": 
+                                                    return "../imgs/broken_shield.png" 
+                                                case "WEAK": 
+                                                    return "../imgs/warning.png" 
+                                                case "REUSED": 
+                                                    return "../imgs/warning.png"
+                                                case "SAFE": 
+                                                    return "../imgs/safe.png"
+                                                default: 
+                                                    return "../imgs/verified.png" 
+                                            }
+                                           }
                                         }
                                     }
 

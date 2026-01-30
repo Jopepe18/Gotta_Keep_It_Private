@@ -29,8 +29,7 @@ if __name__ == "__main__":
     menu_backend = MenuBackend(auth_manager)
     vault_manager = VaultManager()
     vault_backend = VaultBackend(vault_manager)
-
-    watchtower_backend = WatchTowerBackend()
+    watchtower_backend = WatchTowerBackend(vault_manager)
     generator_backend = GeneratorBackend()
     
     # 3. Expose to QML
@@ -41,10 +40,8 @@ if __name__ == "__main__":
     engine.rootContext().setContextProperty("vaultBackend", vault_backend)
     engine.rootContext().setContextProperty("watchTowerBackend", watchtower_backend)
     engine.rootContext().setContextProperty("generatorBackend", generator_backend)
-    
     current_dir = os.path.dirname(os.path.abspath(__file__))
     qml_file_path = os.path.join(current_dir, "../ui/Main.qml")
-
 
     engine.load(qml_file_path)
 

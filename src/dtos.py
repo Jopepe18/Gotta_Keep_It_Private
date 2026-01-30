@@ -1,5 +1,5 @@
 from dataclasses import dataclass ,field
-from typing import Optional
+from typing import Dict, Optional
 from datetime import datetime
 from typing import List, Any 
 # --- Requests (Inputs) ---
@@ -84,6 +84,7 @@ class PasswordDTO:
     website: str
     is_favorite: bool
     has_totp: bool = False
+    security_status: str = "SAFE"
     encrypted_password: str = ""
     note: Optional[str] = None
     created_at: Optional[datetime] = None
@@ -111,10 +112,11 @@ class SecurityReport:
     reused_count: int = 0
     breached_count: int = 0
     average_entropy: float = 0.0
-    timestamp: datetime = field(default_factory=datetime.now)
     weak_credentials: List[Any] = field(default_factory=list)
     reused_credentials: List[Any] = field(default_factory=list)
     breached_credentials: List[Any] = field(default_factory=list)
+    chart_stats: Dict[str, int] = field(default_factory=dict)
+    has_network_error: bool = False
 
 @dataclass
 class ChangeEmailRequest:
