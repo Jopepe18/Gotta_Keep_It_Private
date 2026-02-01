@@ -37,15 +37,15 @@ class PasswordAnalyser:
         return password in self.dictionary
 
     def evaluate_strength(self, password: str) -> str: 
-        # 1. Πρώτα έλεγχος μήκους
+        # Πρώτα έλεγχος μήκους
         if len(password) < 8:
             return "Weak"
             
-        # 2. Μετά έλεγχος Λεξικού 
+        # Μετά έλεγχος Λεξικού 
         if self.check_in_dictionary(password):
             return "Weak"
 
-        # 3. Τέλος έλεγχος Entropy
+        # Τέλος έλεγχος Entropy
         entropy = self.calculate_entropy(password)
         if entropy < 40:
              return "Weak"

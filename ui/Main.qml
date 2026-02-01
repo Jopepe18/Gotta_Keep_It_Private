@@ -46,8 +46,7 @@ Window {
                     stackView.pop()
                 }
                 onRecoveryVerified: function(username, key) {
-                    // Instantiate component programmatically to pass properties or use push with properties if supported
-                    // For simplicity in StackView push:
+                    // StackView push:
                     stackView.push(changeForgotPasswordComponent, {"username": username, "secretKey": key})
                 }
             }

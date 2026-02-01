@@ -30,22 +30,22 @@ class EncryptionService:
             return False
 
     def encrypt_data(self, data: str | bytes, key: bytes) -> bytes:
-        # 1. Convert to bytes if string
+        # Convert to bytes if string
         if isinstance(data, str):
             data_bytes = data.encode('utf-8')
         else:
             data_bytes = data
 
-        # 2. Create AES-GCM Instance
+        # Create AES-GCM Instance
         aesgcm = AESGCM(key)
 
-        # 3. Create Nonce
+        # Create Nonce
         nonce = os.urandom(12)
 
-        # 4. Encrypt
+        # Encrypt
         ciphertext = aesgcm.encrypt(nonce, data_bytes, None)
 
-        # 5. Return [Nonce] + [Ciphertext]
+        # Return [Nonce] + [Ciphertext]
         return nonce + ciphertext
 
     def decrypt_data(self, encrypted_packet: bytes, key: bytes) -> bytes:
@@ -54,14 +54,14 @@ class EncryptionService:
         Returns bytes! Decode if you need string.
         """
         try:
-            # 1. Create AES-GCM Instance
+            # Create AES-GCM Instance
             aesgcm = AESGCM(key)
 
-            # 2. Separate Nonce from Ciphertext
+            # Separate Nonce from Ciphertext
             nonce = encrypted_packet[:12]
             ciphertext = encrypted_packet[12:]
 
-            # 3. Decrypt & Verify
+            # Decrypt & Verify
             plain_bytes = aesgcm.decrypt(nonce, ciphertext, None)
             
             return plain_bytes

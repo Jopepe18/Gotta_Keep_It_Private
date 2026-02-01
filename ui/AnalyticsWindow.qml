@@ -22,7 +22,7 @@ Window {
     property int graphReused: 0
     property int graphBreached: 0
     property int graphSafe: 0
-    // --- 3. ΥΠΟΛΟΓΙΣΜΟΣ ΠΟΣΟΣΤΩΝ (Βάσει Graph Stats) ---
+    // ΥΠΟΛΟΓΙΣΜΟΣ ΠΟΣΟΣΤΩΝ (Βάσει Graph Stats) 
     property real safePct: graphSafe / (totalItems > 0 ? totalItems : 1)
     property real weakPct: graphWeak / (totalItems > 0 ? totalItems : 1)
     property real reusedPct: graphReused / (totalItems > 0 ? totalItems : 1)
@@ -41,7 +41,7 @@ Window {
             Layout.alignment: Qt.AlignHCenter
         }
 
-        // --- TABS ---
+        // TABS 
         TabBar {
             id: bar
             width: parent.width
@@ -67,13 +67,13 @@ Window {
             Layout.fillHeight: true
             clip: true
 
-            // --- TAB 1: PIE CHART ---
+            // TAB 1: PIE CHART 
             Item {
                 RowLayout {
                     anchors.centerIn: parent
                     spacing: 50
 
-                    // A. ΤΟ ΓΡΑΦΗΜΑ (Canvas)
+                    // ΤΟ ΓΡΑΦΗΜΑ (Canvas)
                     Item {
                         width: 300; height: 300
                         
@@ -112,7 +112,7 @@ Window {
                                 drawSlice(root.breachedPct, "#F65151"); // Κόκκινο
                             }
                             
-                            // --- FIX ΓΙΑ ΤΟ BLACK GRAPH ---
+                            //  FIX ΓΙΑ ΤΟ BLACK GRAPH 
                             // Ξαναζωγραφίζουμε όταν αλλάξει ΟΠΟΙΑΔΗΠΟΤΕ τιμή
                             Connections { 
                                 target: root
@@ -144,14 +144,10 @@ Window {
                         }
                     }
 
-                    // B. ΤΟ LEGEND (Επεξήγηση)
+                    // ΤΟ LEGEND (Επεξήγηση)
                     ColumnLayout {
                         spacing: 20
                         Layout.alignment: Qt.AlignVCenter
-
-                        // ΕΔΩ ΕΙΝΑΙ ΤΟ ΚΟΛΠΟ:
-                        // count: Δείχνουμε το REAL count (όλη την αλήθεια)
-                        // pct: Δείχνουμε το GRAPH pct (για να ταιριάζει με την πίτα)
                         
                         LegendItem { colorCode: "#F65151"; label: "Breached"; count: root.graphBreached; pct: root.breachedPct }
                         LegendItem { colorCode: "#F2CA7A"; label: "Reused"; count: root.graphReused; pct: root.reusedPct }
@@ -165,13 +161,13 @@ Window {
                 }
             }
 
-            // --- TAB 2: BAR CHART ---
+            // TAB 2: BAR CHART 
             Item {
                 RowLayout {
                     anchors.centerIn: parent
                     spacing: 40
                     
-                    // Εδώ χρησιμοποιούμε τα REAL counts για να συγκρίνουμε μεγέθη
+                    // Χρησιμοποιούμε τα REAL counts για να συγκρίνουμε μεγέθη
                     ChartBar { label: "Safe"; value: root.graphSafe; maxValue: root.totalItems; barColor: "#7ADCB4" }
                     ChartBar { label: "Breached"; value: root.breachedCount; maxValue: root.totalItems; barColor: "#F65151" }
                     ChartBar { label: "Reused"; value: root.reusedCount; maxValue: root.totalItems; barColor: "#F2CA7A" }
@@ -191,7 +187,7 @@ Window {
         }
     }
 
-    // --- CUSTOM COMPONENTS ---
+    // CUSTOM COMPONENTS
 
     component LegendItem : RowLayout {
         property string colorCode: "white"
@@ -203,7 +199,7 @@ Window {
         Rectangle { width: 15; height: 15; radius: 5; color: colorCode }
         Label { text: label; color: "white"; font.pixelSize: 18; Layout.preferredWidth: 100 }
         
-        // Ο Αριθμός (Real Count)
+        // Real Count
         Label { text: count.toString(); color: "white"; font.bold: true; font.pixelSize: 18; Layout.preferredWidth: 40 }
         
         // Το Ποσοστό (Priority %)

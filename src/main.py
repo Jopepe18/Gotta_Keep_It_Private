@@ -20,11 +20,11 @@ if __name__ == "__main__":
     QQuickStyle.setStyle("Basic")
     engine = QQmlApplicationEngine()
 
-    # 1. Initialize Shared Services
+    # Initialize Shared Services
     auth_manager = AuthenticationManager()
     password_analyser = PasswordAnalyser() 
     
-    # 2. Create Backends, injecting dependencies
+    # Create Backends, injecting dependencies
     login_backend = LoginBackend(auth_manager)
     register_backend = RegisterBackend(auth_manager)
     forgot_password_backend = ForgotPasswordBackend(auth_manager)
@@ -34,7 +34,7 @@ if __name__ == "__main__":
     watchtower_backend = WatchTowerBackend(vault_manager)
     generator_backend = GeneratorBackend(password_analyser)
     
-    # 3. Expose to QML
+    # Expose to QML
     engine.rootContext().setContextProperty("loginBackend", login_backend)
     engine.rootContext().setContextProperty("registerBackend", register_backend)
     engine.rootContext().setContextProperty("forgotPasswordBackend", forgot_password_backend)

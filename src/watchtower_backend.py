@@ -24,20 +24,20 @@ class ScanWorker(QThread):
 
 
 class WatchTowerBackend(QObject):
-    # --- ΣΗΜΑΤΑ (SIGNALS) ---
+    # --- ΣΗΜΑΤΑ ---
     
     scanFinished = Signal(int, int, int, int,str,bool) # weak, reused, breached, total,network error
     
     chartStatsReady = Signal(int, int, int, int) # weak, reused, breached, safe
     
-    # 3. ΓΙΑ ΤΑ ITEMS ΤΩΝ ΛΙΣΤΩΝ
+    #  ΓΙΑ ΤΑ ITEMS ΤΩΝ ΛΙΣΤΩΝ
     scanDataReady = Signal(list, list, list)
     
-    # 4. ΓΙΑ ΤΟ UI LOADING
+    # ΓΙΑ ΤΟ UI LOADING
     isScanningChanged = Signal(bool)
     scanProgressUpdated = Signal(float)
     
-    # 5. Signal to notify that passwords need refresh (security_status updated in DB)
+    # Signal to notify that passwords need refresh (security_status updated in DB)
     passwordsRefreshNeeded = Signal(str)  # user_id
 
     def __init__(self, manager):
@@ -70,7 +70,7 @@ class WatchTowerBackend(QObject):
             stats = full_report["stats"]
             chart_data = full_report.get("chartData", {}) # Τα δεδομένα για την πίτα
 
-            # 1. Στέλνουμε δεδομένα για τις λίστες
+            # Στέλνουμε δεδομένα για τις λίστες
             self.scanFinished.emit(
                 stats["weakCount"], 
                 stats["reusedCount"], 
@@ -80,7 +80,7 @@ class WatchTowerBackend(QObject):
                 stats.get("networkError", False)
             )
             
-            # 2. Στέλνουμε τα CHART stats (Για το Analytics Window)
+            # Στέλνουμε τα CHART stats (Για το Analytics Window)
             # Αν κάτι λείπει, στέλνουμε 0 
             self.chartStatsReady.emit(
                 chart_data.get("weak", 0),
@@ -89,7 +89,7 @@ class WatchTowerBackend(QObject):
                 chart_data.get("safe", 0)
             )
             
-            # 3. Στέλνουμε τις λίστες
+            # Στέλνουμε τις λίστες
             self.scanDataReady.emit(
                 full_report["weakItems"], 
                 full_report["reusedItems"], 

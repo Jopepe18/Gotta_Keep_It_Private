@@ -184,8 +184,7 @@ Window {
         passwordField.text = root.passwordText
         websiteField.text = root.websiteText
         noteField.text = root.noteText
-        // totpSecret stays empty in edit mode (user doesn't see existing secret)
-        // hasTotp and totpCode are set from outside
+        
     }
 
     // Ensure password field updates when the property changes (async decryption)
@@ -212,7 +211,6 @@ Window {
             id: titleField
             placeholderText: "Title (e.g. Gmail)"
             placeholderTextColor: "#B5B5B5"
-            // text: binding removed, handled by populateFields/resetFields
             visible: root.isAdding || root.isEditing
             Layout.fillWidth: true
             Layout.preferredHeight: 45
@@ -238,7 +236,6 @@ Window {
                     Label { text: "Username"; color: "#B5B5B5"; font.pixelSize: 14 }
                     TextField {
                         id: usernameField
-                        // text: binding removed
                         readOnly: !root.isAdding && !root.isEditing
                         Layout.fillWidth: true // Fill the parent ColumnLayout
                         Layout.preferredHeight: 45
@@ -263,7 +260,6 @@ Window {
                             anchors.margins: 5
                             TextField {
                                 id: passwordField
-                                // text: binding removed
                                 readOnly: !root.isAdding && !root.isEditing
                                 Layout.fillWidth: true
                                 font.pixelSize: 16
@@ -293,7 +289,6 @@ Window {
                     Label { text: "Website"; color: "#B5B5B5"; font.pixelSize: 14 }
                     TextField {
                         id: websiteField
-                        // text: binding removed
                         readOnly: !root.isAdding && !root.isEditing
                         Layout.fillWidth: true
                         Layout.preferredHeight: 45
@@ -310,7 +305,6 @@ Window {
                     Label { text: "Note"; color: "#B5B5B5"; font.pixelSize: 14 }
                     TextArea {
                         id: noteField
-                        // text: binding removed
                         readOnly: !root.isAdding && !root.isEditing
                         wrapMode: Text.Wrap
                         Layout.fillWidth: true
@@ -348,7 +342,7 @@ Window {
                         }
                     }
                     
-                    // TOTP Code Display (View mode with TOTP)
+                    // View mode with TOTP
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 60
@@ -486,7 +480,7 @@ Window {
                             passwordField.text,
                             websiteField.text,
                             noteField.text,
-                            root.totpSecret  // TOTP secret (empty = no change, has value = update)
+                            root.totpSecret  
                         )
                     }
                 }

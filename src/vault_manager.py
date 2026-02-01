@@ -32,16 +32,16 @@ class VaultManager:
 
         db: Session = self.get_db()
         try:
-            # 1. Generate Salt (επιστρέφει bytes)
+            # Generate Salt (επιστρέφει bytes)
             kdf_salt = self.key_manager.generate_Salt()
             
-            # 2. Generate DEK (Data Encryption Key) - Το κλειδί που κρυπτογραφεί τα δεδομένα
+            # Generate DEK (Data Encryption Key) - Το κλειδί που κρυπτογραφεί τα δεδομένα
             vault_dek = self.key_manager.generate_DEK()
             
-            # 3. Derive KEK (Key Encryption Key) από το Password + Salt , περιμένει (str,bytes)
+            # Derive KEK (Key Encryption Key) από το Password + Salt , περιμένει (str,bytes)
             kek = self.key_manager.derive_key(request.password, kdf_salt)
             
-            # 4. Encrypt the DEK (Key Wrapping)
+            # Encrypt the DEK (Key Wrapping)
             # Το encrypt_data επιστρέφει bytes
             encrypted_vault_key = self.encrypt_service.encrypt_data(vault_dek, kek)
 
@@ -53,10 +53,10 @@ class VaultManager:
             
             if user and user.secret_key:
                 print(f"VaultManager: Encrypting Vault Key with Recovery Key for User {request.user_id}")
-                # 4.1 Generate Recovery Salt
+                # Generate Recovery Salt
                 recovery_salt = self.key_manager.generate_Salt()
                 
-                # 4.2 Derive Recovery KEK (Key Encryption Key) from Secret Key
+                # Derive Recovery KEK from Secret Key
                 recovery_cek = self.key_manager.derive_key(user.secret_key, recovery_salt)
                 
                 # 4.3 Encrypt the DEK with the Recovery KEK
@@ -66,7 +66,7 @@ class VaultManager:
 
             print(f"DEBUG: Salt type: {type(kdf_salt)}, Encrypted Key type: {type(encrypted_vault_key)}")
 
-            # 5. Create Vault Entity
+            # Create Vault Entity
             new_vault = VaultModel(
                 user_id=request.user_id,
                 name=request.vault_name,
@@ -225,7 +225,7 @@ class VaultManager:
             password_entry.encrypted_password = encrypted_password
             password_entry.note = entry_data.get('note', '')
             
-            # Update last_modified implicitly via onupdate in model or explicitly here if needed.
+            # Update last_modified implicitly via onupdate in model or here 
             from datetime import datetime
             password_entry.last_modified = datetime.utcnow()
             
@@ -363,33 +363,33 @@ class VaultManager:
                 return {"success": False, "message": "Invalid current password"}
 
             # RE-ENCRYPT ALL VAULT DATA
-            # 1. Fetch Vault
+            # ]Fetch Vault
             vault = db.query(VaultModel).filter(VaultModel.user_id == request.user_id).first()
             if not vault:
                 
                  pass
             else:
-                 # 2. Derive OLD KEK
+                 #  Derive OLD KEK
                  # We need the salt used for the OLD password.
                  if not vault.kdf_salt or not vault.encrypted_vault_key:
                       return {"success": False, "message": "Vault is corrupted or missing encryption data."}
 
                  old_kek = self.key_manager.derive_key(request.current_password, vault.kdf_salt)
                  
-                 # 3. Decrypt DEK (Unwrap)
+                 # Decrypt DEK (Unwrap)
                  try:
                     vault_dek = self.encrypt_service.decrypt_data(vault.encrypted_vault_key, old_kek)
                  except Exception as e:
                      return {"success": False, "message": f"Failed to decrypt vault with current password: {e}"}
 
-                 # 4. Generate NEW Salt and KEK
+                 # Generate NEW Salt and KEK
                  new_kdf_salt = self.key_manager.generate_Salt()
                  new_kek = self.key_manager.derive_key(request.new_password, new_kdf_salt)
                  
-                 # 5. Re-Encrypt DEK (Wrap)
+                 #  Re-Encrypt DEK (Wrap)
                  new_encrypted_vault_key = self.encrypt_service.encrypt_data(vault_dek, new_kek)
                  
-                 # 6. Update Vault Records
+                 #  Update Vault Records
                  vault.kdf_salt = new_kdf_salt
                  vault.encrypted_vault_key = new_encrypted_vault_key
 
@@ -522,17 +522,17 @@ class VaultManager:
             print("DEBUG: Vault not found!")
             raise Exception("Vault not found")
 
-        # 3. VERIFY: Password Check
+        # VERIFY: Password Check
         if not self.encrypt_service.verify_password(password, user.password_hash):
             print("DEBUG: Password verification FAILED")
             raise Exception("Invalid Master Password")
 
-        # 4. VALIDATE: Encryption data check
+        # VALIDATE: Encryption data check
         if not vault.kdf_salt or not vault.encrypted_vault_key:
             print("DEBUG: Vault encryption data missing")
             raise Exception("Vault encryption data is missing or corrupted.")
 
-        # 5. UNWRAP: Derive KEK and decrypt DEK
+        # UNWRAP: Derive KEK and decrypt DEK
         kek = self.key_manager.derive_key(password, vault.kdf_salt)
         dek = self.encrypt_service.decrypt_data(vault.encrypted_vault_key, kek)
         return vault, dek
@@ -766,18 +766,18 @@ class VaultManager:
         db = self.get_db()
         analyzer = Watchtower(self.PasswordHandler) 
         try:
-            # 1. AUTH & PREPARE
+            # AUTH & PREPARE
             try:
                 vault, dek = self._prepare_vault_session(db, user_id, master_password)
             except Exception as e:
                 return {"success": False, "message": str(e)}
 
-            # 2. FETCH
+            # FETCH
             passwords = db.query(PasswordEntry).filter(PasswordEntry.vault_id == vault.vault_id).all()
             decrypted_objects = []
             total_items = len(passwords)
 
-            # 3. DECRYPT LOOP (Φάση 1: Γρήγορη - 0 έως 10% στο progress bar του watchtower )
+            # DECRYPT LOOP (Φάση 1: Γρήγορη - 0 έως 10% στο progress bar του watchtower )
             for index, entry in enumerate(passwords):
                 # Υπολογισμός προόδου (0-10%)
                 if progress_callback and total_items > 0:
@@ -795,7 +795,7 @@ class VaultManager:
             # Περνάμε το callback στον analyzer
             report = analyzer.analyze_vault(decrypted_objects, progress_callback)
 
-            # 5. COMMIT & RETURN
+            # COMMIT & RETURN
             db.commit()
             response_data = analyzer.format_json_response(report, len(decrypted_objects))
             
@@ -986,7 +986,7 @@ class VaultManager:
         
         db: Session = self.get_db()
         try:
-            # 1. Fetch User, Vault, and Card Entry
+            # Fetch User, Vault, and Card Entry
             vault, dek = self._prepare_vault_session(db, user_id, master_password)
 
             card_entry = db.query(CreditCardEntry).filter(CreditCardEntry.id == card_id).first()

@@ -2,7 +2,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-//code generated, δεν χρησιμοποιηθηκε απο το Qt Designer
+
 Page {
     id: root
     

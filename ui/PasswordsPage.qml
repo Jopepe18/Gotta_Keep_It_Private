@@ -207,7 +207,7 @@ Item{
                         
                     }
 
-                    /*----------Search TextField and Buttons*/
+                    /*Search TextField and Buttons*/
                     RowLayout{
                         spacing: 20
 
@@ -571,7 +571,7 @@ Item{
                                 anchors.margins: 20
                                 anchors.fill:parent
 
-                                /*------------Image Title and Last Modification Labels*/
+                                /*Image Title and Last Modification Labels*/
                                 RowLayout{
                                     spacing: 20
                                     Layout.topMargin: 10
@@ -619,7 +619,7 @@ Item{
                                         }
                                 }
                                 
-                                /*-------Details of Object*/
+                                /*Details of Object*/
                                ColumnLayout{
                                 spacing: 10
 
@@ -1220,8 +1220,6 @@ Item{
                                     viewPasswordPopUp.masterPassword = passwordsPage.masterPassword
                                     viewPasswordPopUp.titleText = selectedPassword.title || ""
                                     viewPasswordPopUp.usernameText = selectedPassword.username || ""
-                                    // viewPasswordPopUp.passwordText = "Loading..."  // Removed to avoid overwriting if already decrypted? No, we need to show loading or fetch it.
-                                    // Actually, let's keep it as is, but we need to ensure the field is populated.
                                     viewPasswordPopUp.passwordText = "Loading..." 
                                     viewPasswordPopUp.websiteText = selectedPassword.website || ""
                                     viewPasswordPopUp.noteText = selectedPassword.note || ""

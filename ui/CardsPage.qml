@@ -119,7 +119,7 @@ Item{
         var expMonth = parseInt(parts[0])
         var expYear = parseInt(parts[1])
         
-        // Handle 2-digit years (e.g., 28 -> 2028)
+        // Handle 2-digit years (πχ 28 -> 2028)
         if (expYear < 100) {
             expYear += 2000
         }
@@ -129,7 +129,7 @@ Item{
         var currentYear = now.getFullYear()
 
         // Έλεγχος Λήξης (EXPIRED)
-        // Αν ο χρόνος είναι μικρότερος ή (ο χρόνος είναι ίδιος ΚΑΙ ο μήνας μικρότερος)
+        // Αν ο χρόνος/μηνας είναι μικρότερος 
         if (expYear < currentYear || (expYear === currentYear && expMonth < currentMonth)) {
             return { 
                 status: "EXPIRED", 
@@ -194,7 +194,7 @@ Item{
                 anchors.fill: parent
                 spacing:10
 
-                /*---------All Cards-----------*/
+                /*All Cards*/
                 ColumnLayout{
                     Layout.preferredWidth: 800
                     Layout.fillHeight: true
@@ -208,11 +208,11 @@ Item{
                         
                     }
 
-                    /*----------Search TextField and Buttons*/
+                    /*Search TextField and Buttons*/
                     RowLayout{
                         spacing: 20
 
-                        /*----------Search TextField----------*/
+                        /*Search TextField*/
 
                         Rectangle{
                             width: 300
@@ -253,7 +253,7 @@ Item{
                             }
                         }
 
-                        /*------------Show Favorites Button-----------*/
+                        /*Show Favorites Button*/
                         Button{
                             id: showFavoriteCardsButton
                             Layout.preferredWidth:170
@@ -299,7 +299,7 @@ Item{
 
                         }
 
-                        /*------------Add New Card Button-----------*/
+                        /*Add New Card Button*/
                         Button{
                             id: addNewCardButton
                             Layout.preferredWidth:150
@@ -345,7 +345,7 @@ Item{
                             }
                         }
 
-                        /*------------DEBUG Button-----------*/
+                        /*DEBUG Button*/
                         Button{
                             id: addCardDebug
                             Layout.preferredWidth:150
@@ -375,7 +375,7 @@ Item{
 
                     }
 
-                    /*----------Headline-------------*/
+                    /*Headline*/
                     ColumnLayout{
                         spacing: 10
 
@@ -528,7 +528,7 @@ Item{
 
                 }
 
-                /*--------------Details----------------*/
+                /*Details*/
                 Rectangle{
                     Layout.preferredWidth:450
                     Layout.fillHeight: true
@@ -561,7 +561,7 @@ Item{
                                 anchors.bottomMargin:15
                                 anchors.fill:parent
 
-                                /*------------Image Title and Last Modification Labels*/
+                                /*Image Title and Last Modification Labels*/
                                 RowLayout{
                                     spacing: 20
                                     Layout.topMargin: 10
@@ -596,11 +596,11 @@ Item{
                                         }
                                     }
                                 
-                                /*-------Details of Object*/
+                                /*Details of Object*/
                                ColumnLayout{
                                 spacing: 10
 
-                                /*----------Cardholder Row---------------*/
+                                /*Cardholder Row*/
                                 ColumnLayout{
                                     spacing: 10
 
@@ -634,7 +634,7 @@ Item{
                                 
                                 }
 
-                                /*----------Card Type Row---------------*/
+                                /*Card Type Row*/
                                 ColumnLayout{
                                     spacing: 10
 
@@ -690,7 +690,7 @@ Item{
                                 
                                 }
 
-                                /*----------Card Number Row---------------*/
+                                /*Card Number Row*/
                                 ColumnLayout{
                                     spacing: 5
 
@@ -746,7 +746,7 @@ Item{
 
 
 
-                                /*----------Card CVV Row---------------*/
+                                /*Card CVV Row*/
                                 ColumnLayout{
                                     spacing: 5
 
@@ -800,7 +800,7 @@ Item{
                                 
                                 }
 
-                                /*----------Card Expiration Date Row---------------*/
+                                /*Card Expiration Date Row*/
                                 ColumnLayout{
                                     spacing: 10
 
@@ -825,7 +825,7 @@ Item{
                                         }
                                     }
 
-                                    /*---------- Expiration Alert Row (Below Expiration Date) ---------------*/
+                                    /*Expiration Alert Row */
                                     RowLayout {
                                         id: expiryAlertRow
                                         spacing: 8
@@ -870,7 +870,7 @@ Item{
                                 
                                 }
 
-                                /*----------------Note Display (Read-Only)---------------*/
+                                /*Note Display (Read-Only)*/
                                 TextField{
                                     id: passAddANote
                                     placeholderText: "No note"
@@ -918,7 +918,7 @@ Item{
                                 spacing: 20
 
 
-                                /*--------------Created at Row------------*/
+                                /*Created at Row*/
                                 RowLayout{
                                         spacing: 5
 
@@ -940,7 +940,7 @@ Item{
                                         }
                                 }
 
-                                /*--------------Last Modified Row------------*/
+                                /*Last Modified Row*/
                                 RowLayout{
                                         spacing: 10
 

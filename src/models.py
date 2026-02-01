@@ -40,8 +40,8 @@ def generate_uuid():
 #    created_at = Column(DateTime(timezone=True), server_default=func.now())
 #    vaults = relationship("VaultModel", back_populates="user", cascade="all, delete-orphan") 
 
-# ========================================================== # TABLE: VAULTS 
-# # ========================================================== 
+ # TABLE: VAULTS 
+ 
 class VaultModel(Base): 
   __tablename__ = 'vaults'  
   vault_id = Column(Integer, primary_key=True, autoincrement=True)#δημιουργία τυχαίου id για κάθε vault, με αύξων αριθμο
@@ -56,8 +56,9 @@ class VaultModel(Base):
   user = relationship("UserModel", back_populates="vaults")
   passwords = relationship("PasswordEntry", back_populates="vault", cascade="all, delete-orphan")
   cards = relationship("CreditCardEntry", back_populates="vault", cascade="all, delete-orphan")
-   # ========================================================== # TABLE: PASSWORDS 
-   # ========================================================== 
+
+ # TABLE: PASSWORDS 
+
 class PasswordEntry(Base): 
     __tablename__ = 'passwords' 
     id = Column(Integer, primary_key=True, autoincrement=True) 
@@ -73,8 +74,9 @@ class PasswordEntry(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now()) 
     last_modified = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now()) 
     vault = relationship("VaultModel", back_populates="passwords") 
-# ========================================================== # TABLE: CREDIT CARDS 
-# # ========================================================== 
+
+ # TABLE: CREDIT CARDS 
+
 class CreditCardEntry(Base): 
     __tablename__ = 'credit_cards' 
     id = Column(Integer, primary_key=True, autoincrement=True) 

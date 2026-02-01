@@ -12,7 +12,7 @@ Item {
     property string userIdString: ""
     property string masterPassword: ""
 
-    // 1. ΣΥΝΔΕΣΗ ΜΕ ΤΗ ΒΑΣΗ (ΓΙΑ LOGOUT)
+    //  ΣΥΝΔΕΣΗ ΜΕ ΤΗ ΒΑΣΗ ΓΙΑ LOGOUT
     Connections {
         target: vaultBackend
         function onVaultDeleted(success, message){
@@ -23,7 +23,6 @@ Item {
         }
     }
 
-    // 2. ΣΥΝΔΕΣΗ ΜΕ ΤΙΣ ΣΕΛΙΔΕΣ (ΓΙΑ ΤΟ ΚΛΙΚ)
     // Αυτό πιάνει το σήμα από το Watchtower
     Connections {
         target: stack.currentItem 
@@ -35,7 +34,7 @@ Item {
         }
     }
 
-    // 3. ΤΟ POPUP (ΤΟ ΠΑΡΑΘΥΡΟ) - Χρησιμοποιoύμε το ίδιο με το PasswordsPage
+    // ΤΟ POPUP - Χρησιμοποιoύμε το ίδιο με το PasswordsPage
     ViewPasswordPopUp {
         id: viewPasswordPopUp
         
@@ -52,7 +51,7 @@ Item {
         }
     }
 
-    // 4. ΣΥΝΑΡΤΗΣΗ ΠΟΥ ΦΕΡΝΕΙ ΤΑ ΔΕΔΟΜΕΝΑ
+    // ΣΥΝΑΡΤΗΣΗ ΠΟΥ ΦΕΡΝΕΙ ΤΑ ΔΕΔΟΜΕΝΑ
     function openEditPopup(passId) {
         console.log("Fetching details from Python for passId:", passId)
         var details = vaultBackend.get_decrypted_password(root.userIdString, passId)
@@ -83,7 +82,7 @@ Item {
         }
     }
 
-    // 5. UPDATE PAGE
+    // UPDATE PAGE
     function updatePage() {
         var page;
         var props = {};
@@ -112,7 +111,7 @@ Item {
         if(page) stack.replace(page, props);
     }
 
-    // 6. UI VISUALS
+    //  UI VISUALS
     Rectangle {
         color: "#1E2634"
         anchors.fill: parent

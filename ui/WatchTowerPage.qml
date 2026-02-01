@@ -48,7 +48,7 @@ Item {
     }
    
     function getVaultHealth() {
-        // Αν ακόμα ψάχνει...
+        // Analyzing
         if (isChecking) return { text: "Analyzing...", color: "#303946", icon: "" }
         
         if (breachedCount > 0) {
@@ -87,7 +87,7 @@ Item {
     // --- SIGNAL ---
     signal requestEditPassword(int passwordId)
 
-    // --- ANALYTICS WINDOW (Δήλωση του παραθύρου) ---
+    // --- ANALYTICS WINDOW ---
     AnalyticsWindow {
         id: analyticsWindow
     }
@@ -373,7 +373,7 @@ Item {
                                     spacing: 25
                                     visible: !isChecking
 
-                                    // 1. Breached List
+                                    // Breached List
                                     ColumnLayout {
                                         visible: breachedCount > 0
                                         spacing: 10
@@ -406,7 +406,7 @@ Item {
                                         }
                                     }
 
-                                    // 2. Weak List
+                                    //  Weak List
                                     ColumnLayout {
                                         visible: weakCount > 0
                                         spacing: 10
@@ -438,7 +438,7 @@ Item {
                                         }
                                     }
 
-                                    // 3. Reused List
+                                    // Reused List
                                     ColumnLayout {
                                         visible: reusedCount > 0
                                         spacing: 10

@@ -21,7 +21,6 @@ class KeyManager:
         Generates a 16-character alphanumeric secret key.
         """
         # Format: XXXX-XXXX-XXXX-XXXX
-        # Simple implementation
         raw = secrets.token_hex(16).upper() 
         
         # Το χωρίζουμε σε ομάδες των 4 για ευκολία

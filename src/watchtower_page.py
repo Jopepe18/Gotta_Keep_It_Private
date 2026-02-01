@@ -71,7 +71,7 @@ class Watchtower:
         chart_weak = 0
         chart_safe = 0
 
-        # B. Πραγματικοί Μετρητές (Overlap Logic)
+        # Πραγματικοί Μετρητές (Overlap Logic)
         # Χρησιμοποιούνται για τις Λίστες και τα Labels (Action Required)
         real_breached = 0
         real_reused = 0
@@ -79,7 +79,7 @@ class Watchtower:
 
         for item in decrypted_credentials:
             
-            #1. ΥΠΟΛΟΓΙΣΜΟΣ ΓΙΑ ΛΙΣΤΕΣ
+            # ΥΠΟΛΟΓΙΣΜΟΣ ΓΙΑ ΛΙΣΤΕΣ
             #Αν ένας κωδικός έχει και τα 3 προβλήματα, μπαίνει και στις 3 λίστες
             if item.is_breached:
                 real_breached += 1

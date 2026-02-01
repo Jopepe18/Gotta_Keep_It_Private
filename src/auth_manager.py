@@ -38,7 +38,7 @@ class AuthenticationManager:
         try:
             if not all(vars(request).values()):  #check if there are any empty fields 
                 return RegistrationResult(success=False, msg="One or more fields are empty")
-            # 1. Check if email or username exists
+            # Check if email or username exists
             existing_email = db.query(UserModel).filter(UserModel.email == request.email).first()
             if existing_email:
                 return RegistrationResult(success=False, msg="Email already exists")
@@ -47,17 +47,17 @@ class AuthenticationManager:
             if existing_user:
                 return RegistrationResult(success=False, msg="Username already exists")
 
-            # 2. Check passwords match
+            # Check passwords match
             if request.password != request.confirm_password:
                 return RegistrationResult(success=False, msg="Passwords do not match")
 
-            # 3. Hash password
+            # Hash password
             hashed_pw = self.encrypt_service.hash_password(request.password)
 
-            # 4. Generate Secret Key
+            # Generate Secret Key
             secret_key = self.key_manager.generate_secret_key()
 
-            # 5. Create new User
+            # Create new User
             new_user_id = str(uuid.uuid4())#random user id generated
             new_user = UserModel(
                 user_id=new_user_id, 
@@ -71,7 +71,7 @@ class AuthenticationManager:
             db.commit()
             db.refresh(new_user)
 
-            # 6. Return Success with Secret Key
+            # Return Success with Secret Key
             return RegistrationResult(success=True, msg="Success", user_id=new_user_id, secret_key=secret_key)
         finally:
             db.close()
@@ -79,15 +79,15 @@ class AuthenticationManager:
     def login(self, request: LoginRequest) -> AuthenticationResult:
         db: Session = self.get_db()
         try:
-            # 1. Find User by Username
+            # Find User by Username
             found_user = db.query(UserModel).filter(UserModel.username == request.username).first()
             
             if not found_user:
                 return AuthenticationResult(success=False, message="User not found")
 
-            # 2. Verify password
+            # Verify password
             if self.encrypt_service.verify_password(request.password, found_user.password_hash):
-                # 3. Success -> Generate Token
+                # Success -> Generate Token
                 token = self.key_manager.generate_token()
                 # Check if user has vaults
                 has_vault = len(found_user.vaults) > 0
@@ -119,7 +119,7 @@ class AuthenticationManager:
     def execute_password_recovery(self, request: RecoveryChangeRequest) -> bool:
         db: Session = self.get_db()
         try:
-            # 1. Verify Identity again (για Extra Security)
+            #  Verify Identity again (για Extra Security)
             user = db.query(UserModel).filter(
                 UserModel.username == request.username,
                 UserModel.secret_key == request.secret_key
@@ -128,7 +128,7 @@ class AuthenticationManager:
             if not user:
                 return False
 
-            # 2. Check Passwords Match
+            # Check Passwords Match
             if request.new_password != request.confirm_password:
                 return False
 
@@ -144,21 +144,21 @@ class AuthenticationManager:
             if vault and vault.recovery_encrypted_key and vault.recovery_salt:
                  print("AuthManager: Attempting to recover vault keys...")
                  try:
-                     # 2.1 Derive Recovery CEK
+                     # Derive Recovery CEK
                      recovery_cek = self.key_manager.derive_key(request.secret_key, vault.recovery_salt)
                      
-                     # 2.2 Decrypt DEK (Unwrap)
+                     # Decrypt DEK (Unwrap)
                      vault_dek = self.encrypt_service.decrypt_data(vault.recovery_encrypted_key, recovery_cek)
                      
-                     # 2.3 Derive NEW KEK
+                     # Derive NEW KEK
                      
                      new_kdf_salt = self.key_manager.generate_Salt()
                      new_kek = self.key_manager.derive_key(request.new_password, new_kdf_salt)
                      
-                     # 2.4 Re-Encrypt DEK (Rewrap)
+                     # Re-Encrypt DEK (Rewrap)
                      new_encrypted_vault_key = self.encrypt_service.encrypt_data(vault_dek, new_kek)
                      
-                     # 2.5 Update Vault
+                     # Update Vault
                      vault.kdf_salt = new_kdf_salt
                      vault.encrypted_vault_key = new_encrypted_vault_key
                      print("AuthManager: Vault keys re-encrypted successfully.")
@@ -170,7 +170,7 @@ class AuthenticationManager:
                 print("AuthManager: Vault exists but NO RECOVERY DATA found. Data will be LOST.")
               
             
-            # 3. Update Password
+            # Update Password
             user.password_hash = self.encrypt_service.hash_password(request.new_password)
             db.commit()
             
